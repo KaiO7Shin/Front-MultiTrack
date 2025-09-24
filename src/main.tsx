@@ -14,11 +14,16 @@ import {AddParticipant} from "./pages/Participants/AddParticipant";
 import {CheckpointScan} from "./pages/Checkpoint/CheckpointScan";
 import {CheckpointHistory} from "./pages/Checkpoint/CheckpointHistory";
 import {LeaderboardPage} from "./pages/Leaderboard/LeaderboardPage";
+import { LoginPage } from "./pages/Auth/LoginPage";
+
+const isAuth = !!localStorage.getItem("token");
 
 const router = createBrowserRouter([
+  { path: "/login", element: <LoginPage /> },
   {
     path: "/",
-    element: <App />,
+    element: isAuth ? <App /> : <LoginPage />,
+    //element: <App />,
     children: [
       { index: true, element: <DashboardPage /> },
       { path: "dashboard", element: <DashboardPage /> },
