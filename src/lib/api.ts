@@ -1,8 +1,10 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "", // configure dans .env
-  headers: { "Content-Type": "application/json" },
+  baseURL: "http://192.168.88.103:8080", // configure dans .env
+  headers: { 
+    "Content-Type": "application/json",
+   },
 });
 
 // Intercepteur: ajoute automatiquement le token

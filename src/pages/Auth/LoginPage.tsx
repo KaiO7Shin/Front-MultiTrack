@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import multitrackLogo from "@/assets/multitrack.svg";
-import api from "../../lib/api"; // <- axios instance (api.ts)
+import { useAuth } from "../../lib/auth";
 
 export const LoginPage = () => {
   const [passcode, setPasscode] = useState("");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -17,13 +19,10 @@ export const LoginPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.post<{ token: string; user: any }>("/api/auth/login", { passcode });
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      const from = (location.state as any)?.from?.pathname || "/dashboard";
-      navigate(from, { replace: true });
+      await signIn(passcode);                // met à jour le contexte -> re-render
+      navigate(from, { replace: true });     // va où l’utilisateur voulait aller
     } catch (err: any) {
-      setError(err?.message || "Passcode invalide");
+      setError(err?.response?.data?.message || err?.message || "Passcode invalide");
     } finally {
       setLoading(false);
     }

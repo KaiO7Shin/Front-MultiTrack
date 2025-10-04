@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import apiClient from "./api";
+import { Navigate, useLocation } from "react-router-dom";
 
 export type Role = "admin" | "inscriptions" | "checkpoint" | "arrival";
 export type SessionUser = {
@@ -39,9 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
         const res = await apiClient.post<{ token: string; user: SessionUser }>(
-        "/api/auth/login",
+        "/login/user",
         { passcode }
         );
+
+        console.log("login ok", res.data);
 
         const { token, user } = res.data;
         setToken(token);
@@ -73,10 +76,11 @@ export function useAuth() {
 
 export function RequireAuth({ children }: { children: React.ReactElement }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
+
   if (loading) return <div className="p-6 text-sm text-slate-500">Chargement…</div>;
   if (!user) {
-    window.location.href = "/login";
-    return null;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
   return children;
 }

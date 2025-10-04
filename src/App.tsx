@@ -27,8 +27,8 @@ export default function App() {
   }, []);
 
   const role = useMemo(() => (user?.role || "").toLowerCase(), [user]);
-  const isAdmin = role === "admin";
-  const isCollaborateur = role === "collaborateur"; // pointer/checkpoint
+  const isAdmin = role === "0";
+  const isCollaborateur = role === "1"; // pointer/checkpoint
   const pcId = user?.point_de_controle_course_id ?? null;
 
   // Si collaborateur, forcer la nav vers l'interface checkpoint (scan) uniquement
