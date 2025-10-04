@@ -5,19 +5,21 @@ export const CheckpointScan = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const undoTimer = useRef<number | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef1 = useRef<HTMLInputElement | null>(null);
+  const inputRef2 = useRef<HTMLInputElement | null>(null);
 
-  // focus auto + sélection du contenu au focus (plus rapide à enchaîner)
+  const [bib1, setBib1] = useState("");
+  const [bib2, setBib2] = useState("");
+
   useEffect(() => {
-    inputRef.current?.focus();
-    const el = inputRef.current;
+    inputRef1.current?.focus();
+    const el = inputRef1.current;
     if (!el) return;
     const onFocus = () => el.select();
     el.addEventListener("focus", onFocus);
     return () => el.removeEventListener("focus", onFocus);
   }, []);
 
-  // dernier passage (pour Undo)
   const lastBib = useMemo(() => (last[0]?.bib ? last[0].bib : null), [last]);
 
   function vibrate(ms = 30) {
@@ -35,9 +37,7 @@ export const CheckpointScan = () => {
   }
 
   function validateLocal(bib: string) {
-    // Ex: n° dossard 1 à 6 chiffres
     if (!/^\d{1,6}$/.test(bib)) return "Numéro invalide (1 à 6 chiffres)";
-    // Anti-doublon local < 2 min sur le même bib (indicatif côté UI)
     const recent = last.find((x) => x.bib === bib && Date.now() - x.ts < 120000);
     if (recent) return "Doublon récent (< 2 min)";
     return null;
@@ -46,9 +46,14 @@ export const CheckpointScan = () => {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy) return;
-    const fd = new FormData(e.currentTarget);
-    const raw = String(fd.get("bib") || "");
-    const bib = raw.trim();
+
+    if (bib1 !== bib2) {
+      setError("Les deux numéros ne correspondent pas.");
+      vibrate(60);
+      return;
+    }
+
+    const bib = bib1.trim();
     if (!bib) return;
 
     const localErr = validateLocal(bib);
@@ -62,20 +67,21 @@ export const CheckpointScan = () => {
     setError(null);
 
     try {
-      // TODO: appeler ton API ici (axios) si nécessaire.
+      // TODO: appel API
       // await api.post('/api/passages', { num_dossard: bib, course_id })
 
       pushBib(bib);
       vibrate(20);
 
-      // Activer fenêtre d'undo pendant 10s
       if (undoTimer.current) window.clearTimeout(undoTimer.current);
       undoTimer.current = window.setTimeout(() => {
         undoTimer.current && window.clearTimeout(undoTimer.current);
         undoTimer.current = null;
       }, 10000);
-      e.currentTarget.reset();
-      inputRef.current?.focus();
+
+      setBib1("");
+      setBib2("");
+      inputRef1.current?.focus();
     } catch (err: any) {
       setError(err?.message || "Erreur d’enregistrement");
       vibrate(60);
@@ -84,51 +90,50 @@ export const CheckpointScan = () => {
     }
   }
 
-  // clavier numérique tactile (visible sur mobile seulement)
-  function appendDigit(d: string) {
-    const el = inputRef.current;
-    if (!el) return;
-    el.value = (el.value || "") + d;
-    el.focus();
-  }
-  function backspace() {
-    const el = inputRef.current;
-    if (!el) return;
-    el.value = (el.value || "").slice(0, -1);
-    el.focus();
-  }
-  function clearAll() {
-    const el = inputRef.current;
-    if (!el) return;
-    el.value = "";
-    el.focus();
+  function restrictKeys(e: React.KeyboardEvent<HTMLInputElement>) {
+    const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
+    if (/^\d$/.test(e.key) || allowed.includes(e.key)) return;
+    e.preventDefault();
   }
 
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-center">
         <h1 className="text-2xl font-semibold">Pointage Checkpoint</h1>
-        {/* état compact (ex: réseau, pc) à brancher plus tard */}
       </div>
 
       {/* FORM */}
-      <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-3">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-3"
+      >
         <label className="text-sm text-slate-600">N° Dossard</label>
         <input
-          name="bib"
-          ref={inputRef}
+          name="bib1"
+          ref={inputRef1}
+          value={bib1}
+          onChange={(e) => setBib1(e.target.value)}
           autoFocus
           inputMode="numeric"
           pattern="[0-9]*"
           maxLength={6}
           className="w-full text-3xl px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-slate-900/20"
           placeholder="Ex. 1234"
-          onKeyDown={(e) => {
-            // limiter aux chiffres, backspace, delete, arrows, enter
-            const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Enter"];
-            if (/^\d$/.test(e.key) || allowed.includes(e.key)) return;
-            e.preventDefault();
-          }}
+          onKeyDown={restrictKeys}
+        />
+
+        <label className="text-sm text-slate-600">Confirmer N° Dossard</label>
+        <input
+          name="bib2"
+          ref={inputRef2}
+          value={bib2}
+          onChange={(e) => setBib2(e.target.value)}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={6}
+          className="w-full text-3xl px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-slate-900/20"
+          placeholder="Retapez le numéro"
+          onKeyDown={restrictKeys}
         />
 
         {error && (
@@ -138,36 +143,16 @@ export const CheckpointScan = () => {
         )}
 
         <button
-          disabled={busy}
+          disabled={
+            busy || !bib1 || !bib2 || bib1 !== bib2 || validateLocal(bib1) !== null
+          }
           className="w-full rounded-2xl bg-slate-900 text-white px-4 py-3 text-base disabled:opacity-60 flex items-center justify-center gap-2"
         >
-          {busy && <span className="inline-block h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />}
+          {busy && (
+            <span className="inline-block h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
+          )}
           {busy ? "Enregistrement..." : "Valider (ENTER)"}
         </button>
-
-        {/* Numpad tactile: visible seulement < md */}
-        <div className="md:hidden pt-2 grid grid-cols-3 gap-2">
-          {["1","2","3","4","5","6","7","8","9","C","0","OK"].map((k) => (
-            <button
-              key={k}
-              type={k === "OK" ? "submit" : "button"}
-              onClick={
-                k === "C" ? clearAll :
-                k === "OK" ? undefined :
-                k === "←" ? backspace :
-                () => appendDigit(k)
-              }
-              className={`h-12 rounded-xl border text-lg font-medium ${
-                k === "OK" ? "bg-slate-900 text-white" : "bg-white"
-              }`}
-            >
-              {k === "C" ? "⌫" : k}
-            </button>
-          ))}
-          <button type="button" onClick={backspace} className="col-span-3 h-12 rounded-xl border">
-            Effacer un caractère
-          </button>
-        </div>
       </form>
 
       {/* LISTE DERNIERS PASSAGES */}
@@ -199,7 +184,6 @@ export const CheckpointScan = () => {
                     {new Date(item.ts).toLocaleTimeString()}
                   </span>
                 </div>
-                {/* placeholder pour badges d'état (OK / Doublon / Hors ordre) */}
                 <span className="text-[11px] px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
                   OK
                 </span>
