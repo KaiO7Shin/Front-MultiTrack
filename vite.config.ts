@@ -6,6 +6,10 @@ import { defineConfig } from "vite"
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    host: true,       // autorise toutes les IP
+    port: 5173,       // optionnel
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

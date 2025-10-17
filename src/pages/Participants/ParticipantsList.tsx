@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Users } from "lucide-react"; // npm i lucide-react
 
-const ACCENT = "#8c9962";
+//const ACCENT = "#8c9962";
 
 type Participant = {
   id: number;
@@ -15,7 +15,7 @@ type Participant = {
 
 export const ParticipantsList = () => {
   // Mock data (remplace plus tard par API)
-  const [participants, setParticipants] = useState<Participant[]>([
+  const [participants] = useState<Participant[]>([
     { id: 1, nom: "Rasoa M.", dossard: 124, genre: "F", course: "Trail 12K", categorie: "Senior" },
     { id: 2, nom: "Rakoto J.", dossard: 89, genre: "M", course: "Trail 12K", categorie: "Veteran" },
   ]);

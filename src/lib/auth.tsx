@@ -39,14 +39,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function signIn(passcode: string) {
     setLoading(true);
     try {
-        const res = await apiClient.post<{ token: string; user: SessionUser }>(
+        const res = await apiClient.post<{
+          data: { token: any; user: any; }; token: string; user: SessionUser 
+}>(
         "/login/user",
         { passcode }
         );
 
-        console.log("login ok", res.data);
+        console.log("login ok", res.data.data);
 
-        const { token, user } = res.data;
+        const { token, user } = res.data.data;
         setToken(token);
         setUser(user);
 

@@ -5,8 +5,12 @@ import multitrackLogo from "./assets/multitrack.svg";
 
 type SessionUser = {
   id: number;
-  role: "admin" | "collaborateur" | string;
-  point_de_controle_course_id?: number | null;
+  role: number;
+  assignedControlPoint?: {
+    id: number;
+    label: string;
+    controlPointNumber: number;
+  } 
   name?: string | null;
 };
 
@@ -26,10 +30,10 @@ export default function App() {
     }
   }, []);
 
-  const role = useMemo(() => (user?.role || "").toLowerCase(), [user]);
-  const isAdmin = role === "0";
-  const isCollaborateur = role === "1"; // pointer/checkpoint
-  const pcId = user?.point_de_controle_course_id ?? null;
+  const role = useMemo(() => (user?.role), [user]);
+  const isAdmin = role === 0;
+  const isCollaborateur = role === 1; // pointer/checkpoint
+  const pcName = user?.assignedControlPoint?.label ?? null;
 
   // Si collaborateur, forcer la nav vers l'interface checkpoint (scan) uniquement
   useEffect(() => {
@@ -69,7 +73,7 @@ export default function App() {
                            border-[#8c9962]/50 text-[#8c9962]"
                 title="Point de contrôle assigné"
               >
-                PC {pcId ?? "—"}
+                {pcName}
               </span>
               <button
                 onClick={handleLogout}
