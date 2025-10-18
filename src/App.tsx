@@ -34,6 +34,7 @@ export default function App() {
   const isAdmin = role === 0;
   const isCollaborateur = role === 1; // pointer/checkpoint
   const pcName = user?.assignedControlPoint?.label ?? null;
+  
 
   // Si collaborateur, forcer la nav vers l'interface checkpoint (scan) uniquement
   useEffect(() => {

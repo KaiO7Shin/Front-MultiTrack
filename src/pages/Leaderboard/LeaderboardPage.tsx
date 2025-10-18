@@ -1,55 +1,163 @@
-import { useMemo, useState } from "react";
-import { Trophy, Medal, Filter, Download, ArrowUpDown } from "lucide-react";
-// import api from "../../lib/api"; // à brancher
+import { useEffect, useMemo, useState } from "react";
+import { Trophy, Medal, Filter, Download, Search } from "lucide-react";
+import api from "../../lib/api";
 
 const ACCENT = "#8c9962";
 
+/* ===== Types ===== */
+type ApiRow = {
+  rank: number | null;
+  participantId: number;
+  bibNumber: string;
+  athleteName: string;
+  categoryName: string;
+  raceTime: string | null;
+  status: string | null;
+};
+
 type Row = {
+  rank: number | null;
   dossard: number;
   nom: string;
-  genre: "M" | "F";
   categorie: string;
   courseId: number;
   course: string;
-  // temps d'arrivée en secondes depuis départ (plus simple pour trier)
-  timeSec: number;
-  statut: "FINISH" | "EN COURS" | "DNF";
+  raceTime: string | null;
+  status: string | null;
 };
 
-/** --- MOCK (remplace par ton GET /leaderboard?course_id=... etc) --- */
-const mockRows: Row[] = [
-  { dossard: 124, nom: "Rasoa M.", genre: "F", categorie: "Senior", courseId: 1, course: "Trail 12K", timeSec: 4662, statut: "FINISH" },
-  { dossard: 89, nom: "Rakoto J.", genre: "M", categorie: "Senior", courseId: 1, course: "Trail 12K", timeSec: 4711, statut: "FINISH" },
-  { dossard: 301, nom: "Hanitra A.", genre: "F", categorie: "Veteran", courseId: 1, course: "Trail 12K", timeSec: 4742, statut: "FINISH" },
-  { dossard: 55, nom: "Tovo K.", genre: "M", categorie: "Senior", courseId: 1, course: "Trail 12K", timeSec: 4780, statut: "FINISH" },
-  { dossard: 12, nom: "Miora R.", genre: "F", categorie: "Junior", courseId: 2, course: "Trail 35K", timeSec: 12540, statut: "EN COURS" },
+type UICategory = { id: number; alias: string };
+
+const COURSES_FALLBACK: { id: number; label: string }[] = [
+  { id: 1, label: "Trail 12K" },
+  { id: 2, label: "Trail 35K" },
 ];
 
+/* ===== Utils ===== */
+function courseLabelOf(id: number, list: { id: number; label: string }[]) {
+  return list.find((c) => c.id === id)?.label ?? `Course #${id}`;
+}
+function coerceArray(x: any): any[] {
+  if (Array.isArray(x)) return x;
+  if (x && typeof x === "object" && Array.isArray((x as any).data)) return (x as any).data;
+  return [];
+}
+function normalizeCourse(raw: any): { id: number; label: string } {
+  const id = Number(raw?.id ?? raw?.raceId ?? 0);
+  const label = String(raw?.name ?? raw?.label ?? raw?.title ?? `Course #${id}`);
+  return { id, label };
+}
+function normalizeCategory(raw: any): UICategory {
+  return { id: Number(raw?.id ?? 0), alias: String(raw?.alias ?? "") };
+}
+function toRow(raw: ApiRow, ctx: { raceId: number; raceLabel: string }): Row {
+  const bib = Number(raw?.bibNumber ?? 0);
+  return {
+    rank: raw?.rank ?? null,
+    dossard: Number.isFinite(bib) ? bib : 0,
+    nom: String(raw?.athleteName ?? ""),
+    categorie: String(raw?.categoryName ?? ""),
+    courseId: ctx.raceId,
+    course: ctx.raceLabel,
+    raceTime: raw?.raceTime ?? null,
+    status: raw?.status ?? null,
+  };
+}
+
+/* ===== API calls ===== */
+async function fetchRanking(
+  raceId: number,
+  params: { gender?: "Homme" | "Femme"; categoryId?: number }
+): Promise<ApiRow[]> {
+  const qs = new URLSearchParams();
+  if (params.gender) qs.set("gender", params.gender);
+  if (params.categoryId != null) qs.set("categoryId", String(params.categoryId));
+  const res = await api.get(`/races/${raceId}/ranking?${qs.toString()}`);
+  const payload = res?.data ?? {};
+  return Array.isArray(payload?.data) ? (payload.data as ApiRow[]) : [];
+}
+async function fetchCourses(): Promise<{ id: number; label: string }[]> {
+  const res = await api.get("/races");
+  return coerceArray(res?.data).map(normalizeCourse);
+}
+async function fetchCategories(): Promise<UICategory[]> {
+  const res = await api.get("/categories");
+  return coerceArray(res?.data).map(normalizeCategory);
+}
+
+/* ===== Page ===== */
 export const LeaderboardPage = () => {
   const [courseId, setCourseId] = useState<number | "all">(1);
-  const [scope, setScope] = useState<"general" | "categorie">("general");
-  const [genre, setGenre] = useState<"all" | "M" | "F">("all");
-  const [sortAsc, setSortAsc] = useState(true);
+  const [gender, setGender] = useState<"all" | "Homme" | "Femme">("all");
+  const [categoryId, setCategoryId] = useState<number | "" | null>("");
+  const [searchBib, setSearchBib] = useState("");
 
-  // Filtres
-  const filtered = useMemo(() => {
-    let rows = mockRows.slice();
-    if (courseId !== "all") rows = rows.filter((r) => r.courseId === courseId);
-    if (genre !== "all") rows = rows.filter((r) => r.genre === genre);
-    // scope "categorie" : on gardera l’affichage par catégorie (mais tri reste global)
-    rows.sort((a, b) => (sortAsc ? a.timeSec - b.timeSec : b.timeSec - a.timeSec));
-    // On garde que les FINISH en tête, puis EN COURS, puis DNF (ordre visuel)
-    rows.sort((a, b) => statutRank(a.statut) - statutRank(b.statut) || (sortAsc ? a.timeSec - b.timeSec : b.timeSec - a.timeSec));
-    return rows;
-  }, [courseId, genre, sortAsc]);
+  const [courses, setCourses] = useState<{ id: number; label: string }[]>(COURSES_FALLBACK);
+  const [categories, setCategories] = useState<UICategory[]>([]);
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
-  // Podium sur la course sélectionnée, FINISH uniquement
-  const podium = useMemo(() => {
-    const base = filtered.filter((r) => r.statut === "FINISH");
-    return base.slice(0, 3);
-  }, [filtered]);
+  // fetch races + categories
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const [cList, catList] = await Promise.allSettled([
+          fetchCourses(),
+          fetchCategories(),
+        ]);
+        if (!mounted) return;
+        if (cList.status === "fulfilled" && cList.value.length)
+          setCourses(cList.value);
+        if (catList.status === "fulfilled") setCategories(catList.value);
+      } catch {}
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const finishers = filtered.filter((r) => r.statut === "FINISH").length;
+  // fetch classement
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setErr(null);
+        if (courseId === "all") {
+          setRows([]);
+          return;
+        }
+        const apiRows = await fetchRanking(courseId, {
+          gender: gender === "all" ? undefined : gender,
+          categoryId: categoryId === "" || categoryId == null ? undefined : Number(categoryId),
+        });
+        if (!mounted) return;
+        const raceLabel = courseLabelOf(courseId, courses);
+        setRows(apiRows.map((r) => toRow(r, { raceId: courseId, raceLabel })));
+      } catch (e: any) {
+        if (!mounted) return;
+        setErr(e?.message || "Erreur de chargement du classement");
+        setRows([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [courseId, gender, categoryId, courses]);
+
+  // filtre local par dossard
+  const filteredRows = useMemo(() => {
+    const term = searchBib.trim();
+    if (!term) return rows;
+    return rows.filter((r) => String(r.dossard).includes(term));
+  }, [rows, searchBib]);
+
+  const podium = useMemo(() => filteredRows.slice(0, 3), [filteredRows]);
+  const finishers = filteredRows.filter((r) => (r.status ?? "").toLowerCase().startsWith("finish")).length;
 
   return (
     <section className="space-y-6">
@@ -57,11 +165,13 @@ export const LeaderboardPage = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Classement</h1>
-          <p className="text-sm text-slate-500">Résultats provisoires (à homologuer)</p>
+          <p className="text-sm text-slate-500">
+            {loading ? "Chargement..." : "Résultats provisoires (à homologuer)"}{err ? ` — ${err}` : ""}
+          </p>
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => window.print()} // placeholder export
+            onClick={() => window.print()}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10"
           >
             <Download className="inline-block h-4 w-4 mr-2" />
@@ -77,34 +187,57 @@ export const LeaderboardPage = () => {
           <span>Filtres</span>
         </div>
         <div className="flex flex-wrap gap-2">
+          {/* Course */}
           <select
             className="rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
             value={String(courseId)}
             onChange={(e) => setCourseId(e.target.value === "all" ? "all" : Number(e.target.value))}
           >
-            <option value="all">Toutes les courses</option>
-            <option value="1">Trail 12K</option>
-            <option value="2">Trail 35K</option>
+            <option value="all">Sélectionne une course…</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
           </select>
 
+          {/* Genre */}
           <select
             className="rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
-            value={scope}
-            onChange={(e) => setScope(e.target.value as any)}
-          >
-            <option value="general">Général</option>
-            <option value="categorie">Par catégorie</option>
-          </select>
-
-          <select
-            className="rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
-            value={genre}
-            onChange={(e) => setGenre(e.target.value as any)}
+            value={gender}
+            onChange={(e) => setGender(e.target.value as "all" | "Homme" | "Femme")}
           >
             <option value="all">Tous genres</option>
-            <option value="M">Homme</option>
-            <option value="F">Femme</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
           </select>
+
+          {/* Catégorie */}
+          <select
+            className="rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
+            value={String(categoryId ?? "")}
+            onChange={(e) => {
+              const v = e.target.value;
+              setCategoryId(v === "" ? "" : Number(v));
+            }}
+          >
+            <option value="">Toutes catégories</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.alias}
+              </option>
+            ))}
+          </select>
+
+          {/* Recherche dossard */}
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Rechercher dossard..."
+              value={searchBib}
+              onChange={(e) => setSearchBib(e.target.value)}
+              className="pl-8 rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
+            />
+          </div>
         </div>
       </div>
 
@@ -112,30 +245,23 @@ export const LeaderboardPage = () => {
       <div className="grid gap-4 sm:grid-cols-3">
         {podium.length === 0 ? (
           <div className="sm:col-span-3 text-sm text-slate-500 bg-white border border-slate-200 rounded-2xl p-4">
-            Aucun finisher pour l’instant.
+            Aucun résultat pour l’instant.
           </div>
         ) : (
-          podium.map((r, i) => <PodiumCard key={r.dossard} row={r} rank={(i + 1) as 1 | 2 | 3} />)
+          podium.map((r, i) => (
+            <PodiumCard key={`${r.courseId}-${r.dossard}`} row={r} rank={(i + 1) as 1 | 2 | 3} />
+          ))
         )}
       </div>
 
-      {/* Tableau résultats */}
+      {/* Tableau */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 bg-slate-50">
           <div className="text-sm text-slate-600">
-            {finishers} finisher{finishers > 1 ? "s" : ""} / {filtered.length} participants
+            {finishers} finisher{finishers > 1 ? "s" : ""} / {filteredRows.length} participants
           </div>
-          <button
-            onClick={() => setSortAsc((v) => !v)}
-            className="text-sm rounded-lg border px-2 py-1 hover:bg-[#8c9962]/10"
-            title="Trier par temps"
-          >
-            <ArrowUpDown className="inline-block h-4 w-4 mr-1" />
-            {sortAsc ? "Temps ↑" : "Temps ↓"}
-          </button>
         </div>
 
-        {/* Table desktop */}
         <div className="hidden md:block overflow-auto max-h-[70vh]">
           <table className="min-w-full text-sm">
             <thead className="sticky top-0 bg-white">
@@ -143,38 +269,36 @@ export const LeaderboardPage = () => {
                 <Th>#</Th>
                 <Th>Dossard</Th>
                 <Th>Nom</Th>
-                <Th>Genre</Th>
-                {scope === "categorie" && <Th>Catégorie</Th>}
+                <Th>Catégorie</Th>
                 <Th>Course</Th>
                 <Th>Temps</Th>
                 <Th>Statut</Th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.map((r, idx) => (
-                <tr key={r.dossard} className="hover:bg-[#8c9962]/5">
-                  <Td className="font-medium">{displayRank(idx, r.statut)}</Td>
+              {filteredRows.map((r) => (
+                <tr key={`${r.courseId}-${r.dossard}`} className="hover:bg-[#8c9962]/5">
+                  <Td className="font-medium">{r.rank ?? "—"}</Td>
                   <Td className="font-medium tabular-nums">{r.dossard}</Td>
                   <Td>{r.nom}</Td>
-                  <Td>{r.genre}</Td>
-                  {scope === "categorie" && <Td>{r.categorie}</Td>}
+                  <Td>{r.categorie}</Td>
                   <Td>{r.course}</Td>
-                  <Td className="tabular-nums">{formatTime(r.timeSec)}</Td>
-                  <Td><StatusBadge statut={r.statut} /></Td>
+                  <Td className="tabular-nums">{r.raceTime ?? "—"}</Td>
+                  <Td>{r.status ?? "—"}</Td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* List mobile */}
+        {/* Mobile list */}
         <div className="md:hidden divide-y">
-          {filtered.map((r, idx) => (
-            <div key={r.dossard} className="p-4">
+          {filteredRows.map((r) => (
+            <div key={`${r.courseId}-${r.dossard}`} className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 font-semibold">
-                    {typeof displayRank(idx, r.statut) === "number" ? displayRank(idx, r.statut) : "—"}
+                    {r.rank ?? "—"}
                   </span>
                   <div>
                     <div className="text-sm font-medium">{r.nom}</div>
@@ -183,14 +307,11 @@ export const LeaderboardPage = () => {
                     </div>
                   </div>
                 </div>
-                <div className="text-sm font-medium tabular-nums">{formatTime(r.timeSec)}</div>
+                <div className="text-sm font-medium tabular-nums">{r.raceTime ?? "—"}</div>
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs">
-                <span className="text-slate-600">
-                  {r.genre}
-                  {scope === "categorie" ? ` · ${r.categorie}` : ""}
-                </span>
-                <StatusBadge statut={r.statut} />
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+                <span>{r.categorie}</span>
+                <span>{r.status ?? "—"}</span>
               </div>
             </div>
           ))}
@@ -200,8 +321,7 @@ export const LeaderboardPage = () => {
   );
 };
 
-/* ---------- Sub components & helpers ---------- */
-
+/* ---------- Helpers ---------- */
 function Th({ children }: { children: React.ReactNode }) {
   return <th className="px-4 py-2 text-slate-500 text-xs uppercase tracking-wide">{children}</th>;
 }
@@ -210,7 +330,7 @@ function Td({ children, className = "" }: { children: React.ReactNode; className
 }
 
 function PodiumCard({ row, rank }: { row: Row; rank: 1 | 2 | 3 }) {
-  const medal = rank === 1 ? ACCENT : rank === 2 ? "#cbd5e1" : "#d4a373"; // or light bronze
+  const medal = rank === 1 ? ACCENT : rank === 2 ? "#cbd5e1" : "#d4a373";
   const Icon = rank === 1 ? Trophy : Medal;
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
@@ -227,39 +347,7 @@ function PodiumCard({ row, rank }: { row: Row; rank: 1 | 2 | 3 }) {
           <div className="text-xs text-slate-500">Dossard {row.dossard} · {row.course}</div>
         </div>
       </div>
-      <div className="text-sm font-medium tabular-nums">{formatTime(row.timeSec)}</div>
+      <div className="text-sm font-medium tabular-nums">{row.raceTime ?? "—"}</div>
     </div>
   );
-}
-
-function StatusBadge({ statut }: { statut: Row["statut"] }) {
-  const m = {
-    FINISH: { bg: "bg-emerald-50", text: "text-emerald-700", br: "border-emerald-200", label: "FINISH" },
-    "EN COURS": { bg: "bg-amber-50", text: "text-amber-700", br: "border-amber-200", label: "EN COURS" },
-    DNF: { bg: "bg-red-50", text: "text-red-700", br: "border-red-200", label: "DNF" },
-  } as const;
-  const c = m[statut];
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs border ${c.bg} ${c.text} ${c.br}`}>
-      {c.label}
-    </span>
-  );
-}
-
-function statutRank(s: Row["statut"]) {
-  // FINISH (0), EN COURS (1), DNF (2)
-  return s === "FINISH" ? 0 : s === "EN COURS" ? 1 : 2;
-}
-
-function displayRank(index: number, statut: Row["statut"]) {
-  // Affiche un rang uniquement pour FINISH
-  return statut === "FINISH" ? index + 1 : "—";
-}
-
-function formatTime(sec: number) {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return (h > 0 ? `${pad(h)}:` : "") + `${pad(m)}:${pad(s)}`;
 }

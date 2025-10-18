@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api"; // axios instance
 
@@ -50,7 +50,7 @@ function normalizeStatus(v: any): CourseStatus {
 
 function normalizeCourse(raw: any): UICourse {
   const id = Number(
-    raw?.id ?? raw?.course_id ?? raw?.race_id ?? Math.floor(Math.random() * 100000)
+    raw?.id ?? raw?.course_id ?? raw?.raceId ?? Math.floor(Math.random() * 100000)
   );
 
   const name: string = raw?.name ?? raw?.label ?? raw?.title ?? `Course #${id}`;
@@ -82,18 +82,15 @@ function normalizeCourse(raw: any): UICourse {
 /* ========= API client (nouvel endpoint) ========= */
 
 async function updateRaceStatus(raceId: number, newStatus: CourseStatus) {
-  // POST /race/change/status
-  // body: { race_id, new_status }
-  // return: { race_id, start_date_time, status }
   const res = await api.post("/race/change/status", {
-    race_id: raceId,
-    new_status: newStatus,
+    raceId: raceId,
+    newStatus: newStatus,
   });
   const data = res?.data ?? {};
   return {
-    raceId: Number(data?.race_id ?? raceId),
+    raceId: Number(data?.raceId ?? raceId),
     startAt: data?.start_date_time as string | undefined,
-    status: normalizeStatus(data?.status ?? newStatus),
+    status: normalizeStatus(data?.status ?? data?.state ?? newStatus),
   };
 }
 
@@ -110,11 +107,19 @@ export const CoursesList = () => {
     return { total, upcoming, running, done };
   }, [courses]);
 
+  const refresh = useCallback(async () => {
+    try {
+      const res = await api.get("/races");
+      setCourses(coerceArray(res?.data).map(normalizeCourse));
+    } catch (e) {
+      console.error("Failed to refresh courses", e);
+    }
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        // liste: si ton endpoint a changé, adapte ici
         const res = await api.get("/races");
         const arr = coerceArray(res?.data);
         const mapped = arr.map(normalizeCourse);
@@ -158,14 +163,7 @@ export const CoursesList = () => {
             onLocalUpdate={(upd) => {
               setCourses((prev) => prev.map((x) => (x.id === c.id ? { ...x, ...upd } : x)));
             }}
-            onRefresh={async () => {
-              try {
-                const res = await api.get("/races");
-                setCourses(coerceArray(res?.data).map(normalizeCourse));
-              } catch (e) {
-                console.error(e);
-              }
-            }}
+            onRefresh={refresh}
           />
         ))}
       </div>
@@ -200,6 +198,7 @@ function CourseCard({
   onRefresh: () => Promise<void>;
 }) {
   const status = normalizeStatus(course.status);
+  const [loading, setLoading] = useState(false);
 
   function confirm(message: string): Promise<boolean> {
     return Promise.resolve(window.confirm(message));
@@ -209,6 +208,8 @@ function CourseCard({
   const canFinish = status === "En cours";
 
   async function handleStart() {
+    if (loading) return;
+    setLoading(true);
     try {
       // new_status = "En cours"
       const res = await updateRaceStatus(course.id, "En cours");
@@ -216,14 +217,19 @@ function CourseCard({
         status: res.status,
         startAt: res.startAt || course.startAt,
       });
+      // after status change, refetch full list to get authoritative data
       await onRefresh();
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleFinish() {
+    if (loading) return;
     if (!(await confirm(`Terminer la course "${course.name}" ? Action irréversible.`))) return;
+    setLoading(true);
     try {
       // new_status = "Terminée"
       const res = await updateRaceStatus(course.id, "Terminée");
@@ -231,9 +237,12 @@ function CourseCard({
         status: res.status,
         startAt: res.startAt || course.startAt,
       });
+      // after status change, refetch full list to get authoritative data
       await onRefresh();
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -263,8 +272,9 @@ function CourseCard({
               onClick={handleStart}
               type="button"
               aria-label={`Lancer la course ${course.name}`}
+              disabled={loading}
             >
-              Lancer
+              {loading ? "..." : "Lancer"}
             </button>
           )}
           {canFinish && (
@@ -273,8 +283,9 @@ function CourseCard({
               onClick={handleFinish}
               type="button"
               aria-label={`Terminer la course ${course.name}`}
+              disabled={loading}
             >
-              Terminer
+              {loading ? "..." : "Terminer"}
             </button>
           )}
         </div>

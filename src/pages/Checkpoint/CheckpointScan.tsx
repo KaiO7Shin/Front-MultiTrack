@@ -1,10 +1,57 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import api from "../../lib/api"; // axios instance
+
+// Même forme que dans App.tsx
+type SessionUser = {
+  id: number;
+  role: number;
+  assignedControlPoint?: {
+    id: number;
+    label?: string;
+    controlPointNumber?: number;
+  };
+  name?: string | null;
+};
+
+/** Lecture sûre du user depuis localStorage */
+function readStoredUser(): SessionUser | null {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? (JSON.parse(raw) as SessionUser) : null;
+  } catch {
+    return null;
+  }
+}
 
 export const CheckpointScan = () => {
-  const [last, setLast] = useState<Array<{ bib: string; ts: number }>>([]);
+  // === Nouveauté : on gère user ici, sans props ===
+  const [user, setUser] = useState<SessionUser | null>(() => readStoredUser());
+
+  // Réagit si le localStorage change (autre onglet / autre partie de l’app)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "user") {
+        setUser(readStoredUser());
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const controlPointId = useMemo(
+    () => user?.assignedControlPoint?.id ?? null,
+    [user]
+  );
+  const controlPointLabel = useMemo(
+    () => user?.assignedControlPoint?.label ?? undefined,
+    [user]
+  );
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const undoTimer = useRef<number | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const successTimerRef = useRef<number | null>(null);
+
   const inputRef1 = useRef<HTMLInputElement | null>(null);
   const inputRef2 = useRef<HTMLInputElement | null>(null);
 
@@ -20,27 +67,53 @@ export const CheckpointScan = () => {
     return () => el.removeEventListener("focus", onFocus);
   }, []);
 
-  const lastBib = useMemo(() => (last[0]?.bib ? last[0].bib : null), [last]);
+  // cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
 
   function vibrate(ms = 30) {
     if (navigator?.vibrate) navigator.vibrate(ms);
   }
 
-  function pushBib(bib: string) {
-    setLast((arr) => [{ bib, ts: Date.now() }, ...arr].slice(0, 10));
-  }
-
-  function handleUndo() {
-    setLast((arr) => arr.slice(1));
-    setError(null);
-    vibrate(10);
-  }
-
   function validateLocal(bib: string) {
     if (!/^\d{1,6}$/.test(bib)) return "Numéro invalide (1 à 6 chiffres)";
-    const recent = last.find((x) => x.bib === bib && Date.now() - x.ts < 120000);
-    if (recent) return "Doublon récent (< 2 min)";
     return null;
+  }
+
+  async function submitToServer(bibNumber: string) {
+    // Si l’utilisateur a un PC assigné => /checking/pc
+    if (controlPointId) {
+      const res = await api.post("/checking/pc", {
+        bibNumber,
+        controlPointId,
+      });
+      const data = res?.data ?? {};
+      // { bibNumber, controlPoint:{ id, label }, checkpointTime }
+      const iso = data?.checkpointTime as string | undefined;
+      const ts = iso ? Date.parse(iso) : Date.now();
+      return {
+        where: "PC" as const,
+        ts,
+        cpLabel: data?.controlPoint?.label as string | undefined,
+      };
+    } else {
+      // Sinon => arrivée (admin)
+      const res = await api.post("/checking/finishline", { bibNumber });
+      const data = res?.data ?? {};
+      // { bibNumber, arrivalTime }
+      const iso = data?.arrivalTime as string | undefined;
+      const ts = iso ? Date.parse(iso) : Date.now();
+      return {
+        where: "FINISHER" as const,
+        ts,
+        cpLabel: undefined,
+      };
+    }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -65,25 +138,37 @@ export const CheckpointScan = () => {
 
     setBusy(true);
     setError(null);
+    setSuccess(null);
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current);
+      successTimerRef.current = null;
+    }
 
     try {
-      // TODO: appel API
-      // await api.post('/api/passages', { num_dossard: bib, course_id })
+      const result = await submitToServer(bib);
+      // Succès
+      const timeStr = new Date(result.ts).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const successMsg = `Pointage enregistré (${result.where === "PC" ? `PC: ${result.cpLabel ?? ""}` : "Arrivée"
+        }) à ${timeStr}`;
 
-      pushBib(bib);
-      vibrate(20);
-
-      if (undoTimer.current) window.clearTimeout(undoTimer.current);
-      undoTimer.current = window.setTimeout(() => {
-        undoTimer.current && window.clearTimeout(undoTimer.current);
-        undoTimer.current = null;
-      }, 10000);
+      // show inline success message instead of alert
+      setSuccess(successMsg);
+      successTimerRef.current = window.setTimeout(() => setSuccess(null), 5000);
 
       setBib1("");
       setBib2("");
       inputRef1.current?.focus();
+      vibrate(30);
     } catch (err: any) {
-      setError(err?.message || "Erreur d’enregistrement");
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Erreur d’enregistrement";
+      setError(msg);
       vibrate(60);
     } finally {
       setBusy(false);
@@ -101,6 +186,19 @@ export const CheckpointScan = () => {
       <div className="flex items-center justify-center">
         <h1 className="text-2xl font-semibold">Pointage Checkpoint</h1>
       </div>
+
+      {/* Info PC en haut si disponible */}
+      {controlPointId ? (
+        <div className="text-sm text-center">
+          <span className="inline-flex items-center gap-1 rounded-full border px-2 py-1 border-[#8c9962]/50 text-[#8c9962]">
+            Point de contrôle : {controlPointLabel ?? `#${controlPointId}`}
+          </span>
+        </div>
+      ) : (
+        <div className="text-sm text-center text-slate-500">
+          Mode arrivée (admin)
+        </div>
+      )}
 
       {/* FORM */}
       <form
@@ -142,6 +240,11 @@ export const CheckpointScan = () => {
           </div>
         )}
 
+        {success && (
+          <div className="text-sm rounded-xl bg-green-50 text-green-700 px-3 py-2 border border-green-200">
+            {success}
+          </div>
+        )}
         <button
           disabled={
             busy || !bib1 || !bib2 || bib1 !== bib2 || validateLocal(bib1) !== null
@@ -154,44 +257,6 @@ export const CheckpointScan = () => {
           {busy ? "Enregistrement..." : "Valider (ENTER)"}
         </button>
       </form>
-
-      {/* LISTE DERNIERS PASSAGES */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="font-medium">10 derniers passages</div>
-          {lastBib && undoTimer.current && (
-            <button
-              onClick={handleUndo}
-              className="text-sm rounded-lg px-3 py-1.5 border hover:bg-slate-50"
-              title="Annuler le dernier enregistrement (10s)"
-            >
-              Annuler dernier ({lastBib})
-            </button>
-          )}
-        </div>
-
-        {last.length === 0 ? (
-          <div className="text-sm text-slate-500">Aucun passage pour l’instant.</div>
-        ) : (
-          <ul className="divide-y">
-            {last.map((item, i) => (
-              <li key={i} className="py-2 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center justify-center min-w-10 h-8 px-3 rounded-lg bg-slate-100 text-slate-900 font-semibold">
-                    {item.bib}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {new Date(item.ts).toLocaleTimeString()}
-                  </span>
-                </div>
-                <span className="text-[11px] px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  OK
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
     </section>
   );
 };
