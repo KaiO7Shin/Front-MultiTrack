@@ -147,7 +147,7 @@ export default function App() {
           <nav className="flex flex-col gap-1">
             <Item to="/dashboard" label="Dashboard" />
             <Item to="/courses" label="Courses" />
-            <Item to="/participants" label="Participants" />
+            {/* <Item to="/participants" label="Participants" /> */}
             <Item to="/checkpoint/scan" label="Checkpoint" />
             <Item to="/leaderboard" label="Classement" />
             {/* {isAdmin && <Item to="/users" label="Utilisateurs" />} */}

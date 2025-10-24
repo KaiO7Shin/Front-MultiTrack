@@ -6,7 +6,7 @@ const ACCENT = "#8c9962";
 
 /* ========= Types ========= */
 
-type CourseStatus = "A venir" | "En cours" | "Terminée";
+type CourseStatus = "A venir" | "En cours" | "Terminee";
 
 type UICourse = {
   id: number;
@@ -44,7 +44,7 @@ function normalizeStatus(v: any): CourseStatus {
   const lower = String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
   if (lower === "a venir" || lower === "à venir") return "A venir";
   if (lower === "en cours") return "En cours";
-  if (lower === "terminee" || lower === "terminée") return "Terminée";
+  if (lower === "terminee" || lower === "terminee") return "Terminee";
   return "A venir";
 }
 
@@ -103,7 +103,7 @@ export const CoursesList = () => {
     const total = courses.length;
     const upcoming = courses.filter((c) => normalizeStatus(c.status) === "A venir").length;
     const running = courses.filter((c) => normalizeStatus(c.status) === "En cours").length;
-    const done = courses.filter((c) => normalizeStatus(c.status) === "Terminée").length;
+    const done = courses.filter((c) => normalizeStatus(c.status) === "Terminee").length;
     return { total, upcoming, running, done };
   }, [courses]);
 
@@ -232,7 +232,7 @@ function CourseCard({
     setLoading(true);
     try {
       // new_status = "Terminée"
-      const res = await updateRaceStatus(course.id, "Terminée");
+      const res = await updateRaceStatus(course.id, "Terminee");
       onLocalUpdate({
         status: res.status,
         startAt: res.startAt || course.startAt,
