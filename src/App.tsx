@@ -51,7 +51,7 @@ export default function App() {
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.replace("/login");
+    window.location.replace("/");
   }
 
   // ---- LAYOUT COLLABORATEUR (mobile-first, sans sidebar) ----

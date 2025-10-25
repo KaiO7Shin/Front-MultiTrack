@@ -230,8 +230,6 @@ export const LeaderboardPage: React.FC = () => {
     setExpanded((prev) => ({ ...prev, [participantId]: !prev[participantId] }));
   }, []);
 
-  const rowKey = useCallback((r: Row) => `${r.courseId}-${r.participantId}`, []);
-
   /* Safe date formatting helper */
   const formatDateTime = useCallback((raw?: string | null) => {
     if (!raw) return "—";
