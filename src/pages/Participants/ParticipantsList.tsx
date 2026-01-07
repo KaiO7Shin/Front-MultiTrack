@@ -11,6 +11,8 @@ import {
   normalizeCourse,
 } from "@/lib/utils";
 import type { ParticipantProjection } from "@/lib/type";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type Participant = {
   id: number;
@@ -33,6 +35,42 @@ export const ParticipantsList = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<number | "all">("all");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
   const [selectedGender, setSelectedGender] = useState<"all" | "Homme" | "Femme">("all");
+
+  const exportPdf = () => {
+    if (selectedCourseId === "all") return;
+
+    const courseName =
+      courses.find((c) => c.id === selectedCourseId)?.label || "";
+
+    const doc = new jsPDF("p", "mm", "a4");
+
+    doc.setFontSize(16);
+    doc.text(`Liste des participants de ${courseName}`, 14, 20);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [],
+      body: filtered.map((p) => [
+        p.dossard,
+        p.nom,
+        p.genre,
+        p.aliasCategorie,
+      ]),
+      styles: {
+        fontSize: 10,
+      },
+      didParseCell: (data) => {
+        const raw = data.row.raw;
+        const genre = Array.isArray(raw) ? raw[2] : undefined;
+        if (genre === "Femme") {
+          data.cell.styles.fillColor = [255, 205, 210]; // rose nude
+        }
+      },
+    });
+
+    doc.save(`participants-${courseName}.pdf`);
+  };
+
 
   /* Chargement des courses & catégories */
   useEffect(() => {
@@ -124,6 +162,13 @@ export const ParticipantsList = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={exportPdf}
+            disabled={filtered.length === 0 || selectedCourseId === "all"}
+            className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
+          >
+            Exporter les participants
+          </button>
           <Link to="/participants/import" className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10">
             Importer CSV
           </Link>

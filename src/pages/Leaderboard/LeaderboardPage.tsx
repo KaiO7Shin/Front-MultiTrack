@@ -12,6 +12,9 @@ import type { Row, UICategory } from "../../lib/type";
 import { buildPodiumGroups, courseLabelOf, toRow } from "@/lib/utils";
 import { fetchCategories, fetchCourses, fetchRanking } from "@/services/courses";
 import { ACCENT } from "@/lib/constants";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 
 const COURSES_FALLBACK: { id: number; label: string }[] = [
   { id: 1, label: "Trail 12K" },
@@ -45,6 +48,93 @@ export const LeaderboardPage: React.FC = () => {
       return raw;
     }
   }, []);
+
+  const exportGeneralPdf = () => {
+    if (!rows.length) return;
+
+    const courseName = rows[0]?.course ?? "";
+    const doc = new jsPDF("p", "mm", "a4");
+
+    doc.setFontSize(16);
+    doc.text(`Classement des participants de ${courseName}`, 14, 20);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [],
+      body: filteredRows.map((r, idx) => [
+        idx + 1,
+        r.dossard,
+        r.nom,
+        r.categorie,
+        r.raceTime ?? "—",
+        r.status ?? "—",
+      ]),
+      styles: { fontSize: 9 },
+
+      didParseCell: (data) => {
+        const row = (data.row as any).raw;
+        if (!Array.isArray(row)) return;
+
+        const categorie = (row[3] ?? "").toString().toUpperCase().trim();
+        const status = (row[5] ?? "").toString().toLowerCase();
+
+        // 🌸 Femme : catégorie se termine par F
+        if (categorie.endsWith("F")) {
+          data.cell.styles.fillColor = [255, 220, 225]; // rose nude clair
+        }
+
+        // ❌ Abandon
+        if (status.includes("abandon")) {
+          data.cell.styles.textColor = [200, 0, 0];
+        }
+      },
+    });
+
+    doc.save(`classement-${courseName}.pdf`);
+  };
+
+  const exportPodiumPdf = () => {
+    if (!rows.length) return;
+
+    const courseName = rows[0]?.course ?? "";
+
+    const doc = new jsPDF("p", "mm", "a4");
+
+    doc.setFontSize(16);
+    doc.text(`Podiums – ${courseName}`, 14, 20);
+
+    const groups = buildPodiumGroups(rows);
+
+    let y = 30;
+
+    groups.forEach((group) => {
+      doc.setFontSize(13);
+      doc.text(group.title, 14, y);
+      y += 6;
+
+      autoTable(doc, {
+        startY: y,
+        head: [],
+        body: group.rows.map((r, i) => [
+          i + 1,
+          r.dossard,
+          r.nom,
+          r.categorie,
+          r.raceTime ?? "—",
+        ]),
+        styles: { fontSize: 9 },
+        didParseCell: (data) => {
+        if (data.row.index === 0) data.cell.styles.fillColor = [255, 236, 179]; // 🥇 or pastel
+        if (data.row.index === 1) data.cell.styles.fillColor = [230, 230, 230]; // 🥈 gris clair
+        if (data.row.index === 2) data.cell.styles.fillColor = [235, 216, 199]; // 🥉 bronze clair
+      },
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 10;
+    });
+
+    doc.save(`podiums-${courseName}.pdf`);
+  };
 
   /* Load courses & categories once */
   useEffect(() => {
@@ -159,22 +249,20 @@ export const LeaderboardPage: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => window.print()}
+            onClick={exportGeneralPdf}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10"
-            aria-label="Exporter en PDF"
           >
             <Download className="inline-block h-4 w-4 mr-2" />
-            Exporter PDF
+            Exporter Classement
           </button>
 
           <button
-            onClick={() => window.print()}
+            onClick={exportPodiumPdf}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10"
           >
             <Download className="inline-block h-4 w-4 mr-2" />
-            Imprimer Podiums
+            Exporter Podiums
           </button>
-
         </div>
       </div>
 
