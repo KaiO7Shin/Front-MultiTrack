@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: "http://192.168.88.29:8080/api", // configure dans .env
+  baseURL: "http://192.168.88.19:8080/api", // configure dans .env
   headers: { 
     "Content-Type": "application/json",
    },

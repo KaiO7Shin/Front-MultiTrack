@@ -8,150 +8,16 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import api from "../../lib/api";
-
-const ACCENT = "#8c9962";
-
-/* ===== Types ===== */
-type ControlPoint = {
-  pointId: number;
-  numero: number;
-  libelle: string;
-  heurePassage: string | null;
-};
-
-type ApiRow = {
-  rank: number | null;
-  participantId: number;
-  bibNumber: string;
-  athleteName: string;
-  categoryName: string;
-  raceTime: string | null;
-  status: string | null;
-  controlPoints?: ControlPoint[];
-};
-
-type Row = {
-  rank: number | null;
-  participantId: number;
-  dossard: string;
-  nom: string;
-  categorie: string;
-  courseId: number;
-  course: string;
-  raceTime: string | null;
-  status: string | null;
-  controlPoints: ControlPoint[];
-};
-
-type UICategory = { id: number; alias: string };
+import type { Row, UICategory } from "../../lib/type";
+import { buildPodiumGroups, courseLabelOf, toRow } from "@/lib/utils";
+import { fetchCategories, fetchCourses, fetchRanking } from "@/services/courses";
+import { ACCENT } from "@/lib/constants";
 
 const COURSES_FALLBACK: { id: number; label: string }[] = [
   { id: 1, label: "Trail 12K" },
   { id: 2, label: "Trail 35K" },
 ];
 
-type PodiumGroup = {
-  title: string;
-  rows: Row[];
-};
-
-function buildPodiumGroups(rows: Row[]): PodiumGroup[] {
-  const finishers = rows.filter(r =>
-    (r.status ?? "").toLowerCase().includes("finish")
-  );
-
-  const groups: PodiumGroup[] = [];
-
-  // Scratch
-  const men = finishers.filter(r => r.categorie.endsWith("H")).slice(0, 3);
-  const women = finishers.filter(r => r.categorie.endsWith("F")).slice(0, 3);
-
-  if (men.length) groups.push({ title: "Scratch Hommes", rows: men });
-  if (women.length) groups.push({ title: "Scratch Femmes", rows: women });
-
-  // Catégories triées
-  const byCategory: Record<string, Row[]> = {};
-  finishers.forEach(r => {
-    if (!byCategory[r.categorie]) byCategory[r.categorie] = [];
-    byCategory[r.categorie].push(r);
-  });
-
-  const orderedCats = Object.keys(byCategory).sort((a, b) =>
-    a.localeCompare(b, "fr", { numeric: true })
-  );
-
-  orderedCats.forEach(cat => {
-    const podium = byCategory[cat].slice(0, 3);
-    if (podium.length)
-      groups.push({ title: `Catégorie ${cat}`, rows: podium });
-  });
-
-  return groups;
-}
-
-/* ===== Utils ===== */
-function courseLabelOf(id: number, list: { id: number; label: string }[]) {
-  return list.find((c) => c.id === id)?.label ?? `Course #${id}`;
-}
-function coerceArray(x: any): any[] {
-  if (Array.isArray(x)) return x;
-  if (x && typeof x === "object" && Array.isArray((x as any).data))
-    return (x as any).data;
-  return [];
-}
-function normalizeCourse(raw: any): { id: number; label: string } {
-  const id = Number(raw?.id ?? raw?.raceId ?? 0);
-  const label = String(
-    raw?.name ?? raw?.label ?? raw?.title ?? `Course #${id}`
-  );
-  return { id, label };
-}
-function normalizeCategory(raw: any): UICategory {
-  return { id: Number(raw?.id ?? 0), alias: String(raw?.alias ?? "") };
-}
-function toRow(raw: ApiRow, ctx: { raceId: number; raceLabel: string }): Row {
-  const bibRaw = raw?.bibNumber ?? "";
-  return {
-    rank: raw?.rank ?? null,
-    participantId: Number(raw?.participantId ?? 0),
-    dossard: String(bibRaw),
-    nom: String(raw?.athleteName ?? ""),
-    categorie: String(raw?.categoryName ?? ""),
-    courseId: ctx.raceId,
-    course: ctx.raceLabel,
-    raceTime: raw?.raceTime ?? null,
-    status: raw?.status ?? null,
-    controlPoints: Array.isArray(raw?.controlPoints) ? raw.controlPoints : [],
-  };
-}
-
-/* ===== API calls ===== */
-async function fetchRanking(
-  raceId: number,
-  params: { gender?: "Homme" | "Femme"; categoryId?: number },
-  signal?: AbortSignal
-): Promise<ApiRow[]> {
-  const qs = new URLSearchParams();
-  if (params.gender) qs.set("gender", params.gender);
-  if (params.categoryId != null) qs.set("categoryId", String(params.categoryId));
-  // If api.get supports signal, pass it; otherwise ignore
-  const opts: any = {};
-  if (signal) opts.signal = signal;
-  const res = await api.get(`/races/${raceId}/ranking?${qs.toString()}`, opts);
-  const payload = res?.data ?? {};
-  return Array.isArray(payload?.data) ? (payload.data as ApiRow[]) : [];
-}
-async function fetchCourses(): Promise<{ id: number; label: string }[]> {
-  const res = await api.get("/races");
-  return coerceArray(res?.data).map(normalizeCourse);
-}
-async function fetchCategories(): Promise<UICategory[]> {
-  const res = await api.get("/categories");
-  return coerceArray(res?.data).map(normalizeCategory);
-}
-
-/* ===== Page ===== */
 export const LeaderboardPage: React.FC = () => {
   const [courseId, setCourseId] = useState<number | "all">(1);
   const [gender, setGender] = useState<"all" | "Homme" | "Femme">("all");
@@ -168,6 +34,17 @@ export const LeaderboardPage: React.FC = () => {
 
   // expanded set (participantId -> boolean)
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+
+  const formatDateTime = useCallback((raw?: string | null) => {
+    if (!raw) return "—";
+    try {
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return raw;
+      return d.toLocaleString("fr-FR", { hour12: false });
+    } catch {
+      return raw;
+    }
+  }, []);
 
   /* Load courses & categories once */
   useEffect(() => {
@@ -267,18 +144,6 @@ export const LeaderboardPage: React.FC = () => {
   /* Handlers */
   const toggleExpanded = useCallback((participantId: number) => {
     setExpanded((prev) => ({ ...prev, [participantId]: !prev[participantId] }));
-  }, []);
-
-  /* Safe date formatting helper */
-  const formatDateTime = useCallback((raw?: string | null) => {
-    if (!raw) return "—";
-    try {
-      const d = new Date(raw);
-      if (isNaN(d.getTime())) return raw;
-      return d.toLocaleString("fr-FR", { hour12: false });
-    } catch {
-      return raw;
-    }
   }, []);
 
   return (
