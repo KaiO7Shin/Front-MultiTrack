@@ -51,6 +51,45 @@ const COURSES_FALLBACK: { id: number; label: string }[] = [
   { id: 2, label: "Trail 35K" },
 ];
 
+type PodiumGroup = {
+  title: string;
+  rows: Row[];
+};
+
+function buildPodiumGroups(rows: Row[]): PodiumGroup[] {
+  const finishers = rows.filter(r =>
+    (r.status ?? "").toLowerCase().includes("finish")
+  );
+
+  const groups: PodiumGroup[] = [];
+
+  // Scratch
+  const men = finishers.filter(r => r.categorie.endsWith("H")).slice(0, 3);
+  const women = finishers.filter(r => r.categorie.endsWith("F")).slice(0, 3);
+
+  if (men.length) groups.push({ title: "Scratch Hommes", rows: men });
+  if (women.length) groups.push({ title: "Scratch Femmes", rows: women });
+
+  // Catégories triées
+  const byCategory: Record<string, Row[]> = {};
+  finishers.forEach(r => {
+    if (!byCategory[r.categorie]) byCategory[r.categorie] = [];
+    byCategory[r.categorie].push(r);
+  });
+
+  const orderedCats = Object.keys(byCategory).sort((a, b) =>
+    a.localeCompare(b, "fr", { numeric: true })
+  );
+
+  orderedCats.forEach(cat => {
+    const podium = byCategory[cat].slice(0, 3);
+    if (podium.length)
+      groups.push({ title: `Catégorie ${cat}`, rows: podium });
+  });
+
+  return groups;
+}
+
 /* ===== Utils ===== */
 function courseLabelOf(id: number, list: { id: number; label: string }[]) {
   return list.find((c) => c.id === id)?.label ?? `Course #${id}`;
@@ -262,6 +301,15 @@ export const LeaderboardPage: React.FC = () => {
             <Download className="inline-block h-4 w-4 mr-2" />
             Exporter PDF
           </button>
+
+          <button
+            onClick={() => window.print()}
+            className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10"
+          >
+            <Download className="inline-block h-4 w-4 mr-2" />
+            Imprimer Podiums
+          </button>
+
         </div>
       </div>
 
@@ -342,6 +390,42 @@ export const LeaderboardPage: React.FC = () => {
           ))
         )}
       </div>
+
+      <div id="print-podium" className="hidden print:block">
+  <h1 className="text-2xl font-bold mb-6">
+    Résultats Officiels – {rows[0]?.course}
+  </h1>
+
+  {buildPodiumGroups(rows).map((group, i) => (
+    <div key={i} className="mb-6 break-inside-avoid">
+      <h2 className="text-lg font-semibold mb-2">{group.title}</h2>
+
+      <table className="w-full text-sm border">
+        <thead>
+          <tr className="border-b">
+            <th>#</th>
+            <th>Dossard</th>
+            <th>Nom</th>
+            <th>Catégorie</th>
+            <th>Temps</th>
+          </tr>
+        </thead>
+        <tbody>
+          {group.rows.map((r, idx) => (
+            <tr key={r.participantId}>
+              <td>{idx + 1}</td>
+              <td>{r.dossard}</td>
+              <td>{r.nom}</td>
+              <td>{r.categorie}</td>
+              <td>{r.raceTime}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ))}
+</div>
+
 
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
