@@ -145,8 +145,8 @@ export default function App() {
           className={`${open ? "block" : "hidden"} md:block bg-white border border-slate-200 rounded-2xl p-3 h-max`}
         >
           <nav className="flex flex-col gap-1">
-            <Item to="/dashboard" label="Dashboard" />
-            <Item to="/courses" label="Courses" />
+            <Item to="/dashboard" label="Action rapide" />
+            <Item to="/courses" label="Dashboard" />
             <Item to="/participants" label="Participants" />
             <Item to="/checkpoint/scan" label="Checkpoint" />
             <Item to="/leaderboard" label="Classement" />

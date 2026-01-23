@@ -136,6 +136,42 @@ export const LeaderboardPage: React.FC = () => {
     doc.save(`podiums-${courseName}.pdf`);
   };
 
+  const loadRanking = useCallback(async () => {
+    if (courseId === "all") {
+      setRows([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    try {
+      setLoading(true);
+      setErr(null);
+
+      const apiRows = await fetchRanking(
+        courseId as number,
+        {
+          gender: gender === "all" ? undefined : gender,
+          categoryId:
+            categoryId === "" || categoryId == null ? undefined : Number(categoryId),
+        },
+        controller.signal
+      );
+
+      const raceLabel = courseLabelOf(courseId as number, courses);
+      setRows(apiRows.map((r) => toRow(r, { raceId: courseId as number, raceLabel })));
+      setExpanded({});
+    } catch (e: any) {
+      if (e?.name !== "AbortError") {
+        setErr(e?.message || "Erreur de chargement du classement");
+        setRows([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId, gender, categoryId, courses]);
+
+
   /* Load courses & categories once */
   useEffect(() => {
     let mounted = true;
@@ -158,47 +194,10 @@ export const LeaderboardPage: React.FC = () => {
     };
   }, []);
 
-  /* Load ranking when filters change; use AbortController to avoid races */
   useEffect(() => {
-    let mounted = true;
-    const controller = new AbortController();
+    loadRanking();
+  }, [loadRanking]);
 
-    (async () => {
-      try {
-        setLoading(true);
-        setErr(null);
-        if (courseId === "all") {
-          setRows([]);
-          return;
-        }
-        const apiRows = await fetchRanking(
-          courseId as number,
-          {
-            gender: gender === "all" ? undefined : gender,
-            categoryId:
-              categoryId === "" || categoryId == null ? undefined : Number(categoryId),
-          },
-          controller.signal
-        );
-        if (!mounted) return;
-        const raceLabel = courseLabelOf(courseId as number, courses);
-        setRows(apiRows.map((r) => toRow(r, { raceId: courseId as number, raceLabel })));
-        setExpanded({}); // close accordion on new data
-      } catch (e: any) {
-        if (!mounted) return;
-        if (e?.name === "AbortError") return;
-        setErr(e?.message || "Erreur de chargement du classement");
-        setRows([]);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-      controller.abort();
-    };
-  }, [courseId, gender, categoryId, courses]);
 
   /* Debounce search for UX */
   const [debouncedSearch, setDebouncedSearch] = useState(searchBib);
@@ -248,6 +247,24 @@ export const LeaderboardPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
+        <button
+          onClick={loadRanking}
+          disabled={loading}
+          className="rounded-xl border px-4 py-2 text-sm flex items-center gap-2 hover:bg-[#8c9962]/10 disabled:opacity-50"
+        >
+          <svg
+            className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <polyline points="21 3 21 9 15 9" />
+          </svg>
+          Rafraîchir
+        </button>
+
           <button
             onClick={exportGeneralPdf}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10"

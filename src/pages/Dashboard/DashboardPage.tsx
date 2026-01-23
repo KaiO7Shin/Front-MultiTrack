@@ -70,20 +70,20 @@ export const DashboardPage = () => {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Action rapide</h1>
           <p className="text-sm text-slate-500">Vue d’ensemble de l’événement en cours</p>
         </div>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <button className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10">
             <FileText className="inline-block h-4 w-4 mr-2" /> Rapport du jour
           </button>
           <button className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:opacity-90">
             <Download className="inline-block h-4 w-4 mr-2" /> Export global
           </button>
-        </div>
+        </div> */}
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((k, idx) => (
           <StatCard
@@ -95,11 +95,11 @@ export const DashboardPage = () => {
             series={k.series}
           />
         ))}
-      </div>
+      </div>     */}
 
-      {/* Graph + Classement + Actions rapides */}
+      {/* Graph + Classement + Actions rapides
+      
       <div className="grid gap-4 lg:grid-cols-5">
-        {/* Graph: Passages par heure */}
         <div className="lg:col-span-3 bg-white border border-slate-200 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
             <div>
@@ -123,7 +123,7 @@ export const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Classement preview */}
+        
         <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
             <div>
@@ -160,9 +160,10 @@ export const DashboardPage = () => {
           </div>
         </div>
       </div>
+      */}
 
       {/* Raccourcis + Stat cartes “images” */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-1">
         {/* Actions rapides */}
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
           <h3 className="font-medium mb-3">Actions rapides</h3>
@@ -194,19 +195,6 @@ export const DashboardPage = () => {
           </div>
         </div>
 
-        {/* “Images” / cartes visuelles (placeholders) */}
-        <VisualCard
-          title="Arrivée – cam live"
-          caption="Connexion en attente"
-          gradientFrom="#f1f5f9"
-          gradientTo="#e2e8f0"
-        />
-        <VisualCard
-          title="Parcours – PC"
-          caption="Carte à venir"
-          gradientFrom="#f4f6ef"
-          gradientTo="#e0e7db"
-        />
       </div>
     </section>
   );

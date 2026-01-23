@@ -67,4 +67,5 @@ export type ParticipantProjection = {
   aliasCategorie: string;
   courseId: number;
   courseLibelle: string;
+  statut: "Inscrit" | "Present" | "En course" | "DNS" | "DNF";
 };

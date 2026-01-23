@@ -20,7 +20,10 @@ type Participant = {
   dossard: number;
   genre: "Homme" | "Femme";
   aliasCategorie: string;
+  statut: "Inscrit" | "Present" | "En course" | "DNS" | "DNF";
 };
+
+type ParticipantStatus = "Inscrit" | "Present" | "En course" | "DNS" | "DNF";
 
 type UICourse = { id: number; label: string };
 type UICategory = { id: number; alias: string };
@@ -71,6 +74,76 @@ export const ParticipantsList = () => {
     doc.save(`participants-${courseName}.pdf`);
   };
 
+  const getNextStatus = (current: ParticipantStatus): ParticipantStatus => {
+    switch (current) {
+      case "Inscrit":
+        return "Present";
+
+      case "Present":
+        return "Inscrit";
+
+      case "En course":
+        return "DNF";
+
+      case "DNF":
+        return "En course";
+
+      case "DNS":
+        return "En course";
+
+      default:
+        return current;
+    }
+  };
+
+
+  const changeParticipantStatus = async (
+    bibNumber: number,
+    newStatus: ParticipantStatus
+  ) => {
+    await api.post("/participant/change/status", {
+      bibNumber: String(bibNumber),
+      newStatus,
+    });
+  };
+
+  const togglePresence = async (p: Participant) => {
+    const nextStatus = getNextStatus(p.statut);
+
+    try {
+      await changeParticipantStatus(p.dossard, nextStatus);
+
+      setParticipants((prev) =>
+        prev.map((item) =>
+          item.dossard === p.dossard
+            ? { ...item, statut: nextStatus }
+            : item
+        )
+      );
+    } catch {
+      alert("Erreur lors du changement de statut");
+    }
+  };
+
+  const statusStyle = (statut: ParticipantStatus) => {
+    switch (statut) {
+      case "Present":
+        return "bg-green-100 text-green-700 hover:bg-green-200";
+
+      case "En course":
+        return "bg-blue-100 text-blue-700 hover:bg-blue-200";
+
+      case "DNF":
+        return "bg-orange-100 text-orange-700 hover:bg-orange-200";
+
+      case "DNS":
+        return "bg-red-100 text-red-700 hover:bg-red-200";
+
+      default:
+        return "bg-slate-100 text-slate-700 hover:bg-slate-200";
+    }
+  };
+
 
   /* Chargement des courses & catégories */
   useEffect(() => {
@@ -113,6 +186,7 @@ export const ParticipantsList = () => {
             dossard: Number(p.numDossard),
             genre: p.genre,
             aliasCategorie: p.aliasCategorie,
+            statut: p.statut,
           }))
         );
       })
@@ -246,6 +320,7 @@ export const ParticipantsList = () => {
                   <th className="px-4 py-2 text-left">Nom</th>
                   <th className="px-4 py-2 text-left">Genre</th>
                   <th className="px-4 py-2 text-left">Catégorie</th>
+                  <th className="px-4 py-2">Presence</th>
                   <th className="px-4 py-2"></th>
                 </tr>
               </thead>
@@ -256,6 +331,14 @@ export const ParticipantsList = () => {
                     <td className="px-4 py-2">{p.nom}</td>
                     <td className="px-4 py-2">{p.genre}</td>
                     <td className="px-4 py-2">{p.aliasCategorie}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => togglePresence(p)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition ${statusStyle(p.statut)}`}
+                      >
+                        {p.statut}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

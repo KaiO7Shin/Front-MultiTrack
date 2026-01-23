@@ -139,7 +139,7 @@ export const CoursesList = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Courses</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Liste des courses</h1>
           <p className="text-sm text-slate-500">
             Gère les courses, leurs checkpoints et horaires
           </p>
