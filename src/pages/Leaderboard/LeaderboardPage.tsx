@@ -55,11 +55,22 @@ export const LeaderboardPage: React.FC = () => {
     const courseName = rows[0]?.course ?? "";
     const doc = new jsPDF("p", "mm", "a4");
 
-    doc.setFontSize(16);
-    doc.text(`Classement des participants de ${courseName}`, 14, 20);
+    // Titre principal
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Classement officiel`, 14, 18);
+
+    // Sous-titre (course)
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(courseName, 14, 26);
+
+    // Ligne de séparation
+    doc.setDrawColor(180);
+    doc.line(14, 30, 196, 30);
 
     autoTable(doc, {
-      startY: 30,
+      startY: 34,
       head: [[
         "Rang",
         "Dossard",
@@ -78,7 +89,26 @@ export const LeaderboardPage: React.FC = () => {
         r.genderRank ?? "—",
         r.status ?? "—",
       ]),
-      styles: { fontSize: 9 },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+        valign: "middle",
+      },
+      headStyles: {
+        fillColor: [140, 153, 98],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      alternateRowStyles: {
+        fillColor: [245, 247, 242],
+      },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 12 }, // Rang
+        1: { halign: "center", cellWidth: 18 }, // Dossard
+        3: { halign: "center", cellWidth: 22 }, // Temps
+        4: { halign: "center", cellWidth: 18 }, // Clt Cat
+        5: { halign: "center", cellWidth: 20 }, // Clt Genre
+      },
 
       didParseCell: (data) => {
         const r = filteredRows[data.row.index];
@@ -89,15 +119,37 @@ export const LeaderboardPage: React.FC = () => {
 
         // Femme
         if (category.endsWith("F")) {
-          data.cell.styles.fillColor = [255, 220, 225];
+          data.cell.styles.fillColor = [255, 230, 235];
         }
 
         // Abandon
         if (status.includes("abandon")) {
-          data.cell.styles.textColor = [200, 0, 0];
+          data.cell.styles.textColor = [180, 0, 0];
+          data.cell.styles.fontStyle = "bold";
         }
       },
     });
+
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+
+      doc.text(
+        `Page ${i} / ${pageCount}`,
+        196,
+        doc.internal.pageSize.getHeight() - 5,
+        { align: "right" }
+      );
+
+      doc.text(
+        "© Multitrack – Tous droits réservés",
+        doc.internal.pageSize.getWidth() / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: "center" }
+      );
+    }
 
     doc.save(`classement-${courseName}.pdf`);
   };
