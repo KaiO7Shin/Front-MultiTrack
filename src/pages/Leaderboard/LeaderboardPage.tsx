@@ -9,7 +9,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import type { Row, UICategory } from "../../lib/type";
-import { buildPodiumGroups, courseLabelOf, toRow } from "@/lib/utils";
+import { buildCumulatedPodiumGroups, buildPodiumGroups, courseLabelOf, toRow } from "@/lib/utils";
 import { fetchCategories, fetchCourses, fetchRanking } from "@/services/courses";
 import { ACCENT } from "@/lib/constants";
 import jsPDF from "jspdf";
@@ -91,6 +91,49 @@ export const LeaderboardPage: React.FC = () => {
     });
 
     doc.save(`classement-${courseName}.pdf`);
+  };
+
+  const exportCumulatedPodiumPdf = () => {
+    if (!rows.length) return;
+
+    const courseName = rows[0]?.course ?? "";
+    const doc = new jsPDF("p", "mm", "a4");
+
+    doc.setFontSize(16);
+    doc.text(`Podiums cumulés – ${courseName}`, 14, 20);
+
+    const groups = buildCumulatedPodiumGroups(rows);
+    let y = 30;
+
+    groups.forEach(group => {
+      if (group.rows.length === 0) return;
+
+      doc.setFontSize(13);
+      doc.text(group.title, 14, y);
+      y += 6;
+
+      autoTable(doc, {
+        startY: y,
+        head: [],
+        body: group.rows.map((r, i) => [
+          i + 1,
+          r.dossard,
+          r.nom,
+          r.categorie,
+          r.raceTime ?? "—",
+        ]),
+        styles: { fontSize: 9 },
+        didParseCell: (data) => {
+          if (data.row.index === 0) data.cell.styles.fillColor = [255, 236, 179];
+          if (data.row.index === 1) data.cell.styles.fillColor = [230, 230, 230];
+          if (data.row.index === 2) data.cell.styles.fillColor = [235, 216, 199];
+        },
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 10;
+    });
+
+    doc.save(`podiums-cumules-${courseName}.pdf`);
   };
 
   const exportPodiumPdf = () => {
@@ -280,6 +323,15 @@ export const LeaderboardPage: React.FC = () => {
             <Download className="inline-block h-4 w-4 mr-2" />
             Exporter Podiums
           </button>
+
+          <button
+            onClick={exportCumulatedPodiumPdf}
+            className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10"
+          >
+            <Download className="inline-block h-4 w-4 mr-2" />
+            Exporter Podium cumulé
+          </button>
+
         </div>
       </div>
 

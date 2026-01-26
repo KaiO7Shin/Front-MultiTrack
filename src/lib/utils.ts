@@ -84,3 +84,37 @@ export function coerceArrayList<T = unknown>(payload: any): T[] {
   if (payload?.items && Array.isArray(payload.items)) return payload.items;
   return [];
 }
+
+export function buildCumulatedPodiumGroups(rows: Row[]) {
+  if (!rows.length) return [];
+
+  // 1. Scratch podium (top 3 général)
+  const scratch = rows.slice(0, 3);
+  const scratchIds = new Set(scratch.map(r => r.participantId));
+
+  // 2. Catégories sans les scratch
+  const byCategory = new Map<string, Row[]>();
+
+  rows.forEach(row => {
+    if (scratchIds.has(row.participantId)) return;
+
+    const key = row.categorie;
+    if (!byCategory.has(key)) byCategory.set(key, []);
+    byCategory.get(key)!.push(row);
+  });
+
+  const categoryGroups = Array.from(byCategory.entries()).map(
+    ([category, catRows]) => ({
+      title: `Catégorie ${category}`,
+      rows: catRows.slice(0, 3),
+    })
+  );
+
+  return [
+    {
+      title: "Scratch Général",
+      rows: scratch,
+    },
+    ...categoryGroups,
+  ];
+}
