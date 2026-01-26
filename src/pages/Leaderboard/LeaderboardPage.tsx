@@ -49,110 +49,132 @@ export const LeaderboardPage: React.FC = () => {
     }
   }, []);
 
-  const exportGeneralPdf = () => {
-    if (!rows.length) return;
+const exportGeneralPdf = () => {
+  if (!rows.length) return;
 
-    const courseName = rows[0]?.course ?? "";
-    const doc = new jsPDF("p", "mm", "a4");
+  const courseName = rows[0]?.course ?? "";
+  const doc = new jsPDF("p", "mm", "a4");
 
-    // Titre principal
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Classement officiel`, 14, 18);
+  /* =========================
+     Header
+  ========================= */
 
-    // Sous-titre (course)
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(courseName, 14, 26);
+  // Titre principal
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text("Classement officiel", 14, 18);
 
-    // Ligne de séparation
-    doc.setDrawColor(180);
-    doc.line(14, 30, 196, 30);
+  // Sous-titre (course)
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+  doc.text(courseName, 14, 26);
 
-    autoTable(doc, {
-      startY: 34,
-      head: [[
-        "Rang",
-        "Dossard",
-        "Nom complet",
-        "Temps",
-        "Clt Cat",
-        "Clt Genre",
-        "Statut",
-      ]],
-      body: filteredRows.map((r) => [
-        r.rank ?? "—",
-        r.dossard,
-        r.nom,
-        r.raceTime ?? "—",
-        r.categoryRank ?? "—",
-        r.genderRank ?? "—",
-        r.status ?? "—",
-      ]),
-      styles: {
-        fontSize: 9,
-        cellPadding: 3,
-        valign: "middle",
-      },
-      headStyles: {
-        fillColor: [140, 153, 98],
-        textColor: 255,
-        fontStyle: "bold",
-      },
-      alternateRowStyles: {
-        fillColor: [245, 247, 242],
-      },
-      columnStyles: {
-        0: { halign: "center", cellWidth: 14 }, // Rang
-        1: { halign: "center", cellWidth: 22 }, // Dossard
-        3: { halign: "center", cellWidth: 22 }, // Temps
-        4: { halign: "center", cellWidth: 18 }, // Clt Cat
-        5: { halign: "center", cellWidth: 20 }, // Clt Genre
-      },
+  // Ligne de séparation
+  doc.setDrawColor(180);
+  doc.line(14, 30, 196, 30);
 
-      didParseCell: (data) => {
-        const r = filteredRows[data.row.index];
-        if (!r) return;
+  /* =========================
+     Tableau
+  ========================= */
 
-        const category = (r.categorie ?? "").toUpperCase();
-        const status = (r.status ?? "").toLowerCase();
+  autoTable(doc, {
+    startY: 34,
 
-        // Femme
-        if (category.endsWith("F")) {
-          data.cell.styles.fillColor = [255, 230, 235];
-        }
+    head: [[
+      "Rang",
+      "Dossard",
+      "Nom complet",
+      "Cat",
+      "Temps",
+      "Clt Cat",
+      "Clt Genre",
+      "Statut",
+    ]],
 
-        // Abandon
-        if (status.includes("abandon")) {
-          data.cell.styles.textColor = [180, 0, 0];
-          data.cell.styles.fontStyle = "bold";
-        }
-      },
-    });
+    body: filteredRows.map((r) => [
+      r.rank ?? "—",
+      r.dossard,
+      r.nom,
+      r.categorie ?? "—",
+      r.raceTime ?? "—",
+      r.categoryRank ?? "—",
+      r.genderRank ?? "—",
+      r.status ?? "—",
+    ]),
 
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(120);
+    styles: {
+      fontSize: 9,
+      cellPadding: 3,
+      valign: "middle",
+      overflow: "linebreak", 
+    },
 
-      doc.text(
-        `Page ${i} / ${pageCount}`,
-        196,
-        doc.internal.pageSize.getHeight() - 5,
-        { align: "right" }
-      );
+    headStyles: {
+      fillColor: [140, 153, 98], 
+      textColor: 255,
+      fontStyle: "bold",
+      halign: "center",          
+      valign: "middle",          
+      cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
+    },
 
-      doc.text(
-        "© Multitrack – Tous droits réservés",
-        doc.internal.pageSize.getWidth() / 2,
-        doc.internal.pageSize.getHeight() - 10,
-        { align: "center" }
-      );
-    }
+    alternateRowStyles: {
+      fillColor: [245, 247, 242],
+    },
 
-    doc.save(`classement-${courseName}.pdf`);
-  };
+    columnStyles: {
+      0: { halign: "center", cellWidth: 12 }, // Rang
+      1: { halign: "center", cellWidth: 18 }, // Dossard
+      2: { cellWidth: 61 },                   // Nom complet
+      3: { halign: "center", cellWidth: 18 }, // Catégorie
+      4: { halign: "center", cellWidth: 20 }, // Temps
+      5: { halign: "center", cellWidth: 18 }, // Clt Cat
+      6: { halign: "center", cellWidth: 18 }, // Clt Genre
+      7: { halign: "center", cellWidth: 22 }, // Statut
+    },
+
+    didParseCell: (data) => {
+      const r = filteredRows[data.row.index];
+      if (!r) return;
+
+      const category = (r.categorie ?? "").toUpperCase();
+      const status = (r.status ?? "").toLowerCase();
+
+      if (category.endsWith("F")) {
+        data.cell.styles.fillColor = [255, 230, 235];
+      }
+
+    },
+  });
+
+  /* =========================
+     Footer (toutes les pages)
+  ========================= */
+
+  const pageCount = doc.getNumberOfPages();
+
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+
+    doc.text(
+      `Page ${i} / ${pageCount}`,
+      196,
+      doc.internal.pageSize.getHeight() - 5,
+      { align: "right" }
+    );
+
+    doc.text(
+      "© Multitrack – Tous droits réservés",
+      doc.internal.pageSize.getWidth() / 2,
+      doc.internal.pageSize.getHeight() - 10,
+      { align: "center" }
+    );
+  }
+
+  doc.save(`classement-${courseName}.pdf`);
+};
 
   const exportCumulatedPodiumPdf = () => {
     if (!rows.length) return;
