@@ -60,30 +60,39 @@ export const LeaderboardPage: React.FC = () => {
 
     autoTable(doc, {
       startY: 30,
-      head: [],
-      body: filteredRows.map((r, idx) => [
-        idx + 1,
+      head: [[
+        "Rang",
+        "Dossard",
+        "Nom complet",
+        "Temps",
+        "Clt Cat",
+        "Clt Genre",
+        "Statut",
+      ]],
+      body: filteredRows.map((r) => [
+        r.rank ?? "—",
         r.dossard,
         r.nom,
-        r.categorie,
         r.raceTime ?? "—",
+        r.categoryRank ?? "—",
+        r.genderRank ?? "—",
         r.status ?? "—",
       ]),
       styles: { fontSize: 9 },
 
       didParseCell: (data) => {
-        const row = (data.row as any).raw;
-        if (!Array.isArray(row)) return;
+        const r = filteredRows[data.row.index];
+        if (!r) return;
 
-        const categorie = (row[3] ?? "").toString().toUpperCase().trim();
-        const status = (row[5] ?? "").toString().toLowerCase();
+        const category = (r.categorie ?? "").toUpperCase();
+        const status = (r.status ?? "").toLowerCase();
 
-        // 🌸 Femme : catégorie se termine par F
-        if (categorie.endsWith("F")) {
-          data.cell.styles.fillColor = [255, 220, 225]; // rose nude clair
+        // Femme
+        if (category.endsWith("F")) {
+          data.cell.styles.fillColor = [255, 220, 225];
         }
 
-        // ❌ Abandon
+        // Abandon
         if (status.includes("abandon")) {
           data.cell.styles.textColor = [200, 0, 0];
         }

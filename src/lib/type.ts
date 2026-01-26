@@ -27,6 +27,9 @@ export type Row = {
   raceTime: string | null;
   status: string | null;
   controlPoints: ControlPoint[];
+  // 🆕 nouveaux champ
+  categoryRank: number | null;
+  genderRank: number | null;
 };
 
 export type UICategory = { id: number; alias: string };

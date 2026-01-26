@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import type { ApiRow, PodiumGroup, Row, UICategory } from "./type";
+import type { PodiumGroup, Row, UICategory } from "./type";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -61,19 +61,23 @@ export function buildPodiumGroups(rows: Row[]): PodiumGroup[] {
   return groups;
 }
 
-export function toRow(raw: ApiRow, ctx: { raceId: number; raceLabel: string }): Row {
-  const bibRaw = raw?.bibNumber ?? "";
+export function toRow(apiRow: any, ctx: { raceId: number; raceLabel: string }): Row {
   return {
-    rank: raw?.rank ?? null,
-    participantId: Number(raw?.participantId ?? 0),
-    dossard: String(bibRaw),
-    nom: String(raw?.athleteName ?? ""),
-    categorie: String(raw?.categoryName ?? ""),
+    participantId: apiRow.participantId,
+    rank: apiRow.rank, // ✅ rang officiel
+    dossard: apiRow.bibNumber,
+    nom: apiRow.athleteName,
+    categorie: apiRow.categoryName,
+    raceTime: apiRow.raceTime,
+    status: apiRow.status,
+
+    // 🆕 nouveaux champs
+    categoryRank: apiRow.categoryRank,
+    genderRank: apiRow.genderRank,
+
     courseId: ctx.raceId,
     course: ctx.raceLabel,
-    raceTime: raw?.raceTime ?? null,
-    status: raw?.status ?? null,
-    controlPoints: Array.isArray(raw?.controlPoints) ? raw.controlPoints : [],
+    controlPoints: apiRow.controlPoints ?? [],
   };
 }
 
