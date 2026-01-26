@@ -103,8 +103,8 @@ export const LeaderboardPage: React.FC = () => {
         fillColor: [245, 247, 242],
       },
       columnStyles: {
-        0: { halign: "center", cellWidth: 12 }, // Rang
-        1: { halign: "center", cellWidth: 18 }, // Dossard
+        0: { halign: "center", cellWidth: 14 }, // Rang
+        1: { halign: "center", cellWidth: 22 }, // Dossard
         3: { halign: "center", cellWidth: 22 }, // Temps
         4: { halign: "center", cellWidth: 18 }, // Clt Cat
         5: { halign: "center", cellWidth: 20 }, // Clt Genre
