@@ -72,7 +72,7 @@ export const AddParticipant = () => {
           onChange={(e) => handleChange("genre", e.target.value as "Homme" | "Femme")}
         >
           <option value="Homme">Homme</option>
-          <option value="Femmes">Femme</option>
+          <option value="Femme">Femme</option>
         </select>
 
         <select

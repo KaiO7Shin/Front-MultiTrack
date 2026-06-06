@@ -71,4 +71,6 @@ export type ParticipantProjection = {
   courseId: number;
   courseLibelle: string;
   statut: "Inscrit" | "Present" | "En course" | "DNS" | "DNF";
+  dateNaissance: string; // yyyy-MM-dd
+  nomCourse?: string;
 };

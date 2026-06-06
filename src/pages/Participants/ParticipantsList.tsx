@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Users } from "lucide-react";
+import { Pencil, Search, Users, X } from "lucide-react";
 import api from "@/lib/api";
-import { fetchParticipantsByCourse } from "@/services/participants";
+import {
+  fetchParticipantsByCourse,
+  updateParticipantCategory,
+} from "@/services/participants";
 import {
   coerceArrayList,
   normalizeCategory,
@@ -21,6 +24,7 @@ type Participant = {
   genre: "Homme" | "Femme";
   aliasCategorie: string;
   statut: "Inscrit" | "Present" | "En course" | "DNS" | "DNF";
+  dateNaissance: string;
 };
 
 type ParticipantStatus = "Inscrit" | "Present" | "En course" | "DNS" | "DNF";
@@ -38,6 +42,69 @@ export const ParticipantsList = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<number | "all">("all");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
   const [selectedGender, setSelectedGender] = useState<"all" | "Homme" | "Femme">("all");
+
+  /* Édition catégorie (genre + date de naissance) */
+  const [editTarget, setEditTarget] = useState<Participant | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{
+    genre: "Homme" | "Femme";
+    dateNaissance: string;
+  }>({ genre: "Homme", dateNaissance: "" });
+
+  const openEditCategory = (p: Participant) => {
+    setEditTarget(p);
+    setEditError(null);
+    setEditForm({
+      genre: p.genre,
+      dateNaissance: p.dateNaissance ?? "",
+    });
+  };
+
+  const closeEditCategory = () => {
+    if (editSaving) return;
+    setEditTarget(null);
+    setEditError(null);
+  };
+
+  const submitEditCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTarget) return;
+    setEditError(null);
+    setEditSaving(true);
+    try {
+      await updateParticipantCategory({
+        bibNumber: String(editTarget.dossard),
+        genre: editForm.genre,
+        dateNaissance: editForm.dateNaissance,
+      });
+
+      // Recharger la liste pour récupérer le nouvel alias de catégorie (recalculé back)
+      if (selectedCourseId !== "all") {
+        const rows = await fetchParticipantsByCourse(Number(selectedCourseId));
+        setParticipants(
+          rows.map((p) => ({
+            id: p.id,
+            nom: p.nom,
+            dossard: Number(p.numDossard),
+            genre: p.genre,
+            aliasCategorie: p.aliasCategorie,
+            statut: p.statut,
+            dateNaissance: p.dateNaissance ?? "",
+          }))
+        );
+      }
+
+      setEditTarget(null);
+    } catch (err: any) {
+      setEditError(
+        err?.response?.data?.message ||
+          "Erreur lors de la mise à jour de la catégorie"
+      );
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   const exportPdf = () => {
     if (selectedCourseId === "all") return;
@@ -187,6 +254,7 @@ export const ParticipantsList = () => {
             genre: p.genre,
             aliasCategorie: p.aliasCategorie,
             statut: p.statut,
+            dateNaissance: p.dateNaissance ?? "",
           }))
         );
       })
@@ -321,7 +389,7 @@ export const ParticipantsList = () => {
                   <th className="px-4 py-2 text-left">Genre</th>
                   <th className="px-4 py-2 text-left">Catégorie</th>
                   <th className="px-4 py-2">Presence</th>
-                  <th className="px-4 py-2"></th>
+                  <th className="px-4 py-2 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -339,6 +407,17 @@ export const ParticipantsList = () => {
                         {p.statut}
                       </button>
                     </td>
+                    <td className="px-4 py-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => openEditCategory(p)}
+                        className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-[#8c9962]/10"
+                        title="Modifier la catégorie"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Modifier la catégorie
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -346,6 +425,101 @@ export const ParticipantsList = () => {
           </div>
         )}
       </div>
+
+      {/* Modal: Modifier la catégorie */}
+      {editTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={closeEditCategory}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between border-b px-5 py-4">
+              <div>
+                <h2 className="text-lg font-semibold">Modifier la catégorie</h2>
+                <p className="text-xs text-slate-500">
+                  Dossard {editTarget.dossard} — {editTarget.nom}
+                </p>
+              </div>
+              <button
+                onClick={closeEditCategory}
+                disabled={editSaving}
+                className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 disabled:opacity-40"
+                aria-label="Fermer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={submitEditCategory} className="space-y-4 px-5 py-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-600">
+                  Genre
+                </label>
+                <select
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  value={editForm.genre}
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      genre: e.target.value as "Homme" | "Femme",
+                    }))
+                  }
+                  disabled={editSaving}
+                >
+                  <option value="Homme">Homme</option>
+                  <option value="Femme">Femme</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-600">
+                  Date de naissance
+                </label>
+                <input
+                  type="date"
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  value={editForm.dateNaissance}
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      dateNaissance: e.target.value,
+                    }))
+                  }
+                  required
+                  disabled={editSaving}
+                />
+              </div>
+
+              {editError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {editError}
+                </p>
+              )}
+
+              <div className="flex justify-end gap-2 border-t pt-4">
+                <button
+                  type="button"
+                  onClick={closeEditCategory}
+                  disabled={editSaving}
+                  className="rounded-xl border px-4 py-2 text-sm hover:bg-slate-50 disabled:opacity-40"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving || !editForm.dateNaissance}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-40"
+                >
+                  {editSaving ? "Enregistrement..." : "Enregistrer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -15,3 +15,17 @@ export async function createParticipant(dto: ParticipantCreateDTO) {
   const { data } = await api.post<RenderResponse<ParticipantResponse>>("/participant", dto);
   return data;
 }
+
+export type UpdateCategoryDTO = {
+  bibNumber: string;
+  genre: "Homme" | "Femme";
+  dateNaissance: string; // yyyy-MM-dd
+};
+
+export async function updateParticipantCategory(dto: UpdateCategoryDTO) {
+  const { data } = await api.post<RenderResponse<ParticipantResponse>>(
+    "/participant/change/category",
+    dto
+  );
+  return data;
+}
