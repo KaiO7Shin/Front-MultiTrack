@@ -34,28 +34,38 @@ export function buildPodiumGroups(rows: Row[]): PodiumGroup[] {
 
   const groups: PodiumGroup[] = [];
 
-  // Scratch
+  // Scratch Hommes / Femmes : top 3 finishers par genre
   const men = finishers.filter(r => r.categorie.endsWith("H")).slice(0, 3);
   const women = finishers.filter(r => r.categorie.endsWith("F")).slice(0, 3);
 
   if (men.length) groups.push({ title: "Scratch Hommes", rows: men });
   if (women.length) groups.push({ title: "Scratch Femmes", rows: women });
 
-  // Catégories triées
-  const byCategory: Record<string, Row[]> = {};
+  // Participants déjà récompensés au scratch : on les exclut des podiums catégorie
+  const scratchIds = new Set<number>([
+    ...men.map(r => r.participantId),
+    ...women.map(r => r.participantId),
+  ]);
+
+  // Regroupement par catégorie en sautant les scratch.
+  // L'ordre des finishers est conservé (donc le premier non-scratch
+  // de chaque catégorie devient le 1er/1ère catégorie).
+  const byCategory = new Map<string, Row[]>();
   finishers.forEach(r => {
-    if (!byCategory[r.categorie]) byCategory[r.categorie] = [];
-    byCategory[r.categorie].push(r);
+    if (scratchIds.has(r.participantId)) return;
+    if (!byCategory.has(r.categorie)) byCategory.set(r.categorie, []);
+    byCategory.get(r.categorie)!.push(r);
   });
 
-  const orderedCats = Object.keys(byCategory).sort((a, b) =>
+  const orderedCats = Array.from(byCategory.keys()).sort((a, b) =>
     a.localeCompare(b, "fr", { numeric: true })
   );
 
   orderedCats.forEach(cat => {
-    const podium = byCategory[cat].slice(0, 3);
-    if (podium.length)
-      groups.push({ title: `Catégorie ${cat}`, rows: podium });
+    const winner = byCategory.get(cat)?.[0];
+    if (winner) {
+      groups.push({ title: `Catégorie ${cat}`, rows: [winner] });
+    }
   });
 
   return groups;
