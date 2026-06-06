@@ -74,3 +74,11 @@ export type ParticipantProjection = {
   dateNaissance: string; // yyyy-MM-dd
   nomCourse?: string;
 };
+
+export interface ParticipantUpdateInfoResponse {
+  bibNumber: string;
+  genre: string;
+  dateNaissance: string;
+  ageActuelle: number;
+  categorie: string;
+}

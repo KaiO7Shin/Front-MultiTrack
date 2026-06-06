@@ -1,6 +1,6 @@
 // src/services/participants.ts
 import api from "@/lib/api";
-import type { ParticipantCreateDTO, RenderResponse, ParticipantResponse, ParticipantProjection } from "@/lib/type";
+import type { ParticipantCreateDTO, RenderResponse, ParticipantResponse, ParticipantProjection, ParticipantUpdateInfoResponse } from "@/lib/type";
 
 export async function fetchParticipantsByCourse(raceId: number) {
   const { data } = await api.get<RenderResponse<ParticipantProjection[]>>(
@@ -23,9 +23,17 @@ export type UpdateCategoryDTO = {
 };
 
 export async function updateParticipantCategory(dto: UpdateCategoryDTO) {
-  const { data } = await api.post<RenderResponse<ParticipantResponse>>(
-    "/participant/change/category",
-    dto
+  const { bibNumber, genre, dateNaissance } = dto;
+
+  const { data } = await api.put<
+    RenderResponse<ParticipantUpdateInfoResponse>
+  >(
+    `/participant/${bibNumber}`,
+    {
+      genre,
+      dateNaissance,
+    }
   );
+
   return data;
 }
