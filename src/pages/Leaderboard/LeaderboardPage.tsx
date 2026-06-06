@@ -138,7 +138,7 @@ const exportGeneralPdf = () => {
       if (!r) return;
 
       const category = (r.categorie ?? "").toUpperCase();
-      const status = (r.status ?? "").toLowerCase();
+      // const status = (r.status ?? "").toLowerCase();
 
       if (category.endsWith("F")) {
         data.cell.styles.fillColor = [255, 230, 235];

@@ -1,69 +1,69 @@
-import { useMemo } from "react";
+// import { useMemo } from "react";
+// import {
+//   LineChart, Line, ResponsiveContainer, Tooltip
+// } from "recharts";
 import {
-  LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, BarChart, Bar,
-} from "recharts";
-import {
-  Trophy, Users, Timer, Activity, Download, FileText, Flag, ArrowUpRight, ArrowDownRight,
+  Users, Activity, Download, Flag
 } from "lucide-react";
 
 /** Accent vert */
 const ACCENT = "#8c9962";
 
 /** --- Données mockables (remplace plus tard par tes appels Axios) --- */
-const kpiData = {
-  courses: { value: 4, trend: +8, data: [2, 2, 3, 3, 4] },
-  participants: { value: 327, trend: +12, data: [210, 240, 260, 300, 327] },
-  enCourse: { value: 2, trend: 0, data: [1, 1, 2, 2, 2] },
-  passagesToday: { value: 1156, trend: +5, data: [780, 910, 980, 1120, 1156] },
-};
+// const kpiData = {
+//   courses: { value: 4, trend: +8, data: [2, 2, 3, 3, 4] },
+//   participants: { value: 327, trend: +12, data: [210, 240, 260, 300, 327] },
+//   enCourse: { value: 2, trend: 0, data: [1, 1, 2, 2, 2] },
+//   passagesToday: { value: 1156, trend: +5, data: [780, 910, 980, 1120, 1156] },
+// };
 
-const passagesByHour = [
-  { h: "06h", v: 12 }, { h: "07h", v: 48 }, { h: "08h", v: 120 }, { h: "09h", v: 210 },
-  { h: "10h", v: 260 }, { h: "11h", v: 280 }, { h: "12h", v: 190 }, { h: "13h", v: 100 },
-  { h: "14h", v: 80 }, { h: "15h", v: 56 },
-];
+// const passagesByHour = [
+//   { h: "06h", v: 12 }, { h: "07h", v: 48 }, { h: "08h", v: 120 }, { h: "09h", v: 210 },
+//   { h: "10h", v: 260 }, { h: "11h", v: 280 }, { h: "12h", v: 190 }, { h: "13h", v: 100 },
+//   { h: "14h", v: 80 }, { h: "15h", v: 56 },
+// ];
 
-const leaderboardPreview = [
-  { pos: 1, dossard: 124, nom: "Rasoa M.", temps: "01:17:42" },
-  { pos: 2, dossard: 89, nom: "Rakoto J.", temps: "01:18:31" },
-  { pos: 3, dossard: 301, nom: "Hanitra A.", temps: "01:19:02" },
-  { pos: 4, dossard: 55, nom: "Tovo K.", temps: "01:19:40" },
-];
+// const leaderboardPreview = [
+//   { pos: 1, dossard: 124, nom: "Rasoa M.", temps: "01:17:42" },
+//   { pos: 2, dossard: 89, nom: "Rakoto J.", temps: "01:18:31" },
+//   { pos: 3, dossard: 301, nom: "Hanitra A.", temps: "01:19:02" },
+//   { pos: 4, dossard: 55, nom: "Tovo K.", temps: "01:19:40" },
+// ];
 
 export const DashboardPage = () => {
-  const kpis = useMemo(
-    () => [
-      {
-        title: "Courses",
-        value: kpiData.courses.value,
-        trend: kpiData.courses.trend,
-        icon: Flag,
-        series: kpiData.courses.data,
-      },
-      {
-        title: "Participants",
-        value: kpiData.participants.value,
-        trend: kpiData.participants.trend,
-        icon: Users,
-        series: kpiData.participants.data,
-      },
-      {
-        title: "En course",
-        value: kpiData.enCourse.value,
-        trend: kpiData.enCourse.trend,
-        icon: Timer,
-        series: kpiData.enCourse.data,
-      },
-      {
-        title: "Passages (aujourd’hui)",
-        value: kpiData.passagesToday.value,
-        trend: kpiData.passagesToday.trend,
-        icon: Activity,
-        series: kpiData.passagesToday.data,
-      },
-    ],
-    []
-  );
+  // const kpis = useMemo(
+  //   () => [
+  //     {
+  //       title: "Courses",
+  //       value: kpiData.courses.value,
+  //       trend: kpiData.courses.trend,
+  //       icon: Flag,
+  //       series: kpiData.courses.data,
+  //     },
+  //     {
+  //       title: "Participants",
+  //       value: kpiData.participants.value,
+  //       trend: kpiData.participants.trend,
+  //       icon: Users,
+  //       series: kpiData.participants.data,
+  //     },
+  //     {
+  //       title: "En course",
+  //       value: kpiData.enCourse.value,
+  //       trend: kpiData.enCourse.trend,
+  //       icon: Timer,
+  //       series: kpiData.enCourse.data,
+  //     },
+  //     {
+  //       title: "Passages (aujourd’hui)",
+  //       value: kpiData.passagesToday.value,
+  //       trend: kpiData.passagesToday.trend,
+  //       icon: Activity,
+  //       series: kpiData.passagesToday.data,
+  //     },
+  //   ],
+  //   []
+  // );
 
   return (
     <section className="space-y-6">
@@ -202,74 +202,74 @@ export const DashboardPage = () => {
 
 /** --- Composants --- */
 
-function StatCard({
-  title,
-  value,
-  trend,
-  Icon,
-  series,
-}: {
-  title: string;
-  value: string | number;
-  trend: number;
-  Icon: React.ComponentType<any>;
-  series: number[];
-}) {
-  const up = trend > 0;
-  const flat = trend === 0;
+// function StatCard({
+//   title,
+//   value,
+//   trend,
+//   Icon,
+//   series,
+// }: {
+//   title: string;
+//   value: string | number;
+//   trend: number;
+//   Icon: React.ComponentType<any>;
+//   series: number[];
+// }) {
+//   const up = trend > 0;
+//   const flat = trend === 0;
 
-  const spark = series.map((v, i) => ({ i, v }));
+//   const spark = series.map((v, i) => ({ i, v }));
 
-  return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4">
-      <div className="flex items-start justify-between">
-        <div className="text-sm text-slate-500">{title}</div>
-        <div
-          className="h-8 w-8 rounded-xl flex items-center justify-center border"
-          style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
-        >
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
+//   return (
+//     <div className="bg-white border border-slate-200 rounded-2xl p-4">
+//       <div className="flex items-start justify-between">
+//         <div className="text-sm text-slate-500">{title}</div>
+//         <div
+//           className="h-8 w-8 rounded-xl flex items-center justify-center border"
+//           style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
+//         >
+//           <Icon className="h-4 w-4" />
+//         </div>
+//       </div>
 
-      <div className="mt-2 flex items-end justify-between gap-2">
-        <div className="text-3xl font-semibold">{value}</div>
-        <div
-          className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs border
-          ${up ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-               : flat ? "text-slate-600 bg-slate-50 border-slate-200"
-                      : "text-red-700 bg-red-50 border-red-200"}`}
-          title={up ? "En hausse" : flat ? "Stable" : "En baisse"}
-        >
-          {up ? <ArrowUpRight className="h-3.5 w-3.5" /> : flat ? null : <ArrowDownRight className="h-3.5 w-3.5" />}
-          {trend}%
-        </div>
-      </div>
+//       <div className="mt-2 flex items-end justify-between gap-2">
+//         <div className="text-3xl font-semibold">{value}</div>
+//         <div
+//           className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs border
+//           ${up ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+//                : flat ? "text-slate-600 bg-slate-50 border-slate-200"
+//                       : "text-red-700 bg-red-50 border-red-200"}`}
+//           title={up ? "En hausse" : flat ? "Stable" : "En baisse"}
+//         >
+//           {up ? <ArrowUpRight className="h-3.5 w-3.5" /> : flat ? null : <ArrowDownRight className="h-3.5 w-3.5" />}
+//           {trend}%
+//         </div>
+//       </div>
 
-      {/* Sparkline */}
-      <div className="mt-3 h-10">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={spark} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-            <Line
-              type="monotone"
-              dataKey="v"
-              stroke={ACCENT}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4, stroke: ACCENT }}
-            />
-            {/* Tooltip minimaliste */}
-            <Tooltip
-              cursor={{ stroke: "#e2e8f0" }}
-              contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0" }}
-              labelFormatter={() => ""}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
+//       {/* Sparkline */}
+//       <div className="mt-3 h-10">
+//         <ResponsiveContainer width="100%" height="100%">
+//           <LineChart data={spark} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+//             <Line
+//               type="monotone"
+//               dataKey="v"
+//               stroke={ACCENT}
+//               strokeWidth={2}
+//               dot={false}
+//               activeDot={{ r: 4, stroke: ACCENT }}
+//             />
+//             {/* Tooltip minimaliste */}
+//             <Tooltip
+//               cursor={{ stroke: "#e2e8f0" }}
+//               contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0" }}
+//               labelFormatter={() => ""}
+//             />
+//           </LineChart>
+//         </ResponsiveContainer>
+//       </div>
+//     </div>
+//   );
+// }
 
 function QuickAction({
   title,
@@ -301,30 +301,30 @@ function QuickAction({
   );
 }
 
-function VisualCard({
-  title,
-  caption,
-  gradientFrom,
-  gradientTo,
-}: {
-  title: string;
-  caption: string;
-  gradientFrom: string;
-  gradientTo: string;
-}) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-      <div
-        className="h-32 w-full"
-        style={{
-          background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`,
-        }}
-        aria-hidden="true"
-      />
-      <div className="p-4">
-        <div className="text-sm font-medium">{title}</div>
-        <div className="text-xs text-slate-500">{caption}</div>
-      </div>
-    </div>
-  );
-}
+// function VisualCard({
+//   title,
+//   caption,
+//   gradientFrom,
+//   gradientTo,
+// }: {
+//   title: string;
+//   caption: string;
+//   gradientFrom: string;
+//   gradientTo: string;
+// }) {
+//   return (
+//     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+//       <div
+//         className="h-32 w-full"
+//         style={{
+//           background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`,
+//         }}
+//         aria-hidden="true"
+//       />
+//       <div className="p-4">
+//         <div className="text-sm font-medium">{title}</div>
+//         <div className="text-xs text-slate-500">{caption}</div>
+//       </div>
+//     </div>
+//   );
+// }
