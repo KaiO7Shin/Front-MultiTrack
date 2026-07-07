@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
+import { Upload } from "lucide-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { importParticipantsCsv } from "@/services/import";
+import { Alert, Spinner } from "@/components/ui/feedback";
+import { FormField, selectClassName } from "@/components/ui/form-field";
 
 export const ImportParticipants = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -49,39 +52,50 @@ export const ImportParticipants = () => {
   };
 
   return (
-    <section className="space-y-6">
+    <section className="page-section">
       <Breadcrumb
         items={[
           { label: "Participants", to: "/participants" },
           { label: "Import CSV" },
         ]}
       />
-      <h1 className="text-2xl font-semibold">Import CSV – Participants</h1>
+      <div>
+        <h1 className="page-title">Import CSV – Participants</h1>
+        <p className="page-subtitle">
+          Importez une liste de participants depuis un fichier CSV.
+        </p>
+      </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6">
-
-        {/* Séparateur */}
-        <div>
-          <label className="text-sm font-medium text-slate-700">Séparateur CSV</label>
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-6">
+        <FormField label="Séparateur CSV" htmlFor="csv-separator">
           <select
+            id="csv-separator"
             value={separator}
             onChange={(e) => setSeparator(e.target.value)}
-            className="mt-1 w-40 border border-slate-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-100"
+            className={`${selectClassName} w-full sm:w-40`}
           >
             <option value=",">, Virgule</option>
             <option value=";">; Point-virgule</option>
             <option value="|">| Pipe</option>
           </select>
-        </div>
+        </FormField>
 
-        {/* Zone Drag & Drop */}
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Zone de dépôt de fichier CSV"
           onClick={openFileDialog}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openFileDialog();
+            }
+          }}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition
-            ${isDragging ? "border-blue-500 bg-blue-50" : "border-slate-300 hover:border-blue-400"}`}
+          className={`border-2 border-dashed rounded-xl p-6 sm:p-10 text-center cursor-pointer transition outline-none focus-visible:ring-2 focus-visible:ring-brand/40
+            ${isDragging ? "border-brand bg-brand-muted" : "border-slate-300 hover:border-brand/60 hover:bg-brand-muted/50"}`}
         >
           <input
             ref={fileInputRef}
@@ -96,6 +110,8 @@ export const ImportParticipants = () => {
             }}
           />
 
+          <Upload className="h-8 w-8 mx-auto mb-3 text-slate-400" aria-hidden />
+
           {!fileName ? (
             <>
               <p className="text-slate-600 font-medium">
@@ -106,30 +122,21 @@ export const ImportParticipants = () => {
               </p>
             </>
           ) : (
-            <p className="text-slate-700 font-medium">📄 {fileName}</p>
+            <p className="text-slate-700 font-medium">{fileName}</p>
           )}
         </div>
 
-        {/* Loader */}
-        {loading && (
-          <div className="flex items-center gap-2 text-blue-600 text-sm">
-            <span className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></span>
-            Import en cours...
-          </div>
-        )}
+        <div aria-live="polite" aria-atomic="true" className="space-y-3">
+          {loading && (
+            <div className="flex items-center gap-2 text-brand-dark text-sm">
+              <Spinner className="text-brand" />
+              Import en cours…
+            </div>
+          )}
 
-        {/* Messages */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        {message && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
-            {message}
-          </div>
-        )}
+          {error && <Alert variant="error" role="alert">{error}</Alert>}
+          {message && <Alert variant="success">{message}</Alert>}
+        </div>
 
         <p className="text-xs text-slate-500">
           Colonnes requises :

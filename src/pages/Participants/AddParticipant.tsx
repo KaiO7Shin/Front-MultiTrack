@@ -3,6 +3,8 @@ import { BIKE_TYPE_LABELS, BIKE_TYPES } from "@/lib/type";
 import { fetchCoursesDetailed } from "@/services/courses";
 import { createParticipant } from "@/services/participants";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { Alert, Spinner } from "@/components/ui/feedback";
+import { FormField, inputClassName, selectClassName } from "@/components/ui/form-field";
 import { useEffect, useMemo, useState } from "react";
 
 const emptyForm: ParticipantCreateDTO = {
@@ -89,83 +91,94 @@ export const AddParticipant = () => {
   }
 
   return (
-    <section className="space-y-4">
+    <section className="page-section">
       <Breadcrumb
         items={[
           { label: "Participants", to: "/participants" },
           { label: "Ajouter un participant" },
         ]}
       />
-      <h1 className="text-2xl font-semibold">Ajouter un participant</h1>
+      <div>
+        <h1 className="page-title">Ajouter un participant</h1>
+        <p className="page-subtitle">
+          Inscrivez un coureur à une course.
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="bg-white border rounded-2xl p-6 grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="participant-prenom" className="block text-xs font-medium text-slate-600 mb-1">
-            Prénom *
-          </label>
+      <form onSubmit={handleSubmit} className="bg-white border rounded-2xl p-4 sm:p-6 grid gap-4 sm:grid-cols-2">
+        <FormField label="Prénom" htmlFor="participant-prenom" required>
           <input
             id="participant-prenom"
-            className="w-full border rounded-xl px-3 py-2"
+            className={inputClassName}
             placeholder="Prénom"
             value={form.prenom}
             onChange={(e) => handleChange("prenom", e.target.value)}
             required
           />
-        </div>
+        </FormField>
 
-        <div>
-          <label htmlFor="participant-nom" className="block text-xs font-medium text-slate-600 mb-1">
-            Nom *
-          </label>
+        <FormField label="Nom" htmlFor="participant-nom" required>
           <input
             id="participant-nom"
-            className="w-full border rounded-xl px-3 py-2"
+            className={inputClassName}
             placeholder="Nom"
             value={form.nom}
             onChange={(e) => handleChange("nom", e.target.value)}
             required
           />
-        </div>
+        </FormField>
 
-        <input
-          className="border rounded-xl px-3 py-2"
-          type="date"
-          value={form.dateNaissance}
-          onChange={(e) => handleChange("dateNaissance", e.target.value)}
-          required
-        />
+        <FormField label="Date de naissance" htmlFor="participant-birth" required>
+          <input
+            id="participant-birth"
+            className={inputClassName}
+            type="date"
+            value={form.dateNaissance}
+            onChange={(e) => handleChange("dateNaissance", e.target.value)}
+            required
+          />
+        </FormField>
 
-        <select
-          className="border rounded-xl px-3 py-2"
-          value={form.genre}
-          onChange={(e) => handleChange("genre", e.target.value as "Homme" | "Femme")}
-        >
-          <option value="Homme">Homme</option>
-          <option value="Femme">Femme</option>
-        </select>
+        <FormField label="Genre" htmlFor="participant-genre" required>
+          <select
+            id="participant-genre"
+            className={selectClassName}
+            value={form.genre}
+            onChange={(e) => handleChange("genre", e.target.value as "Homme" | "Femme")}
+          >
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
+        </FormField>
 
-        <select
-          className="border rounded-xl px-3 py-2"
-          value={form.courseChoisieId || ""}
-          onChange={(e) => handleCourseChange(Number(e.target.value))}
-          required
-        >
-          <option value="" disabled>Sélectionne une course…</option>
-          {courses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} ({c.type})
-            </option>
-          ))}
-        </select>
+        <FormField label="Course" htmlFor="participant-course" required className="sm:col-span-2">
+          <select
+            id="participant-course"
+            className={selectClassName}
+            value={form.courseChoisieId || ""}
+            onChange={(e) => handleCourseChange(Number(e.target.value))}
+            required
+          >
+            <option value="" disabled>Sélectionne une course…</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.type})
+              </option>
+            ))}
+          </select>
+        </FormField>
 
         {showBikeType && (
-          <div className="sm:col-span-2">
-            <label htmlFor="type-velo" className="block text-xs font-medium text-slate-600 mb-1">
-              Type de vélo *
-            </label>
+          <FormField
+            label="Type de vélo"
+            htmlFor="type-velo"
+            hint="Requis pour les courses Descente (DH)."
+            required
+            className="sm:col-span-2"
+          >
             <select
               id="type-velo"
-              className="w-full border rounded-xl px-3 py-2"
+              className={selectClassName}
               value={form.typeVelo ?? ""}
               onChange={(e) =>
                 handleChange("typeVelo", e.target.value as BikeType)
@@ -179,20 +192,30 @@ export const AddParticipant = () => {
                 </option>
               ))}
             </select>
-            <p className="text-xs text-slate-500 mt-1">
-              Requis pour les courses Descente (DH).
-            </p>
-          </div>
+          </FormField>
         )}
 
-        <div className="sm:col-span-2 flex gap-2">
-          <button disabled={loading} className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm">
-            {loading ? "Enregistrement..." : "Enregistrer"}
+        <div className="sm:col-span-2 flex flex-col sm:flex-row gap-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full sm:w-auto rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {loading && <Spinner className="border-white" />}
+            {loading ? "Enregistrement…" : "Enregistrer"}
           </button>
         </div>
 
-        {success && <p className="text-green-600 text-sm sm:col-span-2">{success}</p>}
-        {err && <p className="text-red-600 text-sm sm:col-span-2">{err}</p>}
+        {success && (
+          <div className="sm:col-span-2">
+            <Alert variant="success">{success}</Alert>
+          </div>
+        )}
+        {err && (
+          <div className="sm:col-span-2">
+            <Alert variant="error" role="alert">{err}</Alert>
+          </div>
+        )}
       </form>
     </section>
   );

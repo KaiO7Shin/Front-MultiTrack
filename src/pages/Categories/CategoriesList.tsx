@@ -127,22 +127,24 @@ export const CategoriesList = () => {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Catégories</h1>
-          <p className="text-sm text-slate-500">
+    <section className="page-section">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Catégories</h1>
+          <p className="page-subtitle">
             Tranches d&apos;âge par genre — utilisées pour classer les participants
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter une catégorie
-        </button>
+        <div className="page-actions">
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter une catégorie
+          </button>
+        </div>
       </div>
 
       {loadError && (
@@ -161,8 +163,8 @@ export const CategoriesList = () => {
             Aucune catégorie. Ajoutez une tranche d&apos;âge pour commencer.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+          <div className="table-scroll">
+            <table>
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Alias</th>
@@ -188,7 +190,7 @@ export const CategoriesList = () => {
                       {formatAgeRange(cat.ageMin, cat.ageMax)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="inline-flex gap-2">
+                      <div className="flex flex-col sm:flex-row sm:inline-flex gap-2 justify-end">
                         <button
                           type="button"
                           onClick={() => openEdit(cat)}

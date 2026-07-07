@@ -3,6 +3,7 @@ import apiClient from "./api";
 import { API } from "./apiEndpoints";
 import { apiOrLocal } from "./apiFallback";
 import { Navigate, useLocation } from "react-router-dom";
+import { PageLoading } from "@/components/ui/feedback";
 
 export type Role = "admin" | "inscriptions" | "checkpoint" | "arrival";
 
@@ -122,7 +123,7 @@ export function RequireAuth({ children }: { children: React.ReactElement }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return <div className="p-6 text-sm text-slate-500">Chargement…</div>;
+  if (loading) return <PageLoading message="Vérification de la session…" />;
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }

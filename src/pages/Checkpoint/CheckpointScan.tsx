@@ -163,7 +163,7 @@ export const CheckpointScan = () => {
     (courseType === "XC" || (courseType === "DH" && dhMode));
 
   return (
-    <section className="space-y-4 max-w-xl mx-auto">
+    <section className="space-y-4 w-full max-w-xl mx-auto min-w-0 px-0 sm:px-0">
       <div className="text-center">
         <h1 className="text-2xl font-semibold">Checkpoint</h1>
         <p className="text-sm text-slate-500 mt-1">

@@ -117,22 +117,24 @@ export const CoursesList = () => {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Courses</h1>
-          <p className="text-sm text-slate-500">
+    <section className="page-section">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Courses</h1>
+          <p className="page-subtitle">
             Créer, modifier et gérer les courses par type (Trail, DH, XC)
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter une course
-        </button>
+        <div className="page-actions">
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter une course
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">

@@ -380,12 +380,12 @@ const exportGeneralPdf = () => {
   }, []);
 
   return (
-    <section className="space-y-6">
+    <section className="page-section">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Classement</h1>
-          <p className="text-sm text-slate-500">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Classement</h1>
+          <p className="page-subtitle">
             {loading ? "Chargement..." : "Résultats provisoires (à homologuer)"}
             {selectedCourse && courseType !== "TRAIL" && (
               <span className="ml-1">— Mode {courseType}</span>
@@ -393,7 +393,7 @@ const exportGeneralPdf = () => {
             {err ? ` — ${err}` : ""}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="page-actions">
         <button
           onClick={loadRanking}
           disabled={loading || courseType !== "TRAIL"}
@@ -443,14 +443,14 @@ const exportGeneralPdf = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div className="filter-panel">
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <Filter className="h-4 w-4" />
           <span>Filtres</span>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="filter-fields">
           <select
-            className="rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
+            className="w-full rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
             value={String(courseId)}
             onChange={(e) => {
               setCourseId(e.target.value === "all" ? "all" : Number(e.target.value));
@@ -469,7 +469,7 @@ const exportGeneralPdf = () => {
           </select>
 
           <select
-            className="rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
+            className="w-full rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
             value={gender}
             onChange={(e) => setGender(e.target.value as "all" | "Homme" | "Femme")}
             aria-label="Filtrer par genre"
@@ -480,7 +480,7 @@ const exportGeneralPdf = () => {
           </select>
 
           <select
-            className="rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
+            className="w-full rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
             value={String(categoryId ?? "")}
             onChange={(e) => {
               const v = e.target.value;
@@ -498,7 +498,7 @@ const exportGeneralPdf = () => {
 
           {courseType === "DH" && (
             <select
-              className="rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
+              className="w-full rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
               value={bikeType}
               onChange={(e) =>
                 setBikeType(e.target.value as "all" | BikeType)
@@ -514,14 +514,14 @@ const exportGeneralPdf = () => {
             </select>
           )}
 
-          <div className="relative">
+          <div className="relative sm:col-span-2 lg:col-span-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="text"
               placeholder="Rechercher dossard..."
               value={searchBib}
               onChange={(e) => setSearchBib(e.target.value)}
-              className="pl-8 rounded-lg border px-2 py-1 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
+              className="w-full pl-8 rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
               aria-label="Rechercher dossard"
             />
           </div>
@@ -713,21 +713,21 @@ const exportGeneralPdf = () => {
           {filteredRows.map((r) => {
             const isOpen = !!expanded[r.participantId];
             return (
-              <div key={r.participantId} className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 font-semibold">
+              <div key={r.participantId} className="p-4 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="inline-flex items-center justify-center w-8 h-8 shrink-0 rounded-lg bg-slate-100 font-semibold">
                       {r.rank ?? "—"}
                     </span>
-                    <div>
-                      <div className="text-sm font-medium">{r.prenom}</div>
-                      <div className="text-xs text-slate-500">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{r.prenom}</div>
+                      <div className="text-xs text-slate-500 break-words">
                         {r.nom} · Dossard {r.dossard} · {r.course}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 shrink-0">
                     <div className="text-sm font-medium tabular-nums">{r.raceTime ?? "—"}</div>
                     <button
                       className="p-1 rounded"
@@ -782,7 +782,7 @@ function PodiumCard({ row, rank }: { row: Row; rank: 1 | 2 | 3 }) {
   const medal = rank === 1 ? ACCENT : rank === 2 ? "#cbd5e1" : "#d4a373";
   const Icon = rank === 1 ? Trophy : Medal;
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
+    <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         <div
           className="h-10 w-10 rounded-xl flex items-center justify-center border"

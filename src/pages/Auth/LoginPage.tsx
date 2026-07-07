@@ -30,38 +30,34 @@ export const LoginPage = () => {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-slate-900">
-      {/* Fond image trail + vélo */}
+    <div className="relative min-h-screen flex items-center justify-center bg-background px-3 sm:px-4 py-6">
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 opacity-[0.35]"
         style={{
-          backgroundImage: `url('/assets/bg-trail.png')`, // ⚠️ place ton image ici (dans /public/assets/)
+          backgroundImage:
+            "radial-gradient(circle at 20% 20%, rgba(255,77,48,0.08), transparent 40%), radial-gradient(circle at 80% 0%, rgba(26,43,72,0.06), transparent 35%)",
         }}
+        aria-hidden
       />
-      {/* Overlay sombre pour lisibilité */}
-      <div className="absolute inset-0 bg-black/60" />
 
-      {/* Box login */}
       <form
         onSubmit={onSubmit}
-        className="relative z-10 w-full max-w-sm bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 shadow-lg space-y-5"
+        className="relative z-10 w-full max-w-sm page-card p-6 sm:p-8 space-y-6"
       >
-        {/* header */}
-        <div className="text-center flex flex-col items-center justify-center space-y-2">
-          <img
-            src={multitrackLogo}
-            alt="MultiTrack Logo"
-            className="h-28 w-auto mx-auto"
-          />
-          <h1 className="text-xl font-semibold text-slate-800">
-            Bienvenue sur MultiTrack
-          </h1>
-          <p className="text-xs text-slate-500">Trail & Bike race management</p>
+        <div className="text-center flex flex-col items-center justify-center space-y-3">
+          <img src={multitrackLogo} alt="MultiTrack Logo" className="h-20 sm:h-24 w-auto mx-auto" />
+          <div>
+            <h1 className="text-xl font-semibold text-brand tracking-tight">
+              Bienvenue sur MultiTrack
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Gérez vos événements sportifs de A à Z
+            </p>
+          </div>
         </div>
 
-        {/* input */}
         <div className="space-y-2">
-          <label className="text-sm text-slate-600" htmlFor="passcode">
+          <label className="text-sm font-medium text-brand" htmlFor="passcode">
             Passcode
           </label>
           <div className="relative">
@@ -72,7 +68,7 @@ export const LoginPage = () => {
               onChange={(e) => setPasscode(e.target.value)}
               autoFocus
               placeholder="••••••"
-              className="w-full rounded-xl border px-3 py-2 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-[#8c9962]/50"
+              className="w-full rounded-xl border border-border px-3 py-2.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-brand-cta/30"
             />
             <button
               type="button"
@@ -93,21 +89,19 @@ export const LoginPage = () => {
               )}
             </button>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Chaque contrôleur possède un passcode lié à un point de contrôle.
           </p>
         </div>
 
-        {/* error */}
         {error && (
-          <div className="text-sm rounded-lg bg-red-50 text-red-700 px-3 py-2 border border-red-200">
+          <div className="text-sm rounded-xl bg-red-50 text-red-700 px-3 py-2 border border-red-200">
             {error}
           </div>
         )}
 
-        {/* submit */}
         <button
-          className="w-full rounded-xl bg-[#8c9962] text-white py-2 text-sm disabled:opacity-60 flex items-center justify-center gap-2 shadow hover:opacity-90"
+          className="btn-primary w-full py-2.5"
           disabled={!passcode || loading}
         >
           {loading && (
@@ -116,10 +110,9 @@ export const LoginPage = () => {
           {loading ? "Connexion..." : "Se connecter"}
         </button>
 
-        {/* footer tips */}
-        <div className="text-xs text-center text-slate-500 space-y-1">
+        <div className="text-xs text-center text-muted-foreground space-y-2">
           {FORCE_LOCAL_DATA && (
-            <p className="rounded-lg bg-[#8c9962]/10 text-[#5c6640] px-3 py-2">
+            <p className="rounded-xl bg-brand-muted text-brand px-3 py-2">
               Mode local actif — passcode : <strong>admin</strong> ou <strong>checkpoint</strong>
               <br />
               <span className="text-[11px] opacity-90">
@@ -129,7 +122,7 @@ export const LoginPage = () => {
             </p>
           )}
           {HYBRID_MODE && (
-            <p className="rounded-lg bg-slate-100 text-slate-600 px-3 py-2">
+            <p className="rounded-xl bg-secondary text-muted-foreground px-3 py-2">
               Mode hybride — API si disponible, mock local sinon (endpoints manquants → fallback).
             </p>
           )}

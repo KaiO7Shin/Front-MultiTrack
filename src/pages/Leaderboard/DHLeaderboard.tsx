@@ -128,11 +128,11 @@ export function DHLeaderboard({
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border rounded-2xl p-4 flex flex-wrap gap-3 items-center justify-between">
-        <div className="flex flex-wrap gap-2 items-center">
+      <div className="bg-white border rounded-2xl p-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1 sm:flex-row sm:gap-2 sm:items-center w-full sm:w-auto">
           <span className="text-sm text-slate-600">Phase</span>
           <select
-            className="rounded-lg border px-2 py-1 text-sm"
+            className="w-full sm:w-auto rounded-lg border px-2 py-2 text-sm"
             value={phaseId === "" ? "" : String(phaseId)}
             onChange={(e) => setPhaseId(e.target.value ? Number(e.target.value) : "")}
           >
@@ -142,18 +142,18 @@ export function DHLeaderboard({
             ))}
           </select>
         </div>
-        <div className="flex rounded-lg border p-0.5 bg-slate-50">
+        <div className="flex rounded-lg border p-0.5 bg-slate-50 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setView("scratch")}
-            className={`px-3 py-1 text-xs rounded-md ${view === "scratch" ? "bg-white shadow" : ""}`}
+            className={`flex-1 px-3 py-1.5 text-xs rounded-md ${view === "scratch" ? "bg-white shadow" : ""}`}
           >
             Scratch
           </button>
           <button
             type="button"
             onClick={() => setView("category")}
-            className={`px-3 py-1 text-xs rounded-md ${view === "category" ? "bg-white shadow" : ""}`}
+            className={`flex-1 px-3 py-1.5 text-xs rounded-md ${view === "category" ? "bg-white shadow" : ""}`}
           >
             Par catégorie
           </button>
@@ -169,8 +169,9 @@ export function DHLeaderboard({
             {courseName} — {data.phaseLabel} — meilleur temps sur les manches
           </p>
 
-          <div className="bg-white border rounded-2xl overflow-x-auto">
-            <table className="min-w-full text-sm">
+          <div className="bg-white border rounded-2xl overflow-hidden">
+          <div className="table-scroll table-scroll-wide">
+            <table>
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-4 py-2 text-left">#</th>
@@ -286,6 +287,7 @@ export function DHLeaderboard({
                 )}
               </tbody>
             </table>
+          </div>
           </div>
         </>
       )}

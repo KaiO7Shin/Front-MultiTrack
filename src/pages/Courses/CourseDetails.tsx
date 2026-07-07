@@ -183,7 +183,7 @@ export const CourseDetails = () => {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="page-section">
       <Breadcrumb
         items={[
           { label: "Courses", to: "/courses" },
@@ -191,17 +191,17 @@ export const CourseDetails = () => {
         ]}
       />
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{course.name}</h1>
-          <p className="text-sm text-slate-500 mt-1">
+      <div className="page-header sm:items-start">
+        <div className="min-w-0">
+          <h1 className="page-title break-words">{course.name}</h1>
+          <p className="page-subtitle">
             {TYPE_LABELS[course.type]} · {normalizeCourseStatus(course.status)}
             {course.distanceKm != null ? ` · ${course.distanceKm} km` : ""}
           </p>
         </div>
         <Link
           to="/checkpoint/scan"
-          className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10 self-start"
+          className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10 self-stretch sm:self-start text-center"
         >
           Ouvrir le checkpoint
         </Link>
@@ -210,8 +210,8 @@ export const CourseDetails = () => {
       {showStructure ? (
         <div className="space-y-4">
           <div className="bg-white border rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-1">
-              <div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-1">
+              <div className="min-w-0">
                 <h2 className="font-semibold">Phases & manches</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Une phase regroupe une ou plusieurs manches. Chaque manche
@@ -224,7 +224,7 @@ export const CourseDetails = () => {
                   setFormError(null);
                   setPhaseModal({ open: true, mode: "create", target: null });
                 }}
-                className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs hover:bg-[#8c9962]/10 shrink-0"
+                className="inline-flex items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-[#8c9962]/10 shrink-0 w-full sm:w-auto"
               >
                 <Plus className="h-3 w-3" />
                 Phase
@@ -306,7 +306,7 @@ export const CourseDetails = () => {
                                 return (
                                   <li
                                     key={manche.id}
-                                    className={`flex items-center justify-between py-1.5 pl-6 pr-1 rounded-lg ${
+                                    className={`flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between py-1.5 pl-6 pr-1 rounded-lg ${
                                       isSelected ? "bg-[#8c9962]/10" : ""
                                     }`}
                                   >
@@ -403,8 +403,8 @@ export const CourseDetails = () => {
               Aucun résultat enregistré pour cette manche.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+            <div className="table-scroll">
+              <table>
                 <thead className="bg-slate-50 text-left">
                   <tr>
                     <th className="px-4 py-2">Dossard</th>

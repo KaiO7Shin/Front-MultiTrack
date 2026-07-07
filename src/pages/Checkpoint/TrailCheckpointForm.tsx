@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { recordTrailCheckpoint } from "@/services/checkpoint";
+import { Alert, Spinner } from "@/components/ui/feedback";
+import { FormField } from "@/components/ui/form-field";
 
 type SessionUser = {
   id: number;
@@ -144,40 +146,40 @@ export function TrailCheckpointForm() {
         <div className="text-sm text-center text-slate-500">Mode arrivée (admin)</div>
       )}
 
-      <label className="text-sm text-slate-600">N° Dossard</label>
-      <input
-        ref={inputRef1}
-        value={bib1}
-        onChange={(e) => setBib1(e.target.value)}
-        inputMode="numeric"
-        maxLength={6}
-        className="w-full text-3xl px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-slate-900/20"
-        placeholder="Ex. 1234"
-        onKeyDown={restrictKeys}
-      />
+      <FormField label="N° Dossard" htmlFor="bib-1">
+        <input
+          id="bib-1"
+          ref={inputRef1}
+          value={bib1}
+          onChange={(e) => setBib1(e.target.value)}
+          inputMode="numeric"
+          maxLength={6}
+          autoComplete="off"
+          className="w-full text-3xl px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-brand/30"
+          placeholder="Ex. 1234"
+          onKeyDown={restrictKeys}
+        />
+      </FormField>
 
-      <label className="text-sm text-slate-600">Confirmer N° Dossard</label>
-      <input
-        ref={inputRef2}
-        value={bib2}
-        onChange={(e) => setBib2(e.target.value)}
-        inputMode="numeric"
-        maxLength={6}
-        className="w-full text-3xl px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-slate-900/20"
-        placeholder="Retapez le numéro"
-        onKeyDown={restrictKeys}
-      />
+      <FormField label="Confirmer N° Dossard" htmlFor="bib-2">
+        <input
+          id="bib-2"
+          ref={inputRef2}
+          value={bib2}
+          onChange={(e) => setBib2(e.target.value)}
+          inputMode="numeric"
+          maxLength={6}
+          autoComplete="off"
+          className="w-full text-3xl px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-brand/30"
+          placeholder="Retapez le numéro"
+          onKeyDown={restrictKeys}
+        />
+      </FormField>
 
-      {error && (
-        <div className="text-sm rounded-xl bg-red-50 text-red-700 px-3 py-2 border border-red-200">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="text-sm rounded-xl bg-green-50 text-green-700 px-3 py-2 border border-green-200">
-          {success}
-        </div>
-      )}
+      <div aria-live="polite" aria-atomic="true" className="space-y-2">
+        {error && <Alert variant="error" role="alert">{error}</Alert>}
+        {success && <Alert variant="success">{success}</Alert>}
+      </div>
 
       <button
         disabled={
@@ -185,9 +187,7 @@ export function TrailCheckpointForm() {
         }
         className="w-full rounded-2xl bg-slate-900 text-white px-4 py-3 text-base disabled:opacity-60 flex items-center justify-center gap-2"
       >
-        {busy && (
-          <span className="inline-block h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
-        )}
+        {busy && <Spinner className="border-white" />}
         {busy ? "Enregistrement..." : "Valider (ENTER)"}
       </button>
     </form>

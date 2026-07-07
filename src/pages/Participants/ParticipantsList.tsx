@@ -13,6 +13,8 @@ import type { BikeType, CourseType, ParticipantProjection, ParticipantStatus } f
 import { BIKE_TYPE_LABELS, BIKE_TYPES } from "@/lib/type";
 import { formatParticipantName } from "@/lib/utils";
 import { ParticipantEditModal } from "./ParticipantEditModal";
+import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
+import { FormField, selectClassName } from "@/components/ui/form-field";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -62,6 +64,8 @@ export const ParticipantsList = () => {
   const [editTarget, setEditTarget] = useState<Participant | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [filtersError, setFiltersError] = useState<string | null>(null);
 
   const reloadParticipants = useCallback(async (courseId: number) => {
     const rows = await fetchParticipantsByCourse(courseId);
@@ -169,6 +173,7 @@ export const ParticipantsList = () => {
 
   const togglePresence = async (p: Participant) => {
     const nextStatus = getNextStatus(p.statut);
+    setStatusError(null);
 
     try {
       await changeParticipantStatus(p.numDossard, nextStatus);
@@ -181,7 +186,7 @@ export const ParticipantsList = () => {
         )
       );
     } catch {
-      alert("Erreur lors du changement de statut");
+      setStatusError("Erreur lors du changement de statut. Réessayez.");
     }
   };
 
@@ -213,8 +218,10 @@ export const ParticipantsList = () => {
           courseList.map((c) => ({ id: c.id, label: c.name, type: c.type }))
         );
         setCategories(catList);
+        setFiltersError(null);
       } catch (e) {
         console.error("Erreur chargement filtres", e);
+        setFiltersError("Impossible de charger les courses ou catégories.");
       }
     })();
     return () => {
@@ -280,15 +287,15 @@ export const ParticipantsList = () => {
   ]);
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Participants</h1>
-          <p className="text-sm text-slate-500">
+    <section className="page-section">
+      <div className="page-header">
+        <div className="min-w-0">
+          <h1 className="page-title">Participants</h1>
+          <p className="page-subtitle">
             Liste des inscrits par course
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="page-actions">
           <button
             onClick={exportPdf}
             disabled={filtered.length === 0 || selectedCourseId === "all"}
@@ -296,97 +303,131 @@ export const ParticipantsList = () => {
           >
             Exporter les participants
           </button>
-          <Link to="/participants/import" className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10">
+          <Link to="/participants/import" className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10 text-center">
             Importer CSV
           </Link>
-          <Link to="/participants/add" className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm hover:opacity-90">
+          <Link to="/participants/add" className="btn-primary px-4 py-2 text-sm">
             + Ajouter
           </Link>
         </div>
       </div>
 
-      <div className="bg-white border rounded-2xl p-4 flex flex-col sm:flex-row gap-3 justify-between">
-        <div className="relative w-full sm:max-w-xs">
+      {filtersError && (
+        <Alert variant="error" role="alert">{filtersError}</Alert>
+      )}
+
+      {statusError && (
+        <Alert variant="error" role="alert">{statusError}</Alert>
+      )}
+
+      <div className="filter-panel">
+        <div className="relative w-full">
+          <label htmlFor="participant-search" className="sr-only">
+            Rechercher un participant
+          </label>
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
+            id="participant-search"
             type="text"
             placeholder="Nom, prénom ou dossard..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-[#8c9962]/30"
+            className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-brand/30"
           />
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <select
-            className="rounded-lg border px-2 py-1 text-sm"
-            value={String(selectedCourseId)}
-            onChange={(e) => {
-              setSelectedCourseId(
-                e.target.value === "all" ? "all" : Number(e.target.value)
-              );
-              setSelectedBikeType("all");
-            }}
-          >
-            <option value="all">Toutes les courses</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>{c.label}</option>
-            ))}
-          </select>
-
-          <select
-            className="rounded-lg border px-2 py-1 text-sm"
-            value={String(selectedCategoryId)}
-            onChange={(e) => setSelectedCategoryId(e.target.value === "all" ? "all" : Number(e.target.value))}
-          >
-            <option value="all">Toutes catégories</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.alias}</option>
-            ))}
-          </select>
-
-          <select
-            className="rounded-lg border px-2 py-1 text-sm"
-            value={selectedGender}
-            onChange={(e) => setSelectedGender(e.target.value as "all" | "Homme" | "Femme")}
-          >
-            <option value="all">Tous genres</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
-
-          {isDhCourse && (
+        <div className="filter-fields">
+          <FormField label="Course" htmlFor="filter-course">
             <select
-              className="rounded-lg border px-2 py-1 text-sm"
-              value={selectedBikeType}
-              onChange={(e) =>
-                setSelectedBikeType(e.target.value as "all" | BikeType)
-              }
+              id="filter-course"
+              className={selectClassName}
+              value={String(selectedCourseId)}
+              onChange={(e) => {
+                setSelectedCourseId(
+                  e.target.value === "all" ? "all" : Number(e.target.value)
+                );
+                setSelectedBikeType("all");
+              }}
             >
-              <option value="all">Tous types de vélo</option>
-              {BIKE_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {BIKE_TYPE_LABELS[t]}
-                </option>
+              <option value="all">Toutes les courses</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>
+          </FormField>
+
+          <FormField label="Catégorie" htmlFor="filter-category">
+            <select
+              id="filter-category"
+              className={selectClassName}
+              value={String(selectedCategoryId)}
+              onChange={(e) => setSelectedCategoryId(e.target.value === "all" ? "all" : Number(e.target.value))}
+              disabled={selectedCourseId === "all"}
+            >
+              <option value="all">Toutes catégories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.alias}</option>
+              ))}
+            </select>
+          </FormField>
+
+          <FormField label="Genre" htmlFor="filter-gender">
+            <select
+              id="filter-gender"
+              className={selectClassName}
+              value={selectedGender}
+              onChange={(e) => setSelectedGender(e.target.value as "all" | "Homme" | "Femme")}
+              disabled={selectedCourseId === "all"}
+            >
+              <option value="all">Tous genres</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </FormField>
+
+          {isDhCourse && (
+            <FormField label="Type vélo" htmlFor="filter-bike">
+              <select
+                id="filter-bike"
+                className={selectClassName}
+                value={selectedBikeType}
+                onChange={(e) =>
+                  setSelectedBikeType(e.target.value as "all" | BikeType)
+                }
+              >
+                <option value="all">Tous types de vélo</option>
+                {BIKE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {BIKE_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
           )}
         </div>
       </div>
 
       <div className="bg-white border rounded-2xl overflow-hidden">
         {loading ? (
-          <div className="p-6 text-center text-slate-500">
-            Chargement des participants...
+          <div className="flex items-center justify-center gap-2 p-8 text-slate-500">
+            <Spinner className="text-brand" />
+            <span className="text-sm">Chargement des participants…</span>
           </div>
+        ) : selectedCourseId === "all" ? (
+          <EmptyState
+            icon={<Users className="h-10 w-10" />}
+            title="Sélectionnez une course"
+            description="Choisissez une course dans le filtre pour afficher les participants inscrits."
+          />
         ) : filtered.length === 0 ? (
-          <div className="p-6 text-center text-slate-500">
-            <Users className="h-10 w-10 mx-auto mb-2 text-slate-400" />
-            <p>Aucun participant trouvé.</p>
-          </div>
+          <EmptyState
+            icon={<Users className="h-10 w-10" />}
+            title="Aucun participant trouvé"
+            description="Aucun résultat pour cette course avec les filtres actuels."
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+          <div className="table-scroll table-scroll-wide">
+            <table>
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-4 py-2 text-left">Dossard</th>
@@ -423,6 +464,8 @@ export const ParticipantsList = () => {
                     <td className="px-4 py-2">
                       <button
                         onClick={() => togglePresence(p)}
+                        title="Cliquer pour changer le statut"
+                        aria-label={`Statut ${p.statut}, cliquer pour modifier`}
                         className={`px-3 py-1 rounded-full text-xs font-medium transition ${statusStyle(p.statut)}`}
                       >
                         {p.statut}
