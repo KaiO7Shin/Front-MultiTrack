@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import api from "../../lib/api";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 export const ImportParticipants = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -57,6 +58,12 @@ export const ImportParticipants = () => {
 
   return (
     <section className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: "Participants", to: "/participants" },
+          { label: "Import CSV" },
+        ]}
+      />
       <h1 className="text-2xl font-semibold">Import CSV – Participants</h1>
 
       <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6">

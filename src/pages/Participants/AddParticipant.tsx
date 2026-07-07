@@ -1,8 +1,7 @@
-"use client";
-
 import type { ParticipantCreateDTO } from "@/lib/type";
 import { fetchCourses } from "@/services/courses";
 import { createParticipant } from "@/services/participants";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { useEffect, useState } from "react";
 
 type Course = { id: number; label: string };
@@ -47,6 +46,12 @@ export const AddParticipant = () => {
 
   return (
     <section className="space-y-4">
+      <Breadcrumb
+        items={[
+          { label: "Participants", to: "/participants" },
+          { label: "Ajouter un participant" },
+        ]}
+      />
       <h1 className="text-2xl font-semibold">Ajouter un participant</h1>
 
       <form onSubmit={handleSubmit} className="bg-white border rounded-2xl p-6 grid gap-4 sm:grid-cols-2">

@@ -3,12 +3,22 @@ import apiClient from "./api";
 import { Navigate, useLocation } from "react-router-dom";
 
 export type Role = "admin" | "inscriptions" | "checkpoint" | "arrival";
+
+/** Utilisateur de session tel que renvoyé par l'API login */
 export type SessionUser = {
   id: number;
-  role: Role;
+  role: number;
+  assignedControlPoint?: {
+    id: number;
+    label: string;
+    controlPointNumber?: number;
+  };
   point_de_controle_course_id?: number | null;
   name?: string | null;
 };
+
+export const ROLE_ADMIN = 0;
+export const ROLE_CHECKPOINT = 1;
 
 type AuthContextType = {
   user: SessionUser | null;
@@ -27,13 +37,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // restore from storage
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    const u = localStorage.getItem("user");
-    if (t && u) {
-      setToken(t);
-      setUser(JSON.parse(u));
+    try {
+      const t = localStorage.getItem("token");
+      const u = localStorage.getItem("user");
+      if (t && u) {
+        setToken(t);
+        setUser(JSON.parse(u) as SessionUser);
+      }
+    } catch {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   async function signIn(passcode: string) {
@@ -91,11 +107,14 @@ export function RequireRole({
   role,
   children,
 }: {
-  role: Role | Role[];
+  role: number | number[];
   children: React.ReactElement;
 }) {
   const { user } = useAuth();
-  const allowed = Array.isArray(role) ? role.includes(user?.role as Role) : user?.role === role;
+  const userRole = user?.role;
+  const allowed = Array.isArray(role)
+    ? role.includes(userRole ?? -1)
+    : userRole === role;
   if (!allowed) return <div className="p-6 text-sm text-red-600">Accès refusé.</div>;
   return children;
 }

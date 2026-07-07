@@ -1,5 +1,4 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
 import api from "../../lib/api"; // axios instance
 
 const ACCENT = "#8c9962";
@@ -250,12 +249,7 @@ function CourseCard({
     <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3">
       <div className="flex items-start justify-between">
         <div>
-          <Link
-            to={`/courses/${course.id}`}
-            className="text-base font-semibold hover:underline decoration-[#8c9962] underline-offset-4"
-          >
-            {course.name}
-          </Link>
+          <span className="text-base font-semibold">{course.name}</span>
           <div className="text-xs text-slate-500 mt-0.5">
             {status}
             {course.distanceKm ? ` • ${course.distanceKm} km` : ""}

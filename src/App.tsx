@@ -1,80 +1,64 @@
-import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { Outlet, NavLink, Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { CheckpointScan } from "./pages/Checkpoint/CheckpointScan";
 import multitrackLogo from "./assets/multitrack.svg";
-
-type SessionUser = {
-  id: number;
-  role: number;
-  assignedControlPoint?: {
-    id: number;
-    label: string;
-    controlPointNumber: number;
-  } 
-  name?: string | null;
-};
+import { ROLE_ADMIN, ROLE_CHECKPOINT, useAuth } from "./lib/auth";
 
 export default function App() {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Récupère l'utilisateur du localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("user");
-      setUser(raw ? JSON.parse(raw) : null);
-    } catch {
-      setUser(null);
-    }
-  }, []);
-
-  const role = useMemo(() => (user?.role), [user]);
-  const isAdmin = role === 0;
-  const isCollaborateur = role === 1; // pointer/checkpoint
+  const role = user?.role;
+  const isAdmin = role === ROLE_ADMIN;
+  const isCollaborateur = role === ROLE_CHECKPOINT;
   const pcName = user?.assignedControlPoint?.label ?? null;
-  
 
-  // Si collaborateur, forcer la nav vers l'interface checkpoint (scan) uniquement
+  // Collaborateur : accès checkpoint uniquement
   useEffect(() => {
     if (isCollaborateur && !location.pathname.startsWith("/checkpoint")) {
       navigate("/checkpoint/scan", { replace: true });
     }
   }, [isCollaborateur, location.pathname, navigate]);
 
-  // Fermer le drawer mobile à chaque changement de route
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
 
   function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.replace("/");
+    signOut();
+    navigate("/login", { replace: true });
   }
 
-  // ---- LAYOUT COLLABORATEUR (mobile-first, sans sidebar) ----
+  const logo = (
+    <Link to="/dashboard" className="inline-block" aria-label="Accueil MultiTrack">
+      <img
+        src={multitrackLogo}
+        alt="MultiTrack Logo"
+        className="h-10 w-auto"
+      />
+    </Link>
+  );
+
+  // ---- LAYOUT COLLABORATEUR ----
   if (isCollaborateur) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900">
         <header className="sticky top-0 z-30 bg-white border-b border-slate-200">
           <div className="px-4 h-14 flex items-center justify-between">
-            <div className="font-semibold">
-              <img
-                src={multitrackLogo}
-                alt="MultiTrack Logo"
-                className="h-25 w-auto"
-              />
-            </div>
+            <div className="font-semibold">{logo}</div>
 
             <div className="flex items-center gap-2 text-sm">
+              <span className="hidden sm:inline rounded-full border px-2 py-1 border-[#8c9962]/50 text-[#8c9962]">
+                CHECKPOINT
+              </span>
               <span
                 className="inline-flex items-center gap-1 rounded-full border px-2 py-1
                            border-[#8c9962]/50 text-[#8c9962]"
                 title="Point de contrôle assigné"
               >
-                {pcName}
+                {pcName ?? "—"}
               </span>
               <button
                 onClick={handleLogout}
@@ -97,10 +81,9 @@ export default function App() {
     );
   }
 
-  // ---- LAYOUT ADMIN (sidebar + routes complètes) ----
+  // ---- LAYOUT ADMIN ----
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Topbar */}
       <header className="sticky top-0 z-30 bg-white border-b border-slate-200">
         <div className="mx-auto max-w-7xl px-4 h-14 flex items-center justify-between">
           <button
@@ -113,13 +96,7 @@ export default function App() {
             ☰
           </button>
 
-          <div className="font-semibold">
-            <img
-              src={multitrackLogo}
-              alt="MultiTrack Logo"
-              className="h-25 w-auto"
-            />
-          </div>
+          <div className="font-semibold">{logo}</div>
 
           <div className="text-sm text-slate-600 flex items-center gap-3">
             {isAdmin && (
@@ -137,30 +114,25 @@ export default function App() {
         </div>
       </header>
 
-      {/* Wrapper */}
       <div className="mx-auto max-w-7xl px-4 py-6 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
-        {/* Sidebar */}
         <aside
           id="sidebar"
           className={`${open ? "block" : "hidden"} md:block bg-white border border-slate-200 rounded-2xl p-3 h-max`}
         >
           <nav className="flex flex-col gap-1">
-            <Item to="/dashboard" label="Action rapide" />
-            <Item to="/courses" label="Dashboard" />
+            <Item to="/dashboard" label="Action rapide" end />
+            <Item to="/courses" label="Courses" end />
             <Item to="/participants" label="Participants" />
-            <Item to="/checkpoint/scan" label="Checkpoint" />
-            <Item to="/leaderboard" label="Classement" />
-            {/* {isAdmin && <Item to="/users" label="Utilisateurs" />} */}
+            <Item to="/checkpoint/scan" label="Checkpoint" end />
+            <Item to="/leaderboard" label="Classement" end />
           </nav>
         </aside>
 
-        {/* Main content */}
         <main className="min-h-[70vh]">
           <Outlet />
         </main>
       </div>
 
-      {/* Footer */}
       <footer className="py-6 text-center text-sm text-slate-500">
         © {new Date().getFullYear()} <span className="text-[#8c9962]">MultiTrack</span>
       </footer>
@@ -168,12 +140,21 @@ export default function App() {
   );
 }
 
-function Item({ to, label }: { to: string; label: string }) {
+function Item({
+  to,
+  label,
+  end,
+}: {
+  to: string;
+  label: string;
+  end?: boolean;
+}) {
   return (
     <NavLink
       to={to}
+      end={end}
       className={({ isActive }) =>
-        `px-3 py-2 rounded-xl text-sm relative transition
+        `px-3 py-2 rounded-xl text-sm relative transition block
          focus:outline-none focus:ring-2 focus:ring-[#8c9962]/30
          ${
            isActive
@@ -182,19 +163,20 @@ function Item({ to, label }: { to: string; label: string }) {
          }`
       }
       onClick={() => {
-        // sur mobile, retire le focus pour fermer le clavier/annuler la highlight
         if (window.innerWidth < 768) (document.activeElement as HTMLElement)?.blur();
       }}
-      aria-current={location.pathname === to ? "page" : undefined}
     >
-      {/* Indicateur latéral accent (visible quand actif) */}
-      <span
-        className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full
-                   bg-[#8c9962] opacity-0 data-[active=true]:opacity-100"
-        data-active={(location.pathname === to).toString()}
-        aria-hidden="true"
-      />
-      {label}
+      {({ isActive }) => (
+        <>
+          <span
+            className={`absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full bg-[#8c9962] transition-opacity ${
+              isActive ? "opacity-100" : "opacity-0"
+            }`}
+            aria-hidden="true"
+          />
+          {label}
+        </>
+      )}
     </NavLink>
   );
 }

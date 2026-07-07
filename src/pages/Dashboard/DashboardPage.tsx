@@ -5,6 +5,7 @@
 import {
   Users, Activity, Download, Flag
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 /** Accent vert */
 const ACCENT = "#8c9962";
@@ -283,8 +284,8 @@ function QuickAction({
   href: string;
 }) {
   return (
-    <a
-      href={href}
+    <Link
+      to={href}
       className="group rounded-2xl border p-3 hover:bg-[#8c9962]/10 transition flex items-start gap-3"
     >
       <div
@@ -297,7 +298,7 @@ function QuickAction({
         <div className="text-sm font-medium group-hover:text-slate-800">{title}</div>
         <div className="text-xs text-slate-500">{subtitle}</div>
       </div>
-    </a>
+    </Link>
   );
 }
 
