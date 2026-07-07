@@ -1,7 +1,10 @@
 import axios from "axios";
 
+const baseURL =
+  import.meta.env.VITE_API_URL ?? "https://b-mtrack-service.onrender.com/api";
+
 const apiClient = axios.create({
-  baseURL: "https://b-mtrack-service.onrender.com/api",
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },

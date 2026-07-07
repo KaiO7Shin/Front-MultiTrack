@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import api from "../../lib/api";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { importParticipantsCsv } from "@/services/import";
 
 export const ImportParticipants = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -19,21 +19,13 @@ export const ImportParticipants = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("csvFile", file);
-
     setLoading(true);
     setError(null);
     setMessage(null);
 
     try {
-      const response = await api.post(
-        `/import/participants?separator=${separator}`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      setMessage(response.data.message || "Import terminé avec succès.");
+      const { message } = await importParticipantsCsv(file, separator);
+      setMessage(message);
     } catch (err: any) {
       if (err.response) {
         setError(err.response.data.message || "Erreur serveur lors de l'import.");
@@ -143,7 +135,7 @@ export const ImportParticipants = () => {
           Colonnes requises :
           <br />
           <span className="font-mono">
-            nom, date_naissance, genre, num_dossard, course_choisie_id, d_categorie_id
+            nom, prenom, date_naissance, genre, num_dossard, course_choisie_id, d_categorie_id
           </span>
         </p>
       </div>

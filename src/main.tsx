@@ -6,6 +6,7 @@ import "./index.css";
 
 import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { CoursesList } from "./pages/Courses/CoursesList";
+import { CategoriesList } from "./pages/Categories/CategoriesList";
 import { CourseDetails } from "./pages/Courses/CourseDetails";
 import { ParticipantsList } from "./pages/Participants/ParticipantsList";
 import { ImportParticipants } from "./pages/Participants/ImportParticipants";
@@ -16,6 +17,12 @@ import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
 import { LoginPage } from "./pages/Auth/LoginPage";
 
 import { AuthProvider, RequireAuth } from "./lib/auth"; // <== ton fichier de contexte
+import { USE_LOCAL_DATA, localResetDemoData } from "./lib/localData";
+
+if (USE_LOCAL_DATA && typeof window !== "undefined") {
+  (window as Window & { localResetDemoData?: () => void }).localResetDemoData =
+    localResetDemoData;
+}
 
 
 const router = createBrowserRouter([
@@ -35,6 +42,7 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <DashboardPage /> },
 
       { path: "courses", element: <CoursesList /> },
+      { path: "categories", element: <CategoriesList /> },
       { path: "courses/:id", element: <CourseDetails /> },
 
       { path: "participants", element: <ParticipantsList /> },

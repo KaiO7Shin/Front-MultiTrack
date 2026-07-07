@@ -1,151 +1,140 @@
-import { useMemo, useState, useEffect, useCallback } from "react";
-import api from "../../lib/api"; // axios instance
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Pencil, Plus, Settings2, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import type { Course, CourseCreateDTO, CourseType } from "@/lib/type";
+import { normalizeCourseStatus } from "@/lib/utils";
+import {
+  changeRaceStatus,
+  createCourse,
+  deleteCourse,
+  fetchCoursesDetailed,
+  updateCourse,
+} from "@/services/courses";
+import { CourseFormModal, TYPE_LABELS } from "./CourseFormModal";
 
 const ACCENT = "#8c9962";
 
-/* ========= Types ========= */
-
-type CourseStatus = "A venir" | "En cours" | "Terminee";
-
-type UICourse = {
-  id: number;
-  name: string;
-  distanceKm?: number;
-  elevation?: number;
-  startAt?: string; // ISO
-  status: CourseStatus | string; // on tolère la valeur brute API puis on normalise
-  checkpoints: number;
-  cutoffMinutes?: number;
-  description?: string;
+const TYPE_BADGE: Record<CourseType, string> = {
+  TRAIL: "bg-[#8c9962]/15 text-[#5c6640] border-[#8c9962]/40",
+  DH: "bg-orange-100 text-orange-800 border-orange-200",
+  XC: "bg-blue-100 text-blue-800 border-blue-200",
 };
 
-/* ========= Helpers ========= */
-
-function coerceArray<T = unknown>(payload: any): T[] {
-  if (Array.isArray(payload)) return payload;
-  if (payload?.data && Array.isArray(payload.data)) return payload.data;
-  if (payload?.races && Array.isArray(payload.races)) return payload.races;
-  if (payload?.items && Array.isArray(payload.items)) return payload.items;
-  return [];
-}
-
-function numOrUndef(v: any): number | undefined {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : undefined;
-}
-function intOrZero(v: any): number {
-  const n = Number(v);
-  return Number.isFinite(n) ? Math.max(0, Math.trunc(n)) : 0;
-}
-
-/** Normalise strictement vers : "A venir" | "En cours" | "Terminée" */
-function normalizeStatus(v: any): CourseStatus {
-  const lower = String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
-  if (lower === "a venir" || lower === "à venir") return "A venir";
-  if (lower === "en cours") return "En cours";
-  if (lower === "terminee" || lower === "terminee") return "Terminee";
-  return "A venir";
-}
-
-function normalizeCourse(raw: any): UICourse {
-  const id = Number(
-    raw?.id ?? raw?.course_id ?? raw?.raceId ?? Math.floor(Math.random() * 100000)
-  );
-
-  const name: string = raw?.name ?? raw?.label ?? raw?.title ?? `Course #${id}`;
-
-  const distanceKm = numOrUndef(raw?.distanceKm ?? raw?.distance_km ?? raw?.distance);
-  const elevation = numOrUndef(raw?.elevation ?? raw?.elevation_gain ?? raw?.ascent);
-  const startAt: string | undefined =
-    raw?.startAt ?? raw?.start_at ?? raw?.start_time ?? raw?.start_date_time;
-
-  const checkpoints = intOrZero(raw?.checkpoints ?? raw?.checkpoints_count ?? raw?.cps);
-  const cutoffMinutes = numOrUndef(raw?.cutoffMinutes ?? raw?.cutoff_minutes ?? raw?.barrier_minutes);
-  const description: string | undefined = raw?.description ?? raw?.desc;
-
-  const status = normalizeStatus(raw?.status ?? raw?.status_label ?? raw?.code ?? raw?.state);
-
-  return {
-    id,
-    name,
-    distanceKm,
-    elevation,
-    startAt,
-    status,
-    checkpoints,
-    cutoffMinutes,
-    description,
-  };
-}
-
-/* ========= API client (nouvel endpoint) ========= */
-
-async function updateRaceStatus(raceId: number, newStatus: CourseStatus) {
-  const res = await api.post("/race/change/status", {
-    raceId: raceId,
-    newStatus: newStatus,
-  });
-  const data = res?.data ?? {};
-  return {
-    raceId: Number(data?.raceId ?? raceId),
-    startAt: data?.start_date_time as string | undefined,
-    status: normalizeStatus(data?.status ?? data?.state ?? newStatus),
-  };
-}
-
-/* ========= Composant principal ========= */
-
 export const CoursesList = () => {
-  const [courses, setCourses] = useState<UICourse[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const counts = useMemo(() => {
-    const total = courses.length;
-    const upcoming = courses.filter((c) => normalizeStatus(c.status) === "A venir").length;
-    const running = courses.filter((c) => normalizeStatus(c.status) === "En cours").length;
-    const done = courses.filter((c) => normalizeStatus(c.status) === "Terminee").length;
-    return { total, upcoming, running, done };
-  }, [courses]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+  const [editTarget, setEditTarget] = useState<Course | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
-      const res = await api.get("/races");
-      setCourses(coerceArray(res?.data).map(normalizeCourse));
-    } catch (e) {
-      console.error("Failed to refresh courses", e);
+      setCourses(await fetchCoursesDetailed());
+    } catch {
+      setLoadError("Impossible de charger les courses.");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await api.get("/races");
-        const arr = coerceArray(res?.data);
-        const mapped = arr.map(normalizeCourse);
-        if (!mounted) return;
-        setCourses(mapped);
-      } catch (err) {
-        console.error("Failed to load courses", err);
+    refresh();
+  }, [refresh]);
+
+  const counts = useMemo(() => {
+    const total = courses.length;
+    const upcoming = courses.filter((c) => c.status === "A venir").length;
+    const running = courses.filter((c) => c.status === "En cours").length;
+    const done = courses.filter((c) => c.status === "Terminee").length;
+    return { total, upcoming, running, done };
+  }, [courses]);
+
+  function openCreate() {
+    setModalMode("create");
+    setEditTarget(null);
+    setFormError(null);
+    setModalOpen(true);
+  }
+
+  function openEdit(course: Course) {
+    setModalMode("edit");
+    setEditTarget(course);
+    setFormError(null);
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    if (saving) return;
+    setModalOpen(false);
+    setEditTarget(null);
+    setFormError(null);
+  }
+
+  async function handleFormSubmit(dto: CourseCreateDTO) {
+    setSaving(true);
+    setFormError(null);
+    try {
+      if (modalMode === "create") {
+        const created = await createCourse(dto);
+        setCourses((prev) => [...prev, created]);
+      } else if (editTarget) {
+        const updated = await updateCourse(editTarget.id, dto, editTarget);
+        setCourses((prev) =>
+          prev.map((c) => (c.id === editTarget.id ? updated : c))
+        );
       }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+      closeModal();
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      setFormError(
+        err?.response?.data?.message ?? "Erreur lors de l'enregistrement."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(course: Course) {
+    if (course.status !== "A venir") {
+      alert("Seules les courses « À venir » peuvent être supprimées.");
+      return;
+    }
+    if (!window.confirm(`Supprimer la course « ${course.name} » ?`)) return;
+
+    try {
+      await deleteCourse(course.id);
+      setCourses((prev) => prev.filter((c) => c.id !== course.id));
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      alert(err?.response?.data?.message ?? "Erreur lors de la suppression.");
+    }
+  }
 
   return (
     <section className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Liste des courses</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Courses</h1>
           <p className="text-sm text-slate-500">
-            Gère les courses, leurs checkpoints et horaires
+            Créer, modifier et gérer les courses par type (Trail, DH, XC)
           </p>
         </div>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          Ajouter une course
+        </button>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-3 sm:grid-cols-4">
         <StatPill label="Total" value={counts.total} />
         <StatPill label="A venir" value={counts.upcoming} />
@@ -153,26 +142,51 @@ export const CoursesList = () => {
         <StatPill label="Terminées" value={counts.done} />
       </div>
 
-      
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {courses.map((c) => (
-          <CourseCard
-            key={c.id}
-            course={c}
-            onLocalUpdate={(upd) => {
-              setCourses((prev) => prev.map((x) => (x.id === c.id ? { ...x, ...upd } : x)));
-            }}
-            onRefresh={refresh}
-          />
-        ))}
-      </div>
+      {loadError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {loadError}
+        </div>
+      )}
 
-      
+      {loading ? (
+        <div className="text-center text-sm text-slate-500 py-12">
+          Chargement des courses…
+        </div>
+      ) : courses.length === 0 ? (
+        <div className="text-center text-sm text-slate-500 py-12 bg-white border rounded-2xl">
+          Aucune course. Cliquez sur « Ajouter une course » pour commencer.
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {courses.map((c) => (
+            <CourseCard
+              key={c.id}
+              course={c}
+              onEdit={() => openEdit(c)}
+              onDelete={() => handleDelete(c)}
+              onLocalUpdate={(upd) => {
+                setCourses((prev) =>
+                  prev.map((x) => (x.id === c.id ? { ...x, ...upd } : x))
+                );
+              }}
+              onRefresh={refresh}
+            />
+          ))}
+        </div>
+      )}
+
+      <CourseFormModal
+        open={modalOpen}
+        mode={modalMode}
+        initial={editTarget}
+        saving={saving}
+        error={formError}
+        onClose={closeModal}
+        onSubmit={handleFormSubmit}
+      />
     </section>
   );
 };
-
-/* ---------- UI sub components ---------- */
 
 function StatPill({ label, value }: { label: string; value: number }) {
   return (
@@ -186,40 +200,39 @@ function StatPill({ label, value }: { label: string; value: number }) {
   );
 }
 
-
 function CourseCard({
   course,
+  onEdit,
+  onDelete,
   onLocalUpdate,
   onRefresh,
 }: {
-  course: UICourse;
-  onLocalUpdate: (upd: Partial<UICourse>) => void;
+  course: Course;
+  onEdit: () => void;
+  onDelete: () => void;
+  onLocalUpdate: (upd: Partial<Course>) => void;
   onRefresh: () => Promise<void>;
 }) {
-  const status = normalizeStatus(course.status);
+  const status = normalizeCourseStatus(course.status);
   const [loading, setLoading] = useState(false);
-
-  function confirm(message: string): Promise<boolean> {
-    return Promise.resolve(window.confirm(message));
-  }
 
   const canStart = status === "A venir";
   const canFinish = status === "En cours";
+  const canEdit = status === "A venir";
+  const canDelete = status === "A venir";
 
   async function handleStart() {
     if (loading) return;
     setLoading(true);
     try {
-      // new_status = "En cours"
-      const res = await updateRaceStatus(course.id, "En cours");
+      const res = await changeRaceStatus(course.id, "En cours");
       onLocalUpdate({
         status: res.status,
         startAt: res.startAt || course.startAt,
       });
-      // after status change, refetch full list to get authoritative data
       await onRefresh();
-    } catch (e) {
-      console.error(e);
+    } catch {
+      alert("Erreur lors du lancement de la course.");
     } finally {
       setLoading(false);
     }
@@ -227,19 +240,18 @@ function CourseCard({
 
   async function handleFinish() {
     if (loading) return;
-    if (!(await confirm(`Terminer la course "${course.name}" ? Action irréversible.`))) return;
+    if (!window.confirm(`Terminer la course « ${course.name} » ? Action irréversible.`))
+      return;
     setLoading(true);
     try {
-      // new_status = "Terminée"
-      const res = await updateRaceStatus(course.id, "Terminee");
+      const res = await changeRaceStatus(course.id, "Terminee");
       onLocalUpdate({
         status: res.status,
         startAt: res.startAt || course.startAt,
       });
-      // after status change, refetch full list to get authoritative data
       await onRefresh();
-    } catch (e) {
-      console.error(e);
+    } catch {
+      alert("Erreur lors de la clôture de la course.");
     } finally {
       setLoading(false);
     }
@@ -247,42 +259,75 @@ function CourseCard({
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3">
-      <div className="flex items-start justify-between">
-        <div>
-          <span className="text-base font-semibold">{course.name}</span>
-          <div className="text-xs text-slate-500 mt-0.5">
-            {status}
-            {course.distanceKm ? ` • ${course.distanceKm} km` : ""}
-            {course.elevation ? ` • D+ ${course.elevation} m` : ""}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-base font-semibold truncate">{course.name}</span>
+            <span
+              className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${TYPE_BADGE[course.type]}`}
+            >
+              {TYPE_LABELS[course.type]}
+            </span>
           </div>
+          <div className="text-xs text-slate-500 mt-1">
+            {status}
+            {course.distanceKm != null ? ` • ${course.distanceKm} km` : ""}
+            {course.elevation != null ? ` • D+ ${course.elevation} m` : ""}
+          </div>
+          {course.description && (
+            <p className="text-xs text-slate-600 mt-2 line-clamp-2">{course.description}</p>
+          )}
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex gap-2">
-          {canStart && (
-            <button
-              className="rounded-lg border px-3 py-1.5 text-sm hover:bg-[#8c9962]/10"
-              onClick={handleStart}
-              type="button"
-              aria-label={`Lancer la course ${course.name}`}
-              disabled={loading}
-            >
-              {loading ? "..." : "Lancer"}
-            </button>
-          )}
-          {canFinish && (
-            <button
-              className="rounded-lg border px-3 py-1.5 text-sm hover:bg-[#8c9962]/10"
-              onClick={handleFinish}
-              type="button"
-              aria-label={`Terminer la course ${course.name}`}
-              disabled={loading}
-            >
-              {loading ? "..." : "Terminer"}
-            </button>
-          )}
-        </div>
+      <div className="flex flex-wrap items-center gap-2 mt-auto pt-1 border-t border-slate-100">
+        <Link
+          to={`/courses/${course.id}`}
+          className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-[#8c9962]/10"
+        >
+          <Settings2 className="h-3 w-3" />
+          Phases & manches
+        </Link>
+        {canStart && (
+          <button
+            className="rounded-lg border px-3 py-1.5 text-xs hover:bg-[#8c9962]/10"
+            onClick={handleStart}
+            type="button"
+            disabled={loading}
+          >
+            {loading ? "..." : "Lancer"}
+          </button>
+        )}
+        {canFinish && (
+          <button
+            className="rounded-lg border px-3 py-1.5 text-xs hover:bg-[#8c9962]/10"
+            onClick={handleFinish}
+            type="button"
+            disabled={loading}
+          >
+            {loading ? "..." : "Terminer"}
+          </button>
+        )}
+        {canEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-[#8c9962]/10"
+          >
+            <Pencil className="h-3 w-3" />
+            Modifier
+          </button>
+        )}
+        {canDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="h-3 w-3" />
+            Supprimer
+          </button>
+        )}
       </div>
     </div>
   );

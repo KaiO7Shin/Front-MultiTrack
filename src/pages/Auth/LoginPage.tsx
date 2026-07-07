@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import multitrackLogo from "@/assets/multitrack.svg";
 import { useAuth } from "../../lib/auth";
+import { FORCE_LOCAL_DATA, HYBRID_MODE } from "@/lib/localData";
 
 export const LoginPage = () => {
   const [passcode, setPasscode] = useState("");
@@ -116,8 +117,23 @@ export const LoginPage = () => {
         </button>
 
         {/* footer tips */}
-        <div className="text-xs text-center text-slate-500">
-          Besoin d’aide ? Demande à l’admin de te (ré)générer un passcode.
+        <div className="text-xs text-center text-slate-500 space-y-1">
+          {FORCE_LOCAL_DATA && (
+            <p className="rounded-lg bg-[#8c9962]/10 text-[#5c6640] px-3 py-2">
+              Mode local actif — passcode : <strong>admin</strong> ou <strong>checkpoint</strong>
+              <br />
+              <span className="text-[11px] opacity-90">
+                Jeu de démo : 3 courses, 20 participants. Console :{" "}
+                <code className="font-mono">localResetDemoData()</code>
+              </span>
+            </p>
+          )}
+          {HYBRID_MODE && (
+            <p className="rounded-lg bg-slate-100 text-slate-600 px-3 py-2">
+              Mode hybride — API si disponible, mock local sinon (endpoints manquants → fallback).
+            </p>
+          )}
+          <p>Besoin d’aide ? Demande à l’admin de te (ré)générer un passcode.</p>
         </div>
       </form>
     </div>

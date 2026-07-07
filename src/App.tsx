@@ -122,6 +122,7 @@ export default function App() {
           <nav className="flex flex-col gap-1">
             <Item to="/dashboard" label="Action rapide" end />
             <Item to="/courses" label="Courses" end />
+            <Item to="/categories" label="Catégories" end />
             <Item to="/participants" label="Participants" />
             <Item to="/checkpoint/scan" label="Checkpoint" end />
             <Item to="/leaderboard" label="Classement" end />
