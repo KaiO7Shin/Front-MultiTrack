@@ -101,7 +101,7 @@ export const CategoriesList = () => {
         const created = await createCategory(dto);
         setCategories((prev) => [...prev, created]);
       } else if (editTarget) {
-        const updated = await updateCategory(editTarget.id, dto, editTarget);
+        const updated = await updateCategory(editTarget.id, dto);
         setCategories((prev) =>
           prev.map((c) => (c.id === editTarget.id ? updated : c))
         );

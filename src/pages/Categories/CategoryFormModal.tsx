@@ -100,12 +100,16 @@ export function CategoryFormModal({
             <input
               id="cat-alias"
               required
+              maxLength={30}
               className="w-full rounded-lg border px-3 py-2 text-sm uppercase"
-              placeholder="Ex. M1H"
+              placeholder="Ex. SNH, M1F"
               value={form.alias}
               onChange={(e) => setForm((f) => ({ ...f, alias: e.target.value }))}
               disabled={saving}
             />
+            <p className="text-[10px] text-slate-400">
+              Doit se terminer par H (Homme) ou F (Femme).
+            </p>
           </div>
 
           <div className="space-y-1">

@@ -64,6 +64,7 @@ export function MancheFormModal({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Ex. Manche 1, Poule A, Finale…"
+            maxLength={30}
             required
             disabled={saving}
           />

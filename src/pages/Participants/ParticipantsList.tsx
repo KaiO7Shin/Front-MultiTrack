@@ -166,6 +166,10 @@ export const ParticipantsList = () => {
         return "En course";
       case "DNS":
         return "En course";
+      case "DSQ":
+        return "Present";
+      case "Finisher":
+        return "En course";
       default:
         return current;
     }
@@ -200,6 +204,10 @@ export const ParticipantsList = () => {
         return "bg-orange-100 text-orange-700 hover:bg-orange-200";
       case "DNS":
         return "bg-red-100 text-red-700 hover:bg-red-200";
+      case "DSQ":
+        return "bg-purple-100 text-purple-700 hover:bg-purple-200";
+      case "Finisher":
+        return "bg-emerald-100 text-emerald-700 hover:bg-emerald-200";
       default:
         return "bg-slate-100 text-slate-700 hover:bg-slate-200";
     }

@@ -58,6 +58,7 @@ export function PhaseFormModal({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Ex. Qualifications, Éliminatoires, Finale…"
+            maxLength={30}
             required
             disabled={saving}
           />

@@ -14,6 +14,9 @@ export const API = {
   category: "/category",
   categoryById: (id: number) => `/category/${id}`,
 
+  typesVelo: "/types-velo",
+  typesCourse: "/types-course",
+
   participants: "/participants",
   participant: "/participant",
   participantByBib: (bibNumber: string) => `/participant/${bibNumber}`,
@@ -36,6 +39,10 @@ export const API = {
   resultatMancheArrivee: "/resultat-manche/arrivee",
 
   checkpointEligible: "/checkpoint/eligible-participants",
+
+  controlPoints: "/control-points",
+  controlPoint: "/control-point",
+  controlPointById: (id: number) => `/control-point/${id}`,
 
   mancheAssignments: "/manche-assignments",
 

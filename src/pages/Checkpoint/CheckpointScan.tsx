@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Course, CourseType, ParticipantProjection } from "@/lib/type";
 import { formatParticipantName, formatTimeShort } from "@/lib/utils";
 import { fetchCoursesDetailed } from "@/services/courses";
+import { fetchControlPointsByCourse } from "@/services/controlPoints";
 import {
   fetchCheckpointEligibleParticipants,
   fetchManchesByPhase,
@@ -13,16 +14,22 @@ import {
 import type { CheckpointMancheMode } from "@/lib/raceRanking";
 import { ParticipantAutocomplete } from "@/components/ParticipantAutocomplete";
 import { TrailCheckpointForm } from "./TrailCheckpointForm";
-import { TYPE_LABELS } from "@/pages/Courses/CourseFormModal";
+import { ROLE_CHECKPOINT, useAuth } from "@/lib/auth";
+import type { ControlPointConfig } from "@/lib/type";
 
 type DHMode = "depart" | "arrivee";
 
 export const CheckpointScan = () => {
+  const { user } = useAuth();
+  const isCollaborateur = user?.role === ROLE_CHECKPOINT;
+  const assignedCourseId = user?.assignedControlPoint?.courseId ?? null;
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [courseId, setCourseId] = useState<number | "">("");
   const [phaseId, setPhaseId] = useState<number | "">("");
   const [mancheId, setMancheId] = useState<number | "">("");
   const [dhMode, setDhMode] = useState<DHMode>("depart");
+  const [controlPoints, setControlPoints] = useState<ControlPointConfig[]>([]);
 
   const [phases, setPhases] = useState<{ id: number; label: string }[]>([]);
   const [manches, setManches] = useState<{ id: number; label: string }[]>([]);
@@ -32,6 +39,13 @@ export const CheckpointScan = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const visibleCourses = useMemo(() => {
+    if (isCollaborateur && assignedCourseId) {
+      return courses.filter((c) => c.id === assignedCourseId);
+    }
+    return courses;
+  }, [courses, isCollaborateur, assignedCourseId]);
 
   const selectedCourse = useMemo(
     () => courses.find((c) => c.id === courseId),
@@ -48,6 +62,22 @@ export const CheckpointScan = () => {
   useEffect(() => {
     fetchCoursesDetailed().then(setCourses).catch(() => setCourses([]));
   }, []);
+
+  useEffect(() => {
+    if (isCollaborateur && assignedCourseId) {
+      setCourseId(assignedCourseId);
+    }
+  }, [isCollaborateur, assignedCourseId]);
+
+  useEffect(() => {
+    if (!courseId || courseType !== "TRAIL") {
+      setControlPoints([]);
+      return;
+    }
+    fetchControlPointsByCourse(Number(courseId))
+      .then(setControlPoints)
+      .catch(() => setControlPoints([]));
+  }, [courseId, courseType]);
 
   useEffect(() => {
     if (!courseId) {
@@ -171,7 +201,6 @@ export const CheckpointScan = () => {
         </p>
       </div>
 
-      {/* Sélecteurs communs */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600">Course</label>
@@ -183,11 +212,12 @@ export const CheckpointScan = () => {
               setCourseId(v ? Number(v) : "");
               resetMessages();
             }}
+            disabled={isCollaborateur && !!assignedCourseId}
           >
             <option value="">Sélectionner une course…</option>
-            {courses.map((c) => (
+            {visibleCourses.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name} ({TYPE_LABELS[c.type]})
+                {c.name} ({c.type})
               </option>
             ))}
           </select>
@@ -256,13 +286,22 @@ export const CheckpointScan = () => {
 
         {courseType && (
           <span className="inline-flex rounded-full border px-2 py-0.5 text-xs text-slate-600">
-            Mode {TYPE_LABELS[courseType]}
+            Mode {courseType}
+            {courseType === "TRAIL" && controlPoints.length > 0 && (
+              <span className="ml-1 text-slate-400">
+                · {controlPoints.length} PC
+              </span>
+            )}
           </span>
         )}
       </div>
 
-      {/* TRAIL — comportement existant */}
-      {courseType === "TRAIL" && <TrailCheckpointForm />}
+      {courseType === "TRAIL" && courseId && (
+        <TrailCheckpointForm
+          courseId={Number(courseId)}
+          controlPoints={controlPoints}
+        />
+      )}
 
       {!courseId && (
         <div className="text-center text-sm text-slate-500 py-8 bg-white border rounded-2xl">
@@ -270,7 +309,6 @@ export const CheckpointScan = () => {
         </div>
       )}
 
-      {/* DH — départ / arrivée */}
       {courseType === "DH" && courseId && (
         <div className="space-y-4">
           <div className="flex rounded-xl border p-1 bg-slate-50">
@@ -343,7 +381,6 @@ export const CheckpointScan = () => {
         </div>
       )}
 
-      {/* XC — arrivée uniquement */}
       {courseType === "XC" && courseId && (
         <div className="bg-white border rounded-2xl p-4 sm:p-6 space-y-4">
           <div className="text-sm font-medium text-slate-700">Arrivée manche</div>

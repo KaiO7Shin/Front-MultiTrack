@@ -1,7 +1,7 @@
 import type { ParticipantCreateDTO, BikeType, Course } from "@/lib/type";
-import { BIKE_TYPE_LABELS, BIKE_TYPES } from "@/lib/type";
-import { fetchCoursesDetailed } from "@/services/courses";
+import { fetchCoursesForRegistration } from "@/services/courses";
 import { createParticipant } from "@/services/participants";
+import { fetchTypesVelo } from "@/services/typesVelo";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import { FormField, inputClassName, selectClassName } from "@/components/ui/form-field";
@@ -22,6 +22,7 @@ function isBikeCourse(type: Course["type"] | undefined): boolean {
 
 export const AddParticipant = () => {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [bikeTypes, setBikeTypes] = useState<{ id: number; libelle: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -29,9 +30,12 @@ export const AddParticipant = () => {
   const [form, setForm] = useState<ParticipantCreateDTO>(emptyForm);
 
   useEffect(() => {
-    fetchCoursesDetailed()
-      .then(setCourses)
-      .catch(() => setErr("Impossible de charger les courses"));
+    Promise.all([fetchCoursesForRegistration(), fetchTypesVelo()])
+      .then(([loadedCourses, loadedBikeTypes]) => {
+        setCourses(loadedCourses);
+        setBikeTypes(loadedBikeTypes);
+      })
+      .catch(() => setErr("Impossible de charger les données d'inscription"));
   }, []);
 
   const selectedCourse = useMemo(
@@ -186,9 +190,9 @@ export const AddParticipant = () => {
               required
             >
               <option value="" disabled>Sélectionne un type de vélo…</option>
-              {BIKE_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {BIKE_TYPE_LABELS[t]}
+              {bikeTypes.map((t) => (
+                <option key={t.id} value={t.libelle}>
+                  {t.libelle}
                 </option>
               ))}
             </select>

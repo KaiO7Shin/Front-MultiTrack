@@ -1,15 +1,8 @@
-import {
-  localGetAllResultatsManche,
-  localGetDisqualificationsByCourse,
-  localGetManches,
-  localGetPhases,
-} from "@/lib/localData";
 import type {
   Course,
   CourseStatus,
   CourseType,
   ParticipantProjection,
-  ResultatManche,
 } from "@/lib/type";
 import { fetchCoursesDetailed } from "@/services/courses";
 import { fetchParticipantsByCourse } from "@/services/participants";
@@ -41,6 +34,7 @@ export type DashboardStats = {
     enCourse: number;
     dnf: number;
     dns: number;
+    dsq: number;
   };
   resultats: {
     departs: number;
@@ -51,35 +45,6 @@ export type DashboardStats = {
   liveCourses: LiveCourseSummary[];
 };
 
-function buildMancheToCourseMap(): Map<number, number> {
-  const phaseCourse = new Map(localGetPhases().map((p) => [p.id, p.courseId]));
-  const map = new Map<number, number>();
-  for (const m of localGetManches()) {
-    const courseId = phaseCourse.get(m.phaseId);
-    if (courseId != null) map.set(m.id, courseId);
-  }
-  return map;
-}
-
-function aggregateResultatsByCourse(
-  resultats: ResultatManche[],
-  mancheToCourse: Map<number, number>
-): Map<number, { departs: number; arrivees: number }> {
-  const byCourse = new Map<number, { departs: number; arrivees: number }>();
-
-  for (const r of resultats) {
-    const courseId = mancheToCourse.get(r.mancheId);
-    if (courseId == null) continue;
-
-    const cur = byCourse.get(courseId) ?? { departs: 0, arrivees: 0 };
-    if (r.tempsDepart) cur.departs += 1;
-    if (r.tempsArrive) cur.arrivees += 1;
-    byCourse.set(courseId, cur);
-  }
-
-  return byCourse;
-}
-
 function countParticipants(participants: ParticipantProjection[]) {
   return {
     total: participants.length,
@@ -88,6 +53,7 @@ function countParticipants(participants: ParticipantProjection[]) {
     enCourse: participants.filter((p) => p.statut === "En course").length,
     dnf: participants.filter((p) => p.statut === "DNF").length,
     dns: participants.filter((p) => p.statut === "DNS").length,
+    dsq: participants.filter((p) => p.statut === "DSQ").length,
   };
 }
 
@@ -116,16 +82,7 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
   );
 
   const allParticipants = participantsByCourse.flatMap((x) => x.participants);
-  const resultats = localGetAllResultatsManche();
-  const resultatsByCourse = aggregateResultatsByCourse(
-    resultats,
-    buildMancheToCourseMap()
-  );
-
-  const disqualifications = courses.reduce(
-    (sum, c) => sum + localGetDisqualificationsByCourse(c.id).length,
-    0
-  );
+  const participantCounts = countParticipants(allParticipants);
 
   const liveCourses: LiveCourseSummary[] = courses
     .filter((c) => c.status === "En cours")
@@ -133,7 +90,6 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
       const plist =
         participantsByCourse.find((x) => x.courseId === course.id)
           ?.participants ?? [];
-      const res = resultatsByCourse.get(course.id);
 
       return {
         id: course.id,
@@ -143,21 +99,19 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
         participantCount: plist.length,
         presentCount: plist.filter((p) => p.statut === "Present").length,
         enCourseCount: plist.filter((p) => p.statut === "En course").length,
-        arriveeCount: res?.arrivees ?? 0,
-        departCount: res?.departs ?? 0,
+        arriveeCount: 0,
+        departCount: 0,
       };
     });
 
   return {
     courses: summarizeCourses(courses),
-    participants: countParticipants(allParticipants),
+    participants: participantCounts,
     resultats: {
-      departs: resultats.filter((r) => r.tempsDepart).length,
-      arrivees: resultats.filter((r) => r.tempsArrive).length,
-      enAttenteArrivee: resultats.filter(
-        (r) => r.tempsDepart && !r.tempsArrive
-      ).length,
-      disqualifications,
+      departs: 0,
+      arrivees: allParticipants.filter((p) => p.statut === "Finisher").length,
+      enAttenteArrivee: 0,
+      disqualifications: participantCounts.dsq,
     },
     liveCourses,
   };

@@ -69,21 +69,23 @@ export type Course = {
   id: number;
   name: string;
   type: CourseType;
+  typeCourseId?: number;
   distanceKm?: number;
   elevation?: number;
   startAt?: string;
   status: CourseStatus;
   checkpoints: number;
-  cutoffMinutes?: number;
-  description?: string;
+  dureeBarriereHoraire?: string;
+  nomSequence?: string;
 };
 
 export type CourseCreateDTO = {
-  name: string;
-  type: CourseType;
-  distanceKm?: number;
-  elevation?: number;
-  description?: string;
+  libelle: string;
+  typeCourseId: number;
+  distance: number;
+  totalDenivele: number;
+  dureeBarriereHoraire: string;
+  nomSequence?: string;
 };
 
 export type CourseUpdateDTO = Partial<CourseCreateDTO>;
@@ -119,6 +121,17 @@ export type ParticipantResponse = {
   genre: string;
   categorie: string;
   statut: string;
+  typeVelo?: string;
+};
+
+export type TypeVelo = {
+  id: number;
+  libelle: string;
+};
+
+export type TypeCourse = {
+  id: number;
+  libelle: string;
 };
 
 export type RenderResponse<T> = {
@@ -132,8 +145,10 @@ export type ParticipantStatus =
   | "Inscrit"
   | "Present"
   | "En course"
+  | "Finisher"
   | "DNS"
-  | "DNF";
+  | "DNF"
+  | "DSQ";
 
 export type ParticipantProjection = {
   id: number;
@@ -200,6 +215,28 @@ export type MancheCreateDTO = {
 
 export type MancheUpdateDTO = Partial<Pick<MancheCreateDTO, "label">>;
 
+/** Point de contrôle d'une course TRAIL */
+export type ControlPointConfig = {
+  id: number;
+  courseId: number;
+  label: string;
+  numero: number;
+  utilisateurId?: number;
+  /** Présent uniquement à la création ou régénération */
+  passcode?: string;
+};
+
+export type ControlPointCreateDTO = {
+  courseId: number;
+  label: string;
+  numero: number;
+  passcode?: string;
+};
+
+export type ControlPointUpdateDTO = Partial<
+  Pick<ControlPointCreateDTO, "label" | "numero" | "passcode">
+>;
+
 /** Phase avec ses manches (relation 1 → N) */
 export type PhaseWithManches = Phase & {
   manches: Manche[];
@@ -220,12 +257,11 @@ export type ResultatMancheView = ResultatManche & {
   nom: string;
 };
 
-/** Disqualification : exclu des phases suivantes sans résultat préalable */
+/** @deprecated La disqualification est gérée via le statut participant « DSQ » */
 export type ParticipantDisqualification = {
   id: number;
   participantId: number;
   courseId: number;
-  /** Première phase où le coureur n'apparaît plus (s'il n'y a pas encore de résultat) */
   fromPhaseId: number;
   mancheId?: number;
   reason?: string;

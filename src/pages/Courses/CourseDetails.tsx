@@ -19,9 +19,16 @@ import {
   updateManche,
   updatePhase,
 } from "@/services/raceStructure";
-import { TYPE_LABELS } from "./CourseFormModal";
+import {
+  createControlPoint,
+  deleteControlPoint,
+  fetchControlPointsByCourse,
+  updateControlPoint,
+} from "@/services/controlPoints";
 import { PhaseFormModal } from "./PhaseFormModal";
 import { MancheFormModal } from "./MancheFormModal";
+import { ControlPointFormModal } from "./ControlPointFormModal";
+import type { ControlPointConfig } from "@/lib/type";
 
 export const CourseDetails = () => {
   const { id } = useParams();
@@ -52,6 +59,14 @@ export const CourseDetails = () => {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const [controlPoints, setControlPoints] = useState<ControlPointConfig[]>([]);
+  const [cpModal, setCpModal] = useState<{
+    open: boolean;
+    mode: "create" | "edit";
+    target: ControlPointConfig | null;
+  }>({ open: false, mode: "create", target: null });
+  const [revealedPasscode, setRevealedPasscode] = useState<string | null>(null);
+
   const loadCourse = useCallback(async () => {
     const list = await fetchCoursesDetailed();
     setCourse(list.find((c) => c.id === courseId) ?? null);
@@ -73,6 +88,18 @@ export const CourseDetails = () => {
     });
   }, [courseId]);
 
+  const loadControlPoints = useCallback(async () => {
+    if (!course || course.type !== "TRAIL") {
+      setControlPoints([]);
+      return;
+    }
+    try {
+      setControlPoints(await fetchControlPointsByCourse(courseId));
+    } catch {
+      setControlPoints([]);
+    }
+  }, [course, courseId]);
+
   const loadResultats = useCallback(async () => {
     if (!selectedManche) {
       setResultats([]);
@@ -87,11 +114,20 @@ export const CourseDetails = () => {
   }, [loadCourse, loadStructure]);
 
   useEffect(() => {
+    loadControlPoints();
+  }, [loadControlPoints]);
+
+  useEffect(() => {
     loadResultats();
   }, [loadResultats]);
 
   const showStructure = useMemo(
     () => course?.type === "DH" || course?.type === "XC",
+    [course?.type]
+  );
+
+  const showControlPoints = useMemo(
+    () => course?.type === "TRAIL",
     [course?.type]
   );
 
@@ -116,7 +152,7 @@ export const CourseDetails = () => {
       if (phaseModal.mode === "create") {
         await createPhase(dto);
       } else if (phaseModal.target) {
-        await updatePhase(phaseModal.target.id, { label: dto.label }, phaseModal.target);
+        await updatePhase(phaseModal.target.id, { label: dto.label });
       }
       setPhaseModal({ open: false, mode: "create", target: null });
       await loadStructure();
@@ -136,11 +172,7 @@ export const CourseDetails = () => {
       if (mancheModal.mode === "create") {
         await createManche(dto);
       } else if (mancheModal.target) {
-        await updateManche(
-          mancheModal.target.id,
-          { label: dto.label },
-          mancheModal.target
-        );
+        await updateManche(mancheModal.target.id, { label: dto.label });
       }
       setMancheModal({ open: false, mode: "create", target: null, phase: null });
       await loadStructure();
@@ -159,16 +191,70 @@ export const CourseDetails = () => {
         ? `Supprimer la phase « ${phase.label} » et ses ${count} manche${count > 1 ? "s" : ""} ?`
         : `Supprimer la phase « ${phase.label} » ?`;
     if (!window.confirm(msg)) return;
-    await deletePhase(phase.id);
-    if (selectedManche?.phase.id === phase.id) setSelectedManche(null);
-    await loadStructure();
+    try {
+      await deletePhase(phase.id);
+      if (selectedManche?.phase.id === phase.id) setSelectedManche(null);
+      await loadStructure();
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      alert(err.response?.data?.message ?? "Erreur lors de la suppression de la phase.");
+    }
   }
 
   async function handleDeleteManche(manche: Manche) {
     if (!window.confirm(`Supprimer la manche « ${manche.label} » ?`)) return;
-    await deleteManche(manche.id);
-    if (selectedManche?.manche.id === manche.id) setSelectedManche(null);
-    await loadStructure();
+    try {
+      await deleteManche(manche.id);
+      if (selectedManche?.manche.id === manche.id) setSelectedManche(null);
+      await loadStructure();
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      alert(err.response?.data?.message ?? "Erreur lors de la suppression de la manche.");
+    }
+  }
+
+  async function handleControlPointSubmit(dto: {
+    courseId: number;
+    label: string;
+    numero: number;
+    passcode?: string;
+  }) {
+    setSaving(true);
+    setFormError(null);
+    setRevealedPasscode(null);
+    try {
+      if (cpModal.mode === "create") {
+        const created = await createControlPoint(dto);
+        if (created.passcode) setRevealedPasscode(created.passcode);
+      } else if (cpModal.target) {
+        const updated = await updateControlPoint(cpModal.target.id, {
+          label: dto.label,
+          numero: dto.numero,
+          passcode: dto.passcode,
+        });
+        if (updated.passcode) setRevealedPasscode(updated.passcode);
+      }
+      setCpModal({ open: false, mode: "create", target: null });
+      await loadControlPoints();
+      await loadCourse();
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      setFormError(err.response?.data?.message ?? "Erreur point de contrôle");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteControlPoint(cp: ControlPointConfig) {
+    if (!window.confirm(`Supprimer le point « ${cp.label} » ?`)) return;
+    try {
+      await deleteControlPoint(cp.id);
+      await loadControlPoints();
+      await loadCourse();
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      alert(err.response?.data?.message ?? "Erreur lors de la suppression.");
+    }
   }
 
   if (!course) {
@@ -195,7 +281,7 @@ export const CourseDetails = () => {
         <div className="min-w-0">
           <h1 className="page-title break-words">{course.name}</h1>
           <p className="page-subtitle">
-            {TYPE_LABELS[course.type]} · {normalizeCourseStatus(course.status)}
+            {course.type} · {normalizeCourseStatus(course.status)}
             {course.distanceKm != null ? ` · ${course.distanceKm} km` : ""}
           </p>
         </div>
@@ -382,11 +468,108 @@ export const CourseDetails = () => {
             )}
           </div>
         </div>
+      ) : showControlPoints ? (
+        <div className="space-y-4">
+          <div className="bg-white border rounded-2xl p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-1">
+              <div className="min-w-0">
+                <h2 className="font-semibold">Points de contrôle</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Chaque point génère un passcode collaborateur pour le scan
+                  dossard sur la page checkpoint.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormError(null);
+                  setRevealedPasscode(null);
+                  setCpModal({ open: true, mode: "create", target: null });
+                }}
+                className="inline-flex items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-[#8c9962]/10 shrink-0 w-full sm:w-auto"
+              >
+                <Plus className="h-3 w-3" />
+                Point de contrôle
+              </button>
+            </div>
+
+            {revealedPasscode && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Passcode collaborateur :{" "}
+                <strong className="font-mono">{revealedPasscode}</strong>
+                <span className="block text-xs mt-1 text-amber-700">
+                  Notez-le maintenant : il ne sera plus affiché ensuite.
+                </span>
+              </div>
+            )}
+
+            {controlPoints.length === 0 ? (
+              <p className="text-sm text-slate-500 py-4">
+                Aucun point de contrôle. Ajoutez au moins un PC intermédiaire ;
+                l'arrivée finale se fait via le mode arrivée (admin) ou un PC
+                dédié.
+              </p>
+            ) : (
+              <ul className="mt-4 divide-y rounded-xl border overflow-hidden">
+                {controlPoints.map((cp) => (
+                  <li
+                    key={cp.id}
+                    className="flex items-center justify-between gap-2 px-3 py-2.5 bg-white"
+                  >
+                    <div className="min-w-0">
+                      <span className="font-medium text-sm">{cp.label}</span>
+                      <span className="text-xs text-slate-500 ml-2">
+                        n°{cp.numero}
+                      </span>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button
+                        type="button"
+                        className="p-1 rounded hover:bg-slate-100"
+                        title="Modifier"
+                        onClick={() => {
+                          setFormError(null);
+                          setRevealedPasscode(null);
+                          setCpModal({
+                            open: true,
+                            mode: "edit",
+                            target: cp,
+                          });
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        className="p-1 rounded text-red-600 hover:bg-red-50"
+                        title="Supprimer"
+                        onClick={() => handleDeleteControlPoint(cp)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {controlPoints.length > 0 && (
+              <p className="text-xs text-slate-400 mt-3 pt-3 border-t">
+                {controlPoints.length} point
+                {controlPoints.length !== 1 ? "s" : ""} de contrôle
+              </p>
+            )}
+          </div>
+
+          <div className="bg-white border rounded-2xl p-4 text-sm text-slate-600">
+            Course <strong>Trail</strong> : le pointage se fait via scan dossard
+            sur chaque point de contrôle. Les collaborateurs se connectent avec
+            le passcode de leur PC assigné.
+          </div>
+        </div>
       ) : (
         <div className="bg-white border rounded-2xl p-4 text-sm text-slate-600">
-          Course <strong>Trail</strong> : le pointage se fait via les checkpoints
-          (scan dossard). Les phases et manches ne sont pas utilisées pour ce
-          type de course.
+          Type de course non pris en charge pour la configuration checkpoint.
         </div>
       )}
 
@@ -477,6 +660,21 @@ export const CourseDetails = () => {
           onSubmit={handleMancheSubmit}
         />
       )}
+
+      <ControlPointFormModal
+        open={cpModal.open}
+        mode={cpModal.mode}
+        courseId={courseId}
+        initial={cpModal.target}
+        saving={saving}
+        error={formError}
+        onClose={() => {
+          if (saving) return;
+          setCpModal({ open: false, mode: "create", target: null });
+          setFormError(null);
+        }}
+        onSubmit={handleControlPointSubmit}
+      />
     </section>
   );
 };

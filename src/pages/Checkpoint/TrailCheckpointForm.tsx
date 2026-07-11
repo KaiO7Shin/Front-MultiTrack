@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { recordTrailCheckpoint } from "@/services/checkpoint";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import { FormField } from "@/components/ui/form-field";
+import type { ControlPointConfig } from "@/lib/type";
+import { ROLE_CHECKPOINT } from "@/lib/auth";
 
 type SessionUser = {
   id: number;
   role: number;
   assignedControlPoint?: {
     id: number;
+    courseId?: number;
     label?: string;
     controlPointNumber?: number;
   };
@@ -23,7 +26,15 @@ function readStoredUser(): SessionUser | null {
   }
 }
 
-export function TrailCheckpointForm() {
+type TrailCheckpointFormProps = {
+  courseId: number;
+  controlPoints: ControlPointConfig[];
+};
+
+export function TrailCheckpointForm({
+  courseId,
+  controlPoints,
+}: TrailCheckpointFormProps) {
   const [user, setUser] = useState<SessionUser | null>(() => readStoredUser());
 
   useEffect(() => {
@@ -34,8 +45,22 @@ export function TrailCheckpointForm() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const controlPointId = user?.assignedControlPoint?.id ?? null;
-  const controlPointLabel = user?.assignedControlPoint?.label ?? undefined;
+  const isCollaborateur = user?.role === ROLE_CHECKPOINT;
+  const assignedPoint = user?.assignedControlPoint ?? null;
+
+  const [adminMode, setAdminMode] = useState<"finishline" | number>("finishline");
+
+  const effectiveControlPointId: number | null = isCollaborateur
+    ? assignedPoint?.id ?? null
+    : adminMode === "finishline"
+      ? null
+      : adminMode;
+
+  const controlPointLabel = isCollaborateur
+    ? assignedPoint?.label
+    : adminMode === "finishline"
+      ? undefined
+      : controlPoints.find((cp) => cp.id === adminMode)?.label;
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +76,13 @@ export function TrailCheckpointForm() {
     return () => {
       if (successTimerRef.current) clearTimeout(successTimerRef.current);
     };
-  }, []);
+  }, [courseId]);
+
+  useEffect(() => {
+    if (!isCollaborateur) {
+      setAdminMode("finishline");
+    }
+  }, [courseId, isCollaborateur]);
 
   function vibrate(ms = 30) {
     if (navigator?.vibrate) navigator.vibrate(ms);
@@ -63,7 +94,7 @@ export function TrailCheckpointForm() {
   }
 
   async function submitToServer(bibNumber: string) {
-    return recordTrailCheckpoint(bibNumber, controlPointId);
+    return recordTrailCheckpoint(bibNumber, effectiveControlPointId);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -79,6 +110,12 @@ export function TrailCheckpointForm() {
     const localErr = validateLocal(bib);
     if (localErr) {
       setError(localErr);
+      vibrate(60);
+      return;
+    }
+
+    if (isCollaborateur && !effectiveControlPointId) {
+      setError("Aucun point de contrôle assigné à votre session.");
       vibrate(60);
       return;
     }
@@ -131,19 +168,62 @@ export function TrailCheckpointForm() {
     e.preventDefault();
   }
 
+  if (isCollaborateur && assignedPoint?.courseId && assignedPoint.courseId !== courseId) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800">
+        Votre point de contrôle est assigné à une autre course. Sélectionnez la
+        course correspondante ou contactez l'organisateur.
+      </div>
+    );
+  }
+
   return (
     <form
       onSubmit={handleSubmit}
       className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-3"
     >
-      {controlPointId ? (
+      {!isCollaborateur && (
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-slate-600">
+            Mode de pointage
+          </label>
+          <select
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+            value={
+              adminMode === "finishline" ? "finishline" : String(adminMode)
+            }
+            onChange={(e) => {
+              const v = e.target.value;
+              setAdminMode(v === "finishline" ? "finishline" : Number(v));
+              setError(null);
+              setSuccess(null);
+            }}
+          >
+            <option value="finishline">Arrivée finale (ligne d'arrivée)</option>
+            {controlPoints.map((cp) => (
+              <option key={cp.id} value={cp.id}>
+                {cp.label} (n°{cp.numero})
+              </option>
+            ))}
+          </select>
+          {controlPoints.length === 0 && (
+            <p className="text-xs text-slate-500">
+              Aucun PC configuré — configurez-les dans la fiche course Trail.
+            </p>
+          )}
+        </div>
+      )}
+
+      {effectiveControlPointId ? (
         <div className="text-sm text-center">
           <span className="inline-flex items-center gap-1 rounded-full border px-2 py-1 border-[#8c9962]/50 text-[#8c9962]">
-            Point de contrôle : {controlPointLabel ?? `#${controlPointId}`}
+            Point de contrôle : {controlPointLabel ?? `#${effectiveControlPointId}`}
           </span>
         </div>
       ) : (
-        <div className="text-sm text-center text-slate-500">Mode arrivée (admin)</div>
+        <div className="text-sm text-center text-slate-500">
+          Mode arrivée (admin)
+        </div>
       )}
 
       <FormField label="N° Dossard" htmlFor="bib-1">
@@ -177,7 +257,11 @@ export function TrailCheckpointForm() {
       </FormField>
 
       <div aria-live="polite" aria-atomic="true" className="space-y-2">
-        {error && <Alert variant="error" role="alert">{error}</Alert>}
+        {error && (
+          <Alert variant="error" role="alert">
+            {error}
+          </Alert>
+        )}
         {success && <Alert variant="success">{success}</Alert>}
       </div>
 

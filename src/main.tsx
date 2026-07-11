@@ -16,14 +16,7 @@ import { CheckpointHistory } from "./pages/Checkpoint/CheckpointHistory";
 import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
 import { LoginPage } from "./pages/Auth/LoginPage";
 
-import { AuthProvider, RequireAuth } from "./lib/auth"; // <== ton fichier de contexte
-import { USE_LOCAL_DATA, localResetDemoData } from "./lib/localData";
-
-if (USE_LOCAL_DATA && typeof window !== "undefined") {
-  (window as Window & { localResetDemoData?: () => void }).localResetDemoData =
-    localResetDemoData;
-}
-
+import { AuthProvider, RequireAuth } from "./lib/auth";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },

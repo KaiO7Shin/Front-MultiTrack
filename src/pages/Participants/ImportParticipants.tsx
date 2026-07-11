@@ -142,7 +142,14 @@ export const ImportParticipants = () => {
           Colonnes requises :
           <br />
           <span className="font-mono">
-            nom, prenom, date_naissance, genre, num_dossard, course_choisie_id, d_categorie_id
+            nom, dtn, genre, course
+          </span>
+          <br />
+          Colonne optionnelle : <span className="font-mono">prenom</span>
+          <br />
+          <span className="text-slate-400">
+            dtn au format jj/mm/aaaa — course = libellé exact de la course (ex. Trail Légende 21 km).
+            Le dossard et la catégorie sont calculés automatiquement.
           </span>
         </p>
       </div>

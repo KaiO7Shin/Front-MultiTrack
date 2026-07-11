@@ -1,14 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
-import {
-  BIKE_TYPE_LABELS,
-  BIKE_TYPES,
-  type BikeType,
-  type Course,
-  type ParticipantUpdateDTO,
-  type ParticipantStatus,
-} from "@/lib/type";
+import type { BikeType, Course, ParticipantUpdateDTO, ParticipantStatus } from "@/lib/type";
 import { fetchCoursesDetailed } from "@/services/courses";
+import { fetchTypesVelo } from "@/services/typesVelo";
 import { formatParticipantName } from "@/lib/utils";
 
 export type ParticipantEditTarget = {
@@ -19,7 +13,7 @@ export type ParticipantEditTarget = {
   dateNaissance: string;
   courseId: number;
   statut: ParticipantStatus;
-  typeVelo?: BikeType;
+  typeVelo?: string;
 };
 
 type ParticipantEditModalProps = {
@@ -53,12 +47,19 @@ export function ParticipantEditModal({
   onSubmit,
 }: ParticipantEditModalProps) {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [bikeTypes, setBikeTypes] = useState<{ id: number; libelle: string }[]>([]);
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
-    fetchCoursesDetailed()
-      .then(setCourses)
-      .catch(() => setCourses([]));
+    Promise.all([fetchCoursesDetailed(), fetchTypesVelo()])
+      .then(([loadedCourses, loadedBikeTypes]) => {
+        setCourses(loadedCourses);
+        setBikeTypes(loadedBikeTypes);
+      })
+      .catch(() => {
+        setCourses([]);
+        setBikeTypes([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -71,7 +72,7 @@ export function ParticipantEditModal({
       genre: participant.genre,
       courseChoisieId: participant.courseId,
       statut: participant.statut,
-      typeVelo: participant.typeVelo,
+      typeVelo: participant.typeVelo as BikeType | undefined,
     });
   }, [participant]);
 
@@ -264,9 +265,9 @@ export function ParticipantEditModal({
                   <option value="" disabled>
                     Sélectionne un type de vélo…
                   </option>
-                  {BIKE_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {BIKE_TYPE_LABELS[t]}
+                  {bikeTypes.map((t) => (
+                    <option key={t.id} value={t.libelle}>
+                      {t.libelle}
                     </option>
                   ))}
                 </select>
@@ -291,8 +292,10 @@ export function ParticipantEditModal({
                 <option value="Inscrit">Inscrit</option>
                 <option value="Present">Present</option>
                 <option value="En course">En course</option>
+                <option value="Finisher">Finisher</option>
                 <option value="DNS">DNS</option>
                 <option value="DNF">DNF</option>
+                <option value="DSQ">DSQ</option>
               </select>
             </div>
           </div>

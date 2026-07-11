@@ -10,7 +10,7 @@ import {
   fetchCoursesDetailed,
   updateCourse,
 } from "@/services/courses";
-import { CourseFormModal, TYPE_LABELS } from "./CourseFormModal";
+import { CourseFormModal } from "./CourseFormModal";
 
 const ACCENT = "#8c9962";
 
@@ -84,7 +84,7 @@ export const CoursesList = () => {
         const created = await createCourse(dto);
         setCourses((prev) => [...prev, created]);
       } else if (editTarget) {
-        const updated = await updateCourse(editTarget.id, dto, editTarget);
+        const updated = await updateCourse(editTarget.id, dto);
         setCourses((prev) =>
           prev.map((c) => (c.id === editTarget.id ? updated : c))
         );
@@ -101,7 +101,7 @@ export const CoursesList = () => {
   }
 
   async function handleDelete(course: Course) {
-    if (course.status !== "A venir") {
+    if (normalizeCourseStatus(course.status) !== "A venir") {
       alert("Seules les courses « À venir » peuvent être supprimées.");
       return;
     }
@@ -268,7 +268,7 @@ function CourseCard({
             <span
               className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${TYPE_BADGE[course.type]}`}
             >
-              {TYPE_LABELS[course.type]}
+              {course.type}
             </span>
           </div>
           <div className="text-xs text-slate-500 mt-1">
@@ -276,9 +276,6 @@ function CourseCard({
             {course.distanceKm != null ? ` • ${course.distanceKm} km` : ""}
             {course.elevation != null ? ` • D+ ${course.elevation} m` : ""}
           </div>
-          {course.description && (
-            <p className="text-xs text-slate-600 mt-2 line-clamp-2">{course.description}</p>
-          )}
         </div>
       </div>
 

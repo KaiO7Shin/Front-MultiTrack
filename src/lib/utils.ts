@@ -25,10 +25,17 @@ export function normalizeCourse(raw: any): { id: number; label: string } {
 }
 export function normalizeCategory(raw: any): Category {
   const ageMaxRaw = raw?.ageMax ?? raw?.age_max;
+  const alias = String(raw?.alias ?? "");
+  const genreFromApi = raw?.genre;
   return {
     id: Number(raw?.id ?? 0),
-    alias: String(raw?.alias ?? ""),
-    genre: raw?.genre === "Femme" ? "Femme" : "Homme",
+    alias,
+    genre:
+      genreFromApi === "Femme" || genreFromApi === "Homme"
+        ? genreFromApi
+        : alias.trim().toUpperCase().endsWith("F")
+          ? "Femme"
+          : "Homme",
     ageMin: Number(raw?.ageMin ?? raw?.age_min ?? 0),
     ageMax:
       ageMaxRaw === null || ageMaxRaw === undefined || ageMaxRaw === ""
@@ -141,15 +148,25 @@ export function normalizeCourseStatus(raw: unknown): CourseStatus {
   return "A venir";
 }
 
+export function normalizeBikeType(raw: unknown): BikeType | undefined {
+  const upper = String(raw ?? "").trim().toUpperCase();
+  if (upper === "TOUT SUSPENDU") return "TOUT SUSPENDU";
+  if (upper === "SEMI-RIGIDE") return "SEMI-RIGIDE";
+  return undefined;
+}
+
 export function normalizeParticipantStatus(raw: unknown): ParticipantStatus {
   const s = String(raw ?? "Inscrit").trim();
-  if (s === "Finisher" || s === "Finished") return "En course";
+  if (s === "Finisher" || s === "Finished") return "Finisher";
+  if (s.toUpperCase() === "DSQ") return "DSQ";
   const allowed: ParticipantStatus[] = [
     "Inscrit",
     "Present",
     "En course",
+    "Finisher",
     "DNS",
     "DNF",
+    "DSQ",
   ];
   if (allowed.includes(s as ParticipantStatus)) return s as ParticipantStatus;
   return "Inscrit";
@@ -173,11 +190,7 @@ export function normalizeParticipantProjection(
     raw.courseId ?? raw.courseChoisieId ?? raw.raceId ?? courseIdFallback ?? 0
   );
 
-  const typeVeloRaw = raw.typeVelo ?? raw.type_velo;
-  const typeVelo =
-    typeVeloRaw === "TOUT SUSPENDU" || typeVeloRaw === "SEMI-RIGIDE"
-      ? typeVeloRaw
-      : undefined;
+  const typeVelo = normalizeBikeType(raw.typeVelo ?? raw.type_velo);
 
   return {
     id: Number(raw.id ?? raw.participantId ?? 0),
@@ -214,8 +227,10 @@ export function normalizeCourseFull(raw: any): Course {
     startAt: raw?.startAt ?? raw?.start_at ?? raw?.start_time ?? raw?.start_date_time,
     status: normalizeCourseStatus(raw?.status ?? raw?.status_label ?? raw?.code ?? raw?.state),
     checkpoints: intOrZero(raw?.checkpoints ?? raw?.checkpoints_count ?? raw?.cps),
-    cutoffMinutes: numOrUndef(raw?.cutoffMinutes ?? raw?.cutoff_minutes ?? raw?.barrier_minutes),
-    description: raw?.description ?? raw?.desc,
+    dureeBarriereHoraire:
+      raw?.dureeBarriereHoraire ?? raw?.duree_barriere_horaire ?? raw?.barrier_time,
+    nomSequence: raw?.nomSequence ?? raw?.nom_sequence,
+    typeCourseId: numOrUndef(raw?.typeCourseId ?? raw?.type_course_id),
   };
 }
 

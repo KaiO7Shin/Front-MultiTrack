@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import apiClient from "./api";
 import { API } from "./apiEndpoints";
-import { apiOrLocal } from "./apiFallback";
 import { Navigate, useLocation } from "react-router-dom";
 import { PageLoading } from "@/components/ui/feedback";
 
@@ -13,6 +12,7 @@ export type SessionUser = {
   role: number;
   assignedControlPoint?: {
     id: number;
+    courseId?: number;
     label: string;
     controlPointNumber?: number;
   };
@@ -38,7 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // restore from storage
   useEffect(() => {
     try {
       const t = localStorage.getItem("token");
@@ -58,45 +57,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function signIn(passcode: string) {
     setLoading(true);
     try {
-      await apiOrLocal(
-        async () => {
-          const res = await apiClient.post<{
-            data: { token: string; user: SessionUser };
-          }>(API.login, { passcode });
+      const res = await apiClient.post<{
+        data: { token: string; user: SessionUser };
+      }>(API.login, { passcode });
 
-          const { token, user } = res.data.data;
-          setToken(token);
-          setUser(user);
-          localStorage.setItem("token", token);
-          localStorage.setItem("user", JSON.stringify(user));
-        },
-        () => {
-          const code = passcode.trim().toLowerCase();
-          const isCheckpoint = code === "checkpoint" || code === "pc";
-          const localUser: SessionUser = isCheckpoint
-            ? {
-                id: 2,
-                role: ROLE_CHECKPOINT,
-                name: "Contrôleur local",
-                assignedControlPoint: {
-                  id: 1,
-                  label: "PC1 – Départ",
-                  controlPointNumber: 1,
-                },
-              }
-            : {
-                id: 1,
-                role: ROLE_ADMIN,
-                name: "Admin local",
-              };
-          const localToken = "local-dev-token";
-          setToken(localToken);
-          setUser(localUser);
-          localStorage.setItem("token", localToken);
-          localStorage.setItem("user", JSON.stringify(localUser));
-        },
-        { label: `POST ${API.login}` }
-      );
+      const { token, user } = res.data.data;
+      setToken(token);
+      setUser(user);
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
     } finally {
       setLoading(false);
     }
