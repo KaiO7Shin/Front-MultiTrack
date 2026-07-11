@@ -119,22 +119,24 @@ export async function fetchCheckpointEligibleParticipants(
 
 export async function recordDepart(
   participantId: number,
-  mancheId: number
+  mancheId: number,
+  recordedAt: string
 ): Promise<ResultatManche> {
   const { data } = await api.post<RenderResponse<ResultatManche>>(
     API.resultatMancheDepart,
-    { participantId, mancheId }
+    { participantId, mancheId, recordedAt }
   );
   return data.data!;
 }
 
 export async function recordArriveDH(
   participantId: number,
-  mancheId: number
+  mancheId: number,
+  recordedAt: string
 ): Promise<ResultatManche> {
   const { data } = await api.post<RenderResponse<ResultatManche>>(
     API.resultatMancheArrivee,
-    { participantId, mancheId, mode: "DH" }
+    { participantId, mancheId, mode: "DH", recordedAt }
   );
   return data.data!;
 }

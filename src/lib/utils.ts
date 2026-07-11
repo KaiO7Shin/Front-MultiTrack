@@ -6,6 +6,28 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Horodatage local au clic (ISO sans fuseau) : yyyy-MM-dd'T'HH:mm:ss.SSS */
+export function captureClientTimestamp(): string {
+  const d = new Date();
+  const pad = (n: number, len = 2) => String(n).padStart(len, "0");
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
+    `.${pad(d.getMilliseconds(), 3)}`
+  );
+}
+
+/** Affichage chrono indicatif : hh:mm:ss.mss */
+export function formatStopwatchMs(ms: number): string {
+  const safe = Math.max(0, Math.floor(ms));
+  const h = Math.floor(safe / 3_600_000);
+  const m = Math.floor((safe % 3_600_000) / 60_000);
+  const s = Math.floor((safe % 60_000) / 1_000);
+  const milli = safe % 1_000;
+  const pad = (n: number, len = 2) => String(n).padStart(len, "0");
+  return `${pad(h)}:${pad(m)}:${pad(s)}.${pad(milli, 3)}`;
+}
+
 /* ===== Utils ===== */
 export function courseLabelOf(id: number, list: { id: number; label: string }[]) {
   return list.find((c) => c.id === id)?.label ?? `Course #${id}`;

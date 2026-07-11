@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Course, CourseType, ParticipantProjection } from "@/lib/type";
-import { formatParticipantName, formatTimeShort } from "@/lib/utils";
+import { formatParticipantName, formatTimeShort, captureClientTimestamp } from "@/lib/utils";
+import { durationMs, formatMs } from "@/lib/raceRanking";
 import { fetchCoursesDetailed } from "@/services/courses";
 import { fetchControlPointsByCourse } from "@/services/controlPoints";
 import {
@@ -14,6 +15,7 @@ import {
 import type { CheckpointMancheMode } from "@/lib/raceRanking";
 import { ParticipantAutocomplete } from "@/components/ParticipantAutocomplete";
 import { TrailCheckpointForm } from "./TrailCheckpointForm";
+import { DhStopwatch, type DhStopwatchStatus } from "./DhStopwatch";
 import { ROLE_CHECKPOINT, useAuth } from "@/lib/auth";
 import type { ControlPointConfig } from "@/lib/type";
 
@@ -39,6 +41,16 @@ export const CheckpointScan = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const [stopwatchStatus, setStopwatchStatus] = useState<DhStopwatchStatus>("idle");
+  const [stopwatchStartedAt, setStopwatchStartedAt] = useState<number | null>(null);
+  const [stopwatchFrozenMs, setStopwatchFrozenMs] = useState(0);
+
+  function resetStopwatch() {
+    setStopwatchStatus("idle");
+    setStopwatchStartedAt(null);
+    setStopwatchFrozenMs(0);
+  }
 
   const visibleCourses = useMemo(() => {
     if (isCollaborateur && assignedCourseId) {
@@ -137,6 +149,10 @@ export const CheckpointScan = () => {
       });
   }, [courseId, courseType, phaseId, mancheId, checkpointMode]);
 
+  useEffect(() => {
+    resetStopwatch();
+  }, [courseId, phaseId, mancheId]);
+
   function resetMessages() {
     setError(null);
     setSuccess(null);
@@ -144,6 +160,13 @@ export const CheckpointScan = () => {
 
   async function handleBikeAction() {
     if (!selected || !mancheId) return;
+    const recordedAt = captureClientTimestamp();
+    const chronoSnapshot =
+      courseType === "DH" && dhMode === "arrivee" && stopwatchStartedAt != null
+        ? Date.now() - stopwatchStartedAt
+        : null;
+    const departChronoStart =
+      courseType === "DH" && dhMode === "depart" ? Date.now() : null;
     resetMessages();
     setBusy(true);
     try {
@@ -151,22 +174,43 @@ export const CheckpointScan = () => {
       if (courseType === "DH") {
         result =
           dhMode === "depart"
-            ? await recordDepart(selected.id, Number(mancheId))
-            : await recordArriveDH(selected.id, Number(mancheId));
+            ? await recordDepart(selected.id, Number(mancheId), recordedAt)
+            : await recordArriveDH(selected.id, Number(mancheId), recordedAt);
       } else if (courseType === "XC") {
         result = await recordArriveXC(selected.id, Number(mancheId));
       } else {
         return;
       }
 
-      const label =
-        courseType === "DH" && dhMode === "depart"
-          ? `Départ enregistré à ${formatTimeShort(result.tempsDepart)}`
+      let label: string;
+      if (courseType === "DH" && dhMode === "depart") {
+        label = `Départ enregistré à ${formatTimeShort(result.tempsDepart)}`;
+      } else if (courseType === "DH" && dhMode === "arrivee") {
+        const elapsedLabel = formatMs(
+          durationMs(result.tempsDepart, result.tempsArrive)
+        );
+        label = elapsedLabel
+          ? `Arrivée à ${formatTimeShort(result.tempsArrive)} — Temps : ${elapsedLabel}`
           : `Arrivée enregistrée à ${formatTimeShort(result.tempsArrive)}`;
+      } else {
+        label = `Arrivée enregistrée à ${formatTimeShort(result.tempsArrive)}`;
+      }
 
       setSuccess(
         `${formatParticipantName(selected.prenom, selected.nom)} (dossard ${selected.numDossard}) — ${label}`
       );
+
+      if (courseType === "DH") {
+        if (dhMode === "depart" && departChronoStart != null) {
+          setStopwatchStatus("running");
+          setStopwatchStartedAt(departChronoStart);
+          setStopwatchFrozenMs(0);
+        } else if (dhMode === "arrivee") {
+          setStopwatchStatus("stopped");
+          setStopwatchFrozenMs(chronoSnapshot ?? 0);
+        }
+      }
+
       setSelected(null);
       if (courseId && phaseId && mancheId && checkpointMode) {
         const list = await fetchCheckpointEligibleParticipants(
@@ -317,6 +361,9 @@ export const CheckpointScan = () => {
               onClick={() => {
                 setDhMode("depart");
                 resetMessages();
+                if (stopwatchStatus === "stopped") {
+                  resetStopwatch();
+                }
               }}
               className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
                 dhMode === "depart"
@@ -341,6 +388,12 @@ export const CheckpointScan = () => {
               Arrivée
             </button>
           </div>
+
+          <DhStopwatch
+            status={stopwatchStatus}
+            startedAt={stopwatchStartedAt}
+            frozenMs={stopwatchFrozenMs}
+          />
 
           <div className="bg-white border rounded-2xl p-4 sm:p-6 space-y-4">
             <label className="text-sm text-slate-600">Participant</label>
