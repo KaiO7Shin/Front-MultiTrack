@@ -8,7 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import type { BikeType, Course, Row, UICategory } from "../../lib/type";
+import type { BikeType, Course, DHPhaseRanking, Row, UICategory } from "../../lib/type";
 import { BIKE_TYPE_LABELS, BIKE_TYPES } from "../../lib/type";
 import { buildCumulatedPodiumGroups, buildPodiumGroups, courseLabelOf, toRow } from "@/lib/utils";
 import { fetchCategories, fetchCourses, fetchCoursesDetailed, fetchRanking } from "@/services/courses";
@@ -42,6 +42,17 @@ export const LeaderboardPage: React.FC = () => {
 
   // expanded set (participantId -> boolean)
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const [dhExportCtx, setDhExportCtx] = useState<{
+    data: DHPhaseRanking | null;
+    view: "scratch" | "category";
+  }>({ data: null, view: "scratch" });
+
+  const handleDhExportContextChange = useCallback(
+    (ctx: { data: DHPhaseRanking | null; view: "scratch" | "category" }) => {
+      setDhExportCtx(ctx);
+    },
+    []
+  );
 
   const formatDateTime = useCallback((raw?: string | null) => {
     if (!raw) return "—";
@@ -184,6 +195,102 @@ const exportGeneralPdf = () => {
   doc.save(`classement-${courseName}.pdf`);
 };
 
+  const exportDhRankingPdf = () => {
+    const { data, view } = dhExportCtx;
+    if (!data) return;
+
+    const base =
+      view === "scratch"
+        ? data.scratch
+        : data.byCategory.flatMap((g) => g.rows);
+
+    const term = debouncedSearch.trim();
+    const exportRows = term
+      ? base.filter((r) => r.dossard.includes(term))
+      : base;
+
+    if (!exportRows.length) return;
+
+    const courseName = selectedCourse?.name ?? "";
+    const mancheLabels =
+      exportRows[0]?.mancheTimes.map((mt) => mt.mancheLabel) ?? [];
+
+    const doc = new jsPDF("l", "mm", "a4");
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Classement DH", 14, 16);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${courseName} — ${data.phaseLabel}`, 14, 24);
+    doc.text(
+      view === "scratch" ? "Vue scratch" : "Vue par catégorie",
+      14,
+      30
+    );
+
+    doc.setDrawColor(180);
+    doc.line(14, 34, 283, 34);
+
+    const head = [
+      "Rang",
+      "Dossard",
+      "Prénom",
+      "Nom",
+      "Cat.",
+      "Type vélo",
+      "Meilleur temps",
+      ...mancheLabels,
+      "Statut",
+    ];
+
+    autoTable(doc, {
+      startY: 38,
+      head: [head],
+      body: exportRows.map((r) => [
+        (view === "scratch" ? r.rankScratch : r.rankCategory) ?? "—",
+        r.dossard,
+        r.prenom,
+        r.nom,
+        r.categorie,
+        r.typeVelo ? BIKE_TYPE_LABELS[r.typeVelo] : "—",
+        r.bestTimeFormatted ?? "—",
+        ...r.mancheTimes.map((mt) => mt.timeFormatted ?? "—"),
+        r.disqualified ? "DQ" : "—",
+      ]),
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        overflow: "linebreak",
+      },
+      headStyles: {
+        fillColor: [140, 153, 98],
+        textColor: 255,
+        fontStyle: "bold",
+        halign: "center",
+      },
+      alternateRowStyles: {
+        fillColor: [245, 247, 242],
+      },
+    });
+
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(
+        `Page ${i} / ${pageCount}`,
+        283,
+        doc.internal.pageSize.getHeight() - 5,
+        { align: "right" }
+      );
+    }
+
+    doc.save(`classement-dh-${courseName}.pdf`);
+  };
+
   const exportCumulatedPodiumPdf = () => {
     if (!rows.length) return;
 
@@ -276,11 +383,12 @@ const exportGeneralPdf = () => {
     () => coursesDetailed.find((c) => c.id === courseId),
     [coursesDetailed, courseId]
   );
-  const courseType = selectedCourse?.type ?? "TRAIL";
+  const courseType = selectedCourse?.type;
 
   const loadRanking = useCallback(async () => {
-    if (courseId === "all" || courseType !== "TRAIL") {
+    if (!courseType || courseId === "all" || courseType !== "TRAIL") {
       setRows([]);
+      setErr(null);
       return;
     }
 
@@ -312,6 +420,18 @@ const exportGeneralPdf = () => {
       setLoading(false);
     }
   }, [courseId, gender, categoryId, courses, courseType]);
+
+  const canExportTrail = courseType === "TRAIL" && rows.length > 0;
+  const canExportDh =
+    courseType === "DH" && (dhExportCtx.data?.scratch.length ?? 0) > 0;
+
+  const handleExportRanking = () => {
+    if (courseType === "DH") {
+      exportDhRankingPdf();
+      return;
+    }
+    exportGeneralPdf();
+  };
 
 
   /* Load courses & categories once */
@@ -387,7 +507,7 @@ const exportGeneralPdf = () => {
           <h1 className="page-title">Classement</h1>
           <p className="page-subtitle">
             {loading ? "Chargement..." : "Résultats provisoires (à homologuer)"}
-            {selectedCourse && courseType !== "TRAIL" && (
+            {selectedCourse && courseType && courseType !== "TRAIL" && (
               <span className="ml-1">— Mode {courseType}</span>
             )}
             {err ? ` — ${err}` : ""}
@@ -413,8 +533,8 @@ const exportGeneralPdf = () => {
         </button>
 
           <button
-            onClick={exportGeneralPdf}
-            disabled={courseType !== "TRAIL" || rows.length === 0}
+            onClick={handleExportRanking}
+            disabled={!canExportTrail && !canExportDh}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
           >
             <Download className="inline-block h-4 w-4 mr-2" />
@@ -423,7 +543,7 @@ const exportGeneralPdf = () => {
 
           <button
             onClick={exportPodiumPdf}
-            disabled={courseType !== "TRAIL" || rows.length === 0}
+            disabled={!canExportTrail}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
           >
             <Download className="inline-block h-4 w-4 mr-2" />
@@ -432,7 +552,7 @@ const exportGeneralPdf = () => {
 
           <button
             onClick={exportCumulatedPodiumPdf}
-            disabled={courseType !== "TRAIL" || rows.length === 0}
+            disabled={!canExportTrail}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
           >
             <Download className="inline-block h-4 w-4 mr-2" />
@@ -537,6 +657,7 @@ const exportGeneralPdf = () => {
           categories={categories}
           searchBib={debouncedSearch}
           bikeType={bikeType}
+          onExportContextChange={handleDhExportContextChange}
         />
       )}
 

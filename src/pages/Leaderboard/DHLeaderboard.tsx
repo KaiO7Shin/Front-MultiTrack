@@ -17,6 +17,10 @@ type DHLeaderboardProps = {
   categories: UICategory[];
   searchBib: string;
   bikeType: "all" | BikeType;
+  onExportContextChange?: (ctx: {
+    data: Awaited<ReturnType<typeof fetchDHPhaseRanking>> | null;
+    view: "scratch" | "category";
+  }) => void;
 };
 
 export function DHLeaderboard({
@@ -27,6 +31,7 @@ export function DHLeaderboard({
   categories,
   searchBib,
   bikeType,
+  onExportContextChange,
 }: DHLeaderboardProps) {
   const [phases, setPhases] = useState<{ id: number; label: string }[]>([]);
   const [phaseId, setPhaseId] = useState<number | "">("");
@@ -81,6 +86,10 @@ export function DHLeaderboard({
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    onExportContextChange?.({ data, view });
+  }, [data, view, onExportContextChange]);
 
   const displayRows = useMemo(() => {
     if (!data) return [] as DHRankingRow[];
