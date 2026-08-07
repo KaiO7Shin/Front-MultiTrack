@@ -9,6 +9,7 @@ export const API = {
   raceRanking: (raceId: number) => `/races/${raceId}/ranking`,
   raceRankingDh: (raceId: number) => `/races/${raceId}/ranking/dh`,
   raceRankingXc: (raceId: number) => `/races/${raceId}/ranking/xc`,
+  raceRankingEnduro: (raceId: number) => `/races/${raceId}/ranking/enduro`,
 
   categories: "/categories",
   category: "/category",
@@ -37,6 +38,7 @@ export const API = {
   resultatsManche: "/resultats-manche",
   resultatMancheDepart: "/resultat-manche/depart",
   resultatMancheArrivee: "/resultat-manche/arrivee",
+  resultatMancheAnnuler: "/resultat-manche/annuler",
 
   checkpointEligible: "/checkpoint/eligible-participants",
 

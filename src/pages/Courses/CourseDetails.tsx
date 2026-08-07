@@ -7,6 +7,7 @@ import {
   formatDurationBetween,
   formatTimeShort,
   normalizeCourseStatus,
+  usesPhaseMancheStructure,
 } from "@/lib/utils";
 import { fetchCoursesDetailed } from "@/services/courses";
 import {
@@ -122,7 +123,7 @@ export const CourseDetails = () => {
   }, [loadResultats]);
 
   const showStructure = useMemo(
-    () => course?.type === "DH" || course?.type === "XC",
+    () => usesPhaseMancheStructure(course?.type),
     [course?.type]
   );
 

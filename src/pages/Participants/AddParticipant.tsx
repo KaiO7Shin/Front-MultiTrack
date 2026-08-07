@@ -5,6 +5,7 @@ import { fetchTypesVelo } from "@/services/typesVelo";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import { FormField, inputClassName, selectClassName } from "@/components/ui/form-field";
+import { isBikeCourse } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 
 const emptyForm: ParticipantCreateDTO = {
@@ -15,10 +16,6 @@ const emptyForm: ParticipantCreateDTO = {
   courseChoisieId: 0,
   typeVelo: undefined,
 };
-
-function isBikeCourse(type: Course["type"] | undefined): boolean {
-  return type === "DH";
-}
 
 export const AddParticipant = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -67,7 +64,7 @@ export const AddParticipant = () => {
     setSuccess(null);
 
     if (showBikeType && !form.typeVelo) {
-      setErr("Le type de vélo est requis pour une course DH.");
+      setErr("Le type de vélo est requis pour une course DH ou Enduro.");
       return;
     }
 
@@ -176,7 +173,7 @@ export const AddParticipant = () => {
           <FormField
             label="Type de vélo"
             htmlFor="type-velo"
-            hint="Requis pour les courses Descente (DH)."
+            hint="Requis pour les courses DH et Enduro."
             required
             className="sm:col-span-2"
           >

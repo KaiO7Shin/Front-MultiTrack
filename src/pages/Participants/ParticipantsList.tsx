@@ -11,7 +11,7 @@ import {
 import { fetchCategories, fetchCoursesDetailed } from "@/services/courses";
 import type { BikeType, CourseType, ParticipantProjection, ParticipantStatus } from "@/lib/type";
 import { BIKE_TYPE_LABELS, BIKE_TYPES } from "@/lib/type";
-import { formatParticipantName } from "@/lib/utils";
+import { formatParticipantName, isBikeCourse } from "@/lib/utils";
 import { ParticipantEditModal } from "./ParticipantEditModal";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
 import { FormField, selectClassName } from "@/components/ui/form-field";
@@ -107,7 +107,7 @@ export const ParticipantsList = () => {
         : courses.find((c) => c.id === selectedCourseId) ?? null,
     [courses, selectedCourseId]
   );
-  const isDhCourse = selectedCourse?.type === "DH";
+  const showBikeTypeColumn = isBikeCourse(selectedCourse?.type);
 
   const exportPdf = () => {
     if (selectedCourseId === "all") return;
@@ -123,12 +123,12 @@ export const ParticipantsList = () => {
     autoTable(doc, {
       startY: 30,
       head: [
-        isDhCourse
+        showBikeTypeColumn
           ? ["Dossard", "Prénom", "Nom", "Genre", "Catégorie", "Type vélo"]
           : ["Dossard", "Prénom", "Nom", "Genre", "Catégorie"],
       ],
       body: filtered.map((p) =>
-        isDhCourse
+        showBikeTypeColumn
           ? [
               p.numDossard,
               p.prenom,
@@ -279,7 +279,7 @@ export const ParticipantsList = () => {
       }
     }
 
-    if (isDhCourse && selectedBikeType !== "all") {
+    if (showBikeTypeColumn && selectedBikeType !== "all") {
       base = base.filter((p) => p.typeVelo === selectedBikeType);
     }
 
@@ -290,7 +290,7 @@ export const ParticipantsList = () => {
     selectedGender,
     selectedCategoryId,
     selectedBikeType,
-    isDhCourse,
+    showBikeTypeColumn,
     categories,
   ]);
 
@@ -393,7 +393,7 @@ export const ParticipantsList = () => {
             </select>
           </FormField>
 
-          {isDhCourse && (
+          {showBikeTypeColumn && (
             <FormField label="Type vélo" htmlFor="filter-bike">
               <select
                 id="filter-bike"
@@ -443,7 +443,7 @@ export const ParticipantsList = () => {
                   <th className="px-4 py-2 text-left">Nom</th>
                   <th className="px-4 py-2 text-left">Genre</th>
                   <th className="px-4 py-2 text-left">Catégorie</th>
-                  {isDhCourse && (
+                  {showBikeTypeColumn && (
                     <th className="px-4 py-2 text-left">Type vélo</th>
                   )}
                   <th className="px-4 py-2">Presence</th>
@@ -458,7 +458,7 @@ export const ParticipantsList = () => {
                     <td className="px-4 py-2">{p.nom}</td>
                     <td className="px-4 py-2">{p.genre}</td>
                     <td className="px-4 py-2">{p.aliasCategorie}</td>
-                    {isDhCourse && (
+                    {showBikeTypeColumn && (
                       <td className="px-4 py-2">
                         {p.typeVelo ? (
                           <span className="inline-flex rounded-full border px-2 py-0.5 text-xs font-medium bg-orange-50 text-orange-800 border-orange-200">

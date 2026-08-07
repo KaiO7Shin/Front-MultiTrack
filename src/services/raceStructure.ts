@@ -151,3 +151,10 @@ export async function recordArriveXC(
   );
   return data.data!;
 }
+
+export async function cancelResultatManche(
+  participantId: number,
+  mancheId: number
+): Promise<void> {
+  await api.post(API.resultatMancheAnnuler, { participantId, mancheId });
+}

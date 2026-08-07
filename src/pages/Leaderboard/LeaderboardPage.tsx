@@ -8,12 +8,26 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import type { BikeType, Course, DHPhaseRanking, Row, UICategory } from "../../lib/type";
+import type {
+  BikeType,
+  Course,
+  DHPhaseRanking,
+  EnduroPhaseRanking,
+  Row,
+  UICategory,
+} from "../../lib/type";
 import { BIKE_TYPE_LABELS, BIKE_TYPES } from "../../lib/type";
-import { buildCumulatedPodiumGroups, buildPodiumGroups, courseLabelOf, toRow } from "@/lib/utils";
+import {
+  buildCumulatedPodiumGroups,
+  buildPodiumGroups,
+  courseLabelOf,
+  isBikeCourse,
+  toRow,
+} from "@/lib/utils";
 import { fetchCategories, fetchCourses, fetchCoursesDetailed, fetchRanking } from "@/services/courses";
 import { ACCENT } from "@/lib/constants";
 import { DHLeaderboard } from "./DHLeaderboard";
+import { EnduroLeaderboard } from "./EnduroLeaderboard";
 import { XCLeaderboard } from "./XCLeaderboard";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -50,6 +64,18 @@ export const LeaderboardPage: React.FC = () => {
   const handleDhExportContextChange = useCallback(
     (ctx: { data: DHPhaseRanking | null; view: "scratch" | "category" }) => {
       setDhExportCtx(ctx);
+    },
+    []
+  );
+
+  const [enduroExportCtx, setEnduroExportCtx] = useState<{
+    data: EnduroPhaseRanking | null;
+    view: "scratch" | "category";
+  }>({ data: null, view: "scratch" });
+
+  const handleEnduroExportContextChange = useCallback(
+    (ctx: { data: EnduroPhaseRanking | null; view: "scratch" | "category" }) => {
+      setEnduroExportCtx(ctx);
     },
     []
   );
@@ -291,6 +317,97 @@ const exportGeneralPdf = () => {
     doc.save(`classement-dh-${courseName}.pdf`);
   };
 
+  const exportEnduroRankingPdf = () => {
+    const { data, view } = enduroExportCtx;
+    if (!data) return;
+
+    const base =
+      view === "scratch" ? data.scratch : data.byCategory.flatMap((g) => g.rows);
+
+    const term = debouncedSearch.trim();
+    const exportRows = term ? base.filter((r) => r.dossard.includes(term)) : base;
+
+    if (!exportRows.length) return;
+
+    const courseName = selectedCourse?.name ?? "";
+    const mancheLabels = exportRows[0]?.mancheTimes.map((mt) => mt.mancheLabel) ?? [];
+
+    const doc = new jsPDF("l", "mm", "a4");
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Classement Enduro", 14, 16);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${courseName} — ${data.phaseLabel}`, 14, 24);
+    doc.text(view === "scratch" ? "Vue scratch" : "Vue par catégorie", 14, 30);
+
+    doc.setDrawColor(180);
+    doc.line(14, 34, 283, 34);
+
+    const head = [
+      "Rang",
+      "Dossard",
+      "Prénom",
+      "Nom",
+      "Cat.",
+      "Type vélo",
+      "Spéciales",
+      "Temps cumulé",
+      "Temps total",
+      ...mancheLabels,
+      "Statut",
+    ];
+
+    autoTable(doc, {
+      startY: 38,
+      head: [head],
+      body: exportRows.map((r) => [
+        (view === "scratch" ? r.rankScratch : r.rankCategory) ?? "—",
+        r.dossard,
+        r.prenom,
+        r.nom,
+        r.categorie,
+        r.typeVelo ? BIKE_TYPE_LABELS[r.typeVelo] : "—",
+        `${r.completedManches}/${r.totalManches}`,
+        r.totalTimeFormatted ?? "—",
+        r.elapsedTimeFormatted ?? "—",
+        ...r.mancheTimes.map((mt) => mt.timeFormatted ?? "—"),
+        r.disqualified ? "DQ" : "—",
+      ]),
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        overflow: "linebreak",
+      },
+      headStyles: {
+        fillColor: [140, 153, 98],
+        textColor: 255,
+        fontStyle: "bold",
+        halign: "center",
+      },
+      alternateRowStyles: {
+        fillColor: [245, 247, 242],
+      },
+    });
+
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(
+        `Page ${i} / ${pageCount}`,
+        283,
+        doc.internal.pageSize.getHeight() - 5,
+        { align: "right" }
+      );
+    }
+
+    doc.save(`classement-enduro-${courseName}.pdf`);
+  };
+
   const exportCumulatedPodiumPdf = () => {
     if (!rows.length) return;
 
@@ -424,10 +541,16 @@ const exportGeneralPdf = () => {
   const canExportTrail = courseType === "TRAIL" && rows.length > 0;
   const canExportDh =
     courseType === "DH" && (dhExportCtx.data?.scratch.length ?? 0) > 0;
+  const canExportEnduro =
+    courseType === "ENDURO" && (enduroExportCtx.data?.scratch.length ?? 0) > 0;
 
   const handleExportRanking = () => {
     if (courseType === "DH") {
       exportDhRankingPdf();
+      return;
+    }
+    if (courseType === "ENDURO") {
+      exportEnduroRankingPdf();
       return;
     }
     exportGeneralPdf();
@@ -534,7 +657,7 @@ const exportGeneralPdf = () => {
 
           <button
             onClick={handleExportRanking}
-            disabled={!canExportTrail && !canExportDh}
+            disabled={!canExportTrail && !canExportDh && !canExportEnduro}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
           >
             <Download className="inline-block h-4 w-4 mr-2" />
@@ -616,7 +739,7 @@ const exportGeneralPdf = () => {
             ))}
           </select>
 
-          {courseType === "DH" && (
+          {isBikeCourse(courseType) && (
             <select
               className="w-full rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
               value={bikeType}
@@ -658,6 +781,19 @@ const exportGeneralPdf = () => {
           searchBib={debouncedSearch}
           bikeType={bikeType}
           onExportContextChange={handleDhExportContextChange}
+        />
+      )}
+
+      {courseType === "ENDURO" && courseId !== "all" && (
+        <EnduroLeaderboard
+          courseId={courseId as number}
+          courseName={selectedCourse?.name ?? ""}
+          gender={gender}
+          categoryId={categoryId}
+          categories={categories}
+          searchBib={debouncedSearch}
+          bikeType={bikeType}
+          onExportContextChange={handleEnduroExportContextChange}
         />
       )}
 

@@ -21,12 +21,14 @@ const TYPE_LABELS: Record<CourseType, string> = {
   TRAIL: "Trail",
   DH: "Descente",
   XC: "Cross-country",
+  ENDURO: "Enduro",
 };
 
 const TYPE_ICONS: Record<CourseType, typeof Flag> = {
   TRAIL: Mountain,
   DH: Bike,
   XC: Activity,
+  ENDURO: Timer,
 };
 
 export const DashboardPage = () => {

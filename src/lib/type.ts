@@ -60,7 +60,7 @@ export type CategoryCreateDTO = {
 export type CategoryUpdateDTO = Partial<CategoryCreateDTO>;
 
 /** Types de course supportés */
-export const COURSE_TYPES = ["TRAIL", "DH", "XC"] as const;
+export const COURSE_TYPES = ["TRAIL", "DH", "XC", "ENDURO"] as const;
 export type CourseType = (typeof COURSE_TYPES)[number];
 
 export type CourseStatus = "A venir" | "En cours" | "Terminee";
@@ -337,4 +337,37 @@ export type DHPhaseRanking = {
   phaseLabel: string;
   scratch: DHRankingRow[];
   byCategory: { categorie: string; rows: DHRankingRow[] }[];
+};
+
+/** Ligne classement Enduro — cumul des temps sur les spéciales de la phase */
+export type EnduroRankingRow = {
+  participantId: number;
+  dossard: string;
+  prenom: string;
+  nom: string;
+  categorie: string;
+  genre: CategoryGenre;
+  typeVelo?: BikeType;
+  /** Somme des temps réalisés sur les spéciales chronométrées */
+  totalTimeMs: number | null;
+  totalTimeFormatted: string | null;
+  /** Arrivée sur la dernière spéciale − départ sur la première (liaisons incluses) */
+  elapsedTimeMs: number | null;
+  elapsedTimeFormatted: string | null;
+  completedManches: number;
+  totalManches: number;
+  /** Vrai lorsque toutes les spéciales de la phase sont chronométrées */
+  complete: boolean;
+  rankScratch: number | null;
+  rankCategory: number | null;
+  disqualified: boolean;
+  mancheTimes: MancheTimeDetail[];
+};
+
+export type EnduroPhaseRanking = {
+  phaseId: number;
+  phaseLabel: string;
+  totalManches: number;
+  scratch: EnduroRankingRow[];
+  byCategory: { categorie: string; rows: EnduroRankingRow[] }[];
 };

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Settings2, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Course, CourseCreateDTO, CourseType } from "@/lib/type";
-import { normalizeCourseStatus } from "@/lib/utils";
+import { formatBarrierDuration, normalizeCourseStatus } from "@/lib/utils";
 import {
   changeRaceStatus,
   createCourse,
@@ -18,6 +18,7 @@ const TYPE_BADGE: Record<CourseType, string> = {
   TRAIL: "bg-[#8c9962]/15 text-[#5c6640] border-[#8c9962]/40",
   DH: "bg-orange-100 text-orange-800 border-orange-200",
   XC: "bg-blue-100 text-blue-800 border-blue-200",
+  ENDURO: "bg-violet-100 text-violet-800 border-violet-200",
 };
 
 export const CoursesList = () => {
@@ -122,7 +123,7 @@ export const CoursesList = () => {
         <div className="min-w-0">
           <h1 className="page-title">Courses</h1>
           <p className="page-subtitle">
-            Créer, modifier et gérer les courses par type (Trail, DH, XC)
+            Créer, modifier et gérer les courses par type (Trail, DH, XC, Enduro)
           </p>
         </div>
         <div className="page-actions">
@@ -259,23 +260,47 @@ function CourseCard({
     }
   }
 
+  const isEnduro = course.type === "ENDURO";
+
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-base font-semibold truncate">{course.name}</span>
-            <span
-              className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${TYPE_BADGE[course.type]}`}
-            >
-              {course.type}
-            </span>
-          </div>
-          <div className="text-xs text-slate-500 mt-1">
-            {status}
-            {course.distanceKm != null ? ` • ${course.distanceKm} km` : ""}
-            {course.elevation != null ? ` • D+ ${course.elevation} m` : ""}
-          </div>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-base font-semibold truncate">{course.name}</span>
+          <span
+            className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${TYPE_BADGE[course.type]}`}
+          >
+            {course.type}
+          </span>
+        </div>
+        <div className="text-xs text-slate-500 mt-1 leading-relaxed">
+          {isEnduro ? (
+            <>
+              <span className="font-medium text-slate-600">{status}</span>
+              {course.dureeBarriereHoraire && (
+                <>
+                  {" • "}
+                  Barrière {formatBarrierDuration(course.dureeBarriereHoraire)}
+                </>
+              )}
+              {course.startAt && (
+                <>
+                  {" • "}
+                  Départ{" "}
+                  {new Date(course.startAt).toLocaleTimeString("fr-FR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {status}
+              {course.distanceKm != null ? ` • ${course.distanceKm} km` : ""}
+              {course.elevation != null ? ` • D+ ${course.elevation} m` : ""}
+            </>
+          )}
         </div>
       </div>
 

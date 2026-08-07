@@ -1,6 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Course, CourseType, ParticipantProjection } from "@/lib/type";
-import { formatParticipantName, formatTimeShort, captureClientTimestamp } from "@/lib/utils";
+import {
+  captureClientTimestamp,
+  formatParticipantName,
+  formatTimeShort,
+  usesPhaseMancheStructure,
+  usesStartStopTiming,
+} from "@/lib/utils";
 import { durationMs, formatMs } from "@/lib/raceRanking";
 import { fetchCoursesDetailed } from "@/services/courses";
 import { fetchControlPointsByCourse } from "@/services/controlPoints";
@@ -8,18 +14,33 @@ import {
   fetchCheckpointEligibleParticipants,
   fetchManchesByPhase,
   fetchPhasesByCourse,
+  fetchResultatsByManche,
   recordArriveDH,
   recordArriveXC,
   recordDepart,
+  cancelResultatManche,
 } from "@/services/raceStructure";
-import type { CheckpointMancheMode } from "@/lib/raceRanking";
 import { ParticipantAutocomplete } from "@/components/ParticipantAutocomplete";
 import { TrailCheckpointForm } from "./TrailCheckpointForm";
-import { DhStopwatch, type DhStopwatchStatus } from "./DhStopwatch";
+import { MancheTimer, type MancheTimerStatus } from "./MancheTimer";
 import { ROLE_CHECKPOINT, useAuth } from "@/lib/auth";
 import type { ControlPointConfig } from "@/lib/type";
+import { Undo2 } from "lucide-react";
 
-type DHMode = "depart" | "arrivee";
+/** Participant éligible, enrichi de son départ déjà enregistré sur la manche. */
+type TimedParticipant = ParticipantProjection & { departAt: string | null };
+
+type FinishedRun = {
+  participantId: number;
+  participantLabel: string;
+  elapsedMs: number;
+  arriveeAt: string | null;
+};
+
+type RecordedPointage = {
+  participantId: number;
+  participantLabel: string;
+};
 
 export const CheckpointScan = () => {
   const { user } = useAuth();
@@ -30,27 +51,24 @@ export const CheckpointScan = () => {
   const [courseId, setCourseId] = useState<number | "">("");
   const [phaseId, setPhaseId] = useState<number | "">("");
   const [mancheId, setMancheId] = useState<number | "">("");
-  const [dhMode, setDhMode] = useState<DHMode>("depart");
   const [controlPoints, setControlPoints] = useState<ControlPointConfig[]>([]);
 
   const [phases, setPhases] = useState<{ id: number; label: string }[]>([]);
   const [manches, setManches] = useState<{ id: number; label: string }[]>([]);
-  const [participants, setParticipants] = useState<ParticipantProjection[]>([]);
-  const [selected, setSelected] = useState<ParticipantProjection | null>(null);
+  const [participants, setParticipants] = useState<TimedParticipant[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const [stopwatchStatus, setStopwatchStatus] = useState<DhStopwatchStatus>("idle");
-  const [stopwatchStartedAt, setStopwatchStartedAt] = useState<number | null>(null);
-  const [stopwatchFrozenMs, setStopwatchFrozenMs] = useState(0);
-
-  function resetStopwatch() {
-    setStopwatchStatus("idle");
-    setStopwatchStartedAt(null);
-    setStopwatchFrozenMs(0);
-  }
+  /** Départ déclenché depuis cet écran : chrono immédiat sans attendre le refetch. */
+  const [localRun, setLocalRun] = useState<{
+    participantId: number;
+    startedAt: number;
+  } | null>(null);
+  const [finishedRun, setFinishedRun] = useState<FinishedRun | null>(null);
+  const [xcRecorded, setXcRecorded] = useState<RecordedPointage | null>(null);
 
   const visibleCourses = useMemo(() => {
     if (isCollaborateur && assignedCourseId) {
@@ -64,12 +82,13 @@ export const CheckpointScan = () => {
     [courses, courseId]
   );
   const courseType: CourseType | null = selectedCourse?.type ?? null;
+  const isTimedRun = usesStartStopTiming(courseType);
+  const needsPhaseManche = usesPhaseMancheStructure(courseType ?? undefined);
 
-  const checkpointMode: CheckpointMancheMode | null = useMemo(() => {
-    if (courseType === "DH") return dhMode === "depart" ? "dh-depart" : "dh-arrivee";
-    if (courseType === "XC") return "xc-arrivee";
-    return null;
-  }, [courseType, dhMode]);
+  const selected = useMemo(
+    () => participants.find((p) => p.id === selectedId) ?? null,
+    [participants, selectedId]
+  );
 
   useEffect(() => {
     fetchCoursesDetailed().then(setCourses).catch(() => setCourses([]));
@@ -125,32 +144,60 @@ export const CheckpointScan = () => {
       });
   }, [phaseId]);
 
-  useEffect(() => {
-    if (!courseId || courseType === "TRAIL" || !phaseId || !mancheId || !checkpointMode) {
+  const loadParticipants = useCallback(async () => {
+    if (!courseId || !phaseId || !mancheId || !courseType || courseType === "TRAIL") {
       setParticipants([]);
-      setSelected(null);
       return;
     }
-    fetchCheckpointEligibleParticipants(
-      Number(courseId),
-      Number(phaseId),
-      Number(mancheId),
-      checkpointMode
-    )
-      .then((list) => {
-        setParticipants(list);
-        setSelected((prev) =>
-          prev && list.some((p) => p.id === prev.id) ? prev : null
+    const cid = Number(courseId);
+    const pid = Number(phaseId);
+    const mid = Number(mancheId);
+
+    try {
+      if (!usesStartStopTiming(courseType)) {
+        const list = await fetchCheckpointEligibleParticipants(
+          cid,
+          pid,
+          mid,
+          "xc-arrivee"
         );
-      })
-      .catch(() => {
-        setParticipants([]);
-        setSelected(null);
-      });
-  }, [courseId, courseType, phaseId, mancheId, checkpointMode]);
+        setParticipants(list.map((p) => ({ ...p, departAt: null })));
+        return;
+      }
+
+      const [pending, inRun, resultats] = await Promise.all([
+        fetchCheckpointEligibleParticipants(cid, pid, mid, "dh-depart"),
+        fetchCheckpointEligibleParticipants(cid, pid, mid, "dh-arrivee"),
+        fetchResultatsByManche(mid),
+      ]);
+      const departByParticipant = new Map(
+        resultats.map((r) => [r.participantId, r.tempsDepart])
+      );
+
+      // Les partis en piste d'abord : ce sont eux qu'il faut arrêter.
+      setParticipants([
+        ...inRun.map((p) => ({
+          ...p,
+          departAt: departByParticipant.get(p.id) ?? null,
+        })),
+        ...pending.map((p) => ({ ...p, departAt: null })),
+      ]);
+    } catch {
+      setParticipants([]);
+    }
+  }, [courseId, phaseId, mancheId, courseType]);
 
   useEffect(() => {
-    resetStopwatch();
+    loadParticipants();
+  }, [loadParticipants]);
+
+  useEffect(() => {
+    setSelectedId(null);
+    setLocalRun(null);
+    setFinishedRun(null);
+    setXcRecorded(null);
+    setError(null);
+    setSuccess(null);
   }, [courseId, phaseId, mancheId]);
 
   function resetMessages() {
@@ -158,69 +205,176 @@ export const CheckpointScan = () => {
     setSuccess(null);
   }
 
-  async function handleBikeAction() {
-    if (!selected || !mancheId) return;
+  function handleSelect(participant: ParticipantProjection | null) {
+    setSelectedId(participant?.id ?? null);
+    setFinishedRun(null);
+    setXcRecorded(null);
+    resetMessages();
+  }
+
+  const startedAt = useMemo(() => {
+    if (!selected) return null;
+    if (localRun?.participantId === selected.id) return localRun.startedAt;
+    return selected.departAt ? Date.parse(selected.departAt) : null;
+  }, [selected, localRun]);
+
+  const timerStatus: MancheTimerStatus = finishedRun
+    ? "stopped"
+    : startedAt != null
+      ? "running"
+      : "idle";
+
+  const canStart = !!selected && !!mancheId && startedAt == null && !finishedRun;
+
+  const canCancelTimed =
+    !!mancheId &&
+    !busy &&
+    ((timerStatus === "running" && !!selected) || !!finishedRun);
+
+  const canCancelXc = !!mancheId && !busy && !!xcRecorded;
+
+  const participantLabel = (p: TimedParticipant) =>
+    `${formatParticipantName(p.prenom, p.nom)} (dossard ${p.numDossard})`;
+
+  async function handleStart() {
+    if (!selected || !mancheId || startedAt != null) return;
     const recordedAt = captureClientTimestamp();
-    const chronoSnapshot =
-      courseType === "DH" && dhMode === "arrivee" && stopwatchStartedAt != null
-        ? Date.now() - stopwatchStartedAt
-        : null;
-    const departChronoStart =
-      courseType === "DH" && dhMode === "depart" ? Date.now() : null;
+    const clickedAt = Date.now();
     resetMessages();
     setBusy(true);
     try {
-      let result;
-      if (courseType === "DH") {
-        result =
-          dhMode === "depart"
-            ? await recordDepart(selected.id, Number(mancheId), recordedAt)
-            : await recordArriveDH(selected.id, Number(mancheId), recordedAt);
-      } else if (courseType === "XC") {
-        result = await recordArriveXC(selected.id, Number(mancheId));
-      } else {
-        return;
-      }
-
-      let label: string;
-      if (courseType === "DH" && dhMode === "depart") {
-        label = `Départ enregistré à ${formatTimeShort(result.tempsDepart)}`;
-      } else if (courseType === "DH" && dhMode === "arrivee") {
-        const elapsedLabel = formatMs(
-          durationMs(result.tempsDepart, result.tempsArrive)
-        );
-        label = elapsedLabel
-          ? `Arrivée à ${formatTimeShort(result.tempsArrive)} — Temps : ${elapsedLabel}`
-          : `Arrivée enregistrée à ${formatTimeShort(result.tempsArrive)}`;
-      } else {
-        label = `Arrivée enregistrée à ${formatTimeShort(result.tempsArrive)}`;
-      }
-
+      const result = await recordDepart(selected.id, Number(mancheId), recordedAt);
+      setLocalRun({ participantId: selected.id, startedAt: clickedAt });
       setSuccess(
-        `${formatParticipantName(selected.prenom, selected.nom)} (dossard ${selected.numDossard}) — ${label}`
+        `${participantLabel(selected)} — Départ à ${formatTimeShort(result.tempsDepart)}`
       );
+      await loadParticipants();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e.response?.data?.message ?? "Erreur lors de l'enregistrement du départ");
+    } finally {
+      setBusy(false);
+    }
+  }
 
-      if (courseType === "DH") {
-        if (dhMode === "depart" && departChronoStart != null) {
-          setStopwatchStatus("running");
-          setStopwatchStartedAt(departChronoStart);
-          setStopwatchFrozenMs(0);
-        } else if (dhMode === "arrivee") {
-          setStopwatchStatus("stopped");
-          setStopwatchFrozenMs(chronoSnapshot ?? 0);
-        }
-      }
+  async function handleStop() {
+    if (!selected || !mancheId) return;
+    const recordedAt = captureClientTimestamp();
+    const label = participantLabel(selected);
+    const localElapsed = startedAt != null ? Date.now() - startedAt : 0;
+    resetMessages();
+    setBusy(true);
+    try {
+      const result = await recordArriveDH(selected.id, Number(mancheId), recordedAt);
+      const serverMs = durationMs(result.tempsDepart, result.tempsArrive);
+      const elapsedMs = serverMs ?? localElapsed;
 
-      setSelected(null);
-      if (courseId && phaseId && mancheId && checkpointMode) {
-        const list = await fetchCheckpointEligibleParticipants(
-          Number(courseId),
-          Number(phaseId),
-          Number(mancheId),
-          checkpointMode
-        );
-        setParticipants(list);
+      setFinishedRun({
+        participantId: selected.id,
+        participantLabel: label,
+        elapsedMs,
+        arriveeAt: result.tempsArrive,
+      });
+      setLocalRun(null);
+      setSelectedId(null);
+      setSuccess(
+        `${label} — Arrivée à ${formatTimeShort(result.tempsArrive)}${
+          formatMs(elapsedMs) ? ` — Temps : ${formatMs(elapsedMs)}` : ""
+        }`
+      );
+      await loadParticipants();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e.response?.data?.message ?? "Erreur lors de l'enregistrement de l'arrivée");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCancelTimed() {
+    const participantId = finishedRun?.participantId ?? selected?.id;
+    if (!participantId || !mancheId) return;
+
+    const label =
+      finishedRun?.participantLabel ??
+      (selected ? participantLabel(selected) : "");
+    const isFullRun = !!finishedRun;
+
+    if (
+      !window.confirm(
+        isFullRun
+          ? `Annuler le pointage complet de ${label} ?`
+          : `Annuler le départ de ${label} ?`
+      )
+    ) {
+      return;
+    }
+
+    resetMessages();
+    setBusy(true);
+    try {
+      await cancelResultatManche(participantId, Number(mancheId));
+      setLocalRun(null);
+      setFinishedRun(null);
+      if (isFullRun) {
+        setSelectedId(null);
       }
+      setSuccess(
+        isFullRun
+          ? `Pointage annulé pour ${label}`
+          : `Départ annulé pour ${label}`
+      );
+      await loadParticipants();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e.response?.data?.message ?? "Erreur lors de l'annulation");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCancelXc() {
+    if (!xcRecorded || !mancheId) return;
+
+    if (
+      !window.confirm(
+        `Annuler l'arrivée de ${xcRecorded.participantLabel} ?`
+      )
+    ) {
+      return;
+    }
+
+    resetMessages();
+    setBusy(true);
+    try {
+      await cancelResultatManche(xcRecorded.participantId, Number(mancheId));
+      setXcRecorded(null);
+      setSuccess(`Arrivée annulée pour ${xcRecorded.participantLabel}`);
+      await loadParticipants();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e.response?.data?.message ?? "Erreur lors de l'annulation");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleXcArrivee() {
+    if (!selected || !mancheId) return;
+    const label = participantLabel(selected);
+    resetMessages();
+    setBusy(true);
+    try {
+      const result = await recordArriveXC(selected.id, Number(mancheId));
+      setXcRecorded({
+        participantId: selected.id,
+        participantLabel: label,
+      });
+      setSuccess(
+        `${label} — Arrivée enregistrée à ${formatTimeShort(result.tempsArrive)}`
+      );
+      setSelectedId(null);
+      await loadParticipants();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setError(e.response?.data?.message ?? "Erreur lors de l'enregistrement");
@@ -229,12 +383,11 @@ export const CheckpointScan = () => {
     }
   }
 
-  const needsPhaseManche = courseType === "DH" || courseType === "XC";
-  const canSubmitBike =
-    !!selected &&
-    !!mancheId &&
-    !busy &&
-    (courseType === "XC" || (courseType === "DH" && dhMode));
+  const timerHint = !mancheId
+    ? "Sélectionnez une manche pour commencer"
+    : participants.length === 0
+      ? "Aucun participant éligible sur cette manche"
+      : undefined;
 
   return (
     <section className="space-y-4 w-full max-w-xl mx-auto min-w-0 px-0 sm:px-0">
@@ -353,84 +506,91 @@ export const CheckpointScan = () => {
         </div>
       )}
 
-      {courseType === "DH" && courseId && (
+      {isTimedRun && courseId && (
         <div className="space-y-4">
-          <div className="flex rounded-xl border p-1 bg-slate-50">
-            <button
-              type="button"
-              onClick={() => {
-                setDhMode("depart");
-                resetMessages();
-                if (stopwatchStatus === "stopped") {
-                  resetStopwatch();
-                }
-              }}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
-                dhMode === "depart"
-                  ? "bg-white shadow text-slate-900"
-                  : "text-slate-500"
-              }`}
-            >
-              Départ
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setDhMode("arrivee");
-                resetMessages();
-              }}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
-                dhMode === "arrivee"
-                  ? "bg-white shadow text-slate-900"
-                  : "text-slate-500"
-              }`}
-            >
-              Arrivée
-            </button>
-          </div>
-
-          <DhStopwatch
-            status={stopwatchStatus}
-            startedAt={stopwatchStartedAt}
-            frozenMs={stopwatchFrozenMs}
-          />
-
-          <div className="bg-white border rounded-2xl p-4 sm:p-6 space-y-4">
+          <div className="bg-white border rounded-2xl p-4 sm:p-6 space-y-3">
             <label className="text-sm text-slate-600">Participant</label>
             <ParticipantAutocomplete
               participants={participants}
               value={selected}
-              onChange={(p) => {
-                setSelected(p);
-                resetMessages();
-              }}
+              onChange={handleSelect}
               disabled={busy || !mancheId}
             />
 
-            {error && (
-              <div className="text-sm rounded-xl bg-red-50 text-red-700 px-3 py-2 border border-red-200">
-                {error}
-              </div>
+            {selected && (
+              <p className="text-xs text-slate-500">
+                {startedAt != null
+                  ? `En piste depuis ${formatTimeShort(new Date(startedAt).toISOString())}`
+                  : "Prêt à partir"}
+              </p>
             )}
-            {success && (
-              <div className="text-sm rounded-xl bg-green-50 text-green-700 px-3 py-2 border border-green-200">
-                {success}
-              </div>
-            )}
+          </div>
 
+          <MancheTimer
+            status={timerStatus}
+            startedAt={startedAt}
+            frozenMs={finishedRun?.elapsedMs ?? 0}
+            busy={busy}
+            canStart={canStart}
+            onStart={handleStart}
+            onStop={handleStop}
+            hint={timerHint}
+          />
+
+          {canCancelTimed && timerStatus === "running" && (
             <button
               type="button"
-              disabled={!canSubmitBike}
-              onClick={handleBikeAction}
-              className="w-full rounded-2xl bg-slate-900 text-white px-4 py-3 text-base disabled:opacity-50"
+              disabled={busy}
+              onClick={handleCancelTimed}
+              className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
-              {busy
-                ? "Enregistrement…"
-                : dhMode === "depart"
-                  ? "Démarrer"
-                  : "Terminer"}
+              <Undo2 className="h-4 w-4" />
+              Annuler le départ
             </button>
-          </div>
+          )}
+
+          {finishedRun && (
+            <div className="bg-white border rounded-2xl p-4 space-y-3 text-center">
+              <p className="text-sm text-slate-700">
+                {finishedRun.participantLabel}
+              </p>
+              <p className="text-xs text-slate-500">
+                Arrivée à {formatTimeShort(finishedRun.arriveeAt)}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={handleCancelTimed}
+                  className="flex-1 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                >
+                  <Undo2 className="h-4 w-4" />
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFinishedRun(null);
+                    resetMessages();
+                  }}
+                  className="flex-1 rounded-xl border px-4 py-2.5 text-sm hover:bg-[#8c9962]/10"
+                >
+                  Nouveau pointage
+                </button>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-sm rounded-xl bg-red-50 text-red-700 px-3 py-2 border border-red-200">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="text-sm rounded-xl bg-green-50 text-green-700 px-3 py-2 border border-green-200">
+              {success}
+            </div>
+          )}
         </div>
       )}
 
@@ -441,10 +601,7 @@ export const CheckpointScan = () => {
           <ParticipantAutocomplete
             participants={participants}
             value={selected}
-            onChange={(p) => {
-              setSelected(p);
-              resetMessages();
-            }}
+            onChange={handleSelect}
             disabled={busy || !mancheId}
           />
 
@@ -461,12 +618,24 @@ export const CheckpointScan = () => {
 
           <button
             type="button"
-            disabled={!canSubmitBike}
-            onClick={handleBikeAction}
+            disabled={!selected || !mancheId || busy}
+            onClick={handleXcArrivee}
             className="w-full rounded-2xl bg-slate-900 text-white px-4 py-3 text-base disabled:opacity-50"
           >
             {busy ? "Enregistrement…" : "Enregistrer l'arrivée"}
           </button>
+
+          {canCancelXc && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={handleCancelXc}
+              className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+            >
+              <Undo2 className="h-4 w-4" />
+              Annuler l'arrivée
+            </button>
+          )}
         </div>
       )}
     </section>

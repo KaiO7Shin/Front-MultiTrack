@@ -4,6 +4,7 @@ import type {
   BikeType,
   CategoryGenre,
   DHPhaseRanking,
+  EnduroPhaseRanking,
   XCPhaseRanking,
 } from "@/lib/type";
 
@@ -26,6 +27,18 @@ export async function fetchXCPhaseRanking(
 ): Promise<XCPhaseRanking> {
   const { data } = await api.get<{ data: XCPhaseRanking }>(
     API.raceRankingXc(courseId),
+    { params: { phaseId, ...filters } }
+  );
+  return data.data;
+}
+
+export async function fetchEnduroPhaseRanking(
+  courseId: number,
+  phaseId: number,
+  filters?: { gender?: CategoryGenre; categoryAlias?: string; bikeType?: BikeType }
+): Promise<EnduroPhaseRanking> {
+  const { data } = await api.get<{ data: EnduroPhaseRanking }>(
+    API.raceRankingEnduro(courseId),
     { params: { phaseId, ...filters } }
   );
   return data.data;

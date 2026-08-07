@@ -158,8 +158,43 @@ function intOrZero(v: unknown): number {
 
 export function normalizeCourseType(raw: unknown): CourseType {
   const upper = String(raw ?? "TRAIL").trim().toUpperCase();
-  if (upper === "TRAIL" || upper === "DH" || upper === "XC") return upper;
+  if (
+    upper === "TRAIL" ||
+    upper === "DH" ||
+    upper === "XC" ||
+    upper === "ENDURO"
+  ) {
+    return upper;
+  }
   return "TRAIL";
+}
+
+/** Courses VTT nécessitant un type de vélo à l'inscription (DH, Enduro). */
+export function isBikeCourse(type: CourseType | undefined): boolean {
+  return type === "DH" || type === "ENDURO";
+}
+
+/** Courses configurées avec phases et manches (DH, XC, Enduro). */
+export function usesPhaseMancheStructure(type: CourseType | undefined): boolean {
+  return type === "DH" || type === "XC" || type === "ENDURO";
+}
+
+/** Courses chronométrées départ + arrivée sur une même manche (DH, Enduro). */
+export function usesStartStopTiming(type: CourseType | null | undefined): boolean {
+  return type === "DH" || type === "ENDURO";
+}
+
+/** Affiche une durée barrière horaire (ex. "04:00:00" → "4 h"). */
+export function formatBarrierDuration(value?: string | null): string {
+  if (!value) return "—";
+  const [hRaw, mRaw] = value.split(":");
+  const h = Number(hRaw);
+  const m = Number(mRaw);
+  if (!Number.isFinite(h)) return value.slice(0, 5);
+  if (h > 0 && m > 0) return `${h} h ${m} min`;
+  if (h > 0) return `${h} h`;
+  if (m > 0) return `${m} min`;
+  return value.slice(0, 5);
 }
 
 export function normalizeCourseStatus(raw: unknown): CourseStatus {

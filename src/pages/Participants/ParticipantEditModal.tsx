@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import type { BikeType, Course, ParticipantUpdateDTO, ParticipantStatus } from "@/lib/type";
 import { fetchCoursesDetailed } from "@/services/courses";
 import { fetchTypesVelo } from "@/services/typesVelo";
-import { formatParticipantName } from "@/lib/utils";
+import { formatParticipantName, isBikeCourse } from "@/lib/utils";
 
 export type ParticipantEditTarget = {
   numDossard: string;
@@ -23,10 +23,6 @@ type ParticipantEditModalProps = {
   onClose: () => void;
   onSubmit: (dto: ParticipantUpdateDTO) => void;
 };
-
-function isBikeCourse(type: Course["type"] | undefined): boolean {
-  return type === "DH";
-}
 
 const emptyForm: Omit<ParticipantUpdateDTO, "bibNumber"> = {
   numDossard: "",
