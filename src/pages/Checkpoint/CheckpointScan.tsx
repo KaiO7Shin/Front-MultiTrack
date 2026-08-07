@@ -45,7 +45,17 @@ type RecordedPointage = {
 export const CheckpointScan = () => {
   const { user } = useAuth();
   const isCollaborateur = user?.role === ROLE_CHECKPOINT;
+  const operatorId = user?.id;
   const assignedCourseId = user?.assignedControlPoint?.courseId ?? null;
+  const assignedManches = useMemo(
+    () => user?.assignedManches ?? [],
+    [user?.assignedManches]
+  );
+  const hasMancheAssignments = assignedManches.length > 0;
+  const singleAssignedManche =
+    isCollaborateur && assignedManches.length === 1
+      ? assignedManches[0]
+      : null;
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [courseId, setCourseId] = useState<number | "">("");
@@ -71,11 +81,13 @@ export const CheckpointScan = () => {
   const [xcRecorded, setXcRecorded] = useState<RecordedPointage | null>(null);
 
   const visibleCourses = useMemo(() => {
-    if (isCollaborateur && assignedCourseId) {
-      return courses.filter((c) => c.id === assignedCourseId);
-    }
-    return courses;
-  }, [courses, isCollaborateur, assignedCourseId]);
+    if (!isCollaborateur) return courses;
+    const allowed = new Set<number>();
+    if (assignedCourseId) allowed.add(assignedCourseId);
+    for (const m of assignedManches) allowed.add(m.courseId);
+    if (allowed.size === 0) return [];
+    return courses.filter((c) => allowed.has(c.id));
+  }, [courses, isCollaborateur, assignedCourseId, assignedManches]);
 
   const selectedCourse = useMemo(
     () => courses.find((c) => c.id === courseId),
@@ -84,6 +96,11 @@ export const CheckpointScan = () => {
   const courseType: CourseType | null = selectedCourse?.type ?? null;
   const isTimedRun = usesStartStopTiming(courseType);
   const needsPhaseManche = usesPhaseMancheStructure(courseType ?? undefined);
+
+  const courseSelectLocked =
+    !!singleAssignedManche ||
+    (isCollaborateur && visibleCourses.length === 1);
+  const phaseMancheLocked = !!singleAssignedManche;
 
   const selected = useMemo(
     () => participants.find((p) => p.id === selectedId) ?? null,
@@ -95,10 +112,27 @@ export const CheckpointScan = () => {
   }, []);
 
   useEffect(() => {
-    if (isCollaborateur && assignedCourseId) {
-      setCourseId(assignedCourseId);
+    if (!isCollaborateur) return;
+    if (singleAssignedManche) {
+      setCourseId(singleAssignedManche.courseId);
+      setPhaseId(singleAssignedManche.phaseId);
+      setMancheId(singleAssignedManche.id);
+      return;
     }
-  }, [isCollaborateur, assignedCourseId]);
+    if (assignedCourseId && !hasMancheAssignments) {
+      setCourseId(assignedCourseId);
+      return;
+    }
+    if (visibleCourses.length === 1) {
+      setCourseId(visibleCourses[0].id);
+    }
+  }, [
+    isCollaborateur,
+    singleAssignedManche,
+    assignedCourseId,
+    hasMancheAssignments,
+    visibleCourses,
+  ]);
 
   useEffect(() => {
     if (!courseId || courseType !== "TRAIL") {
@@ -111,38 +145,85 @@ export const CheckpointScan = () => {
   }, [courseId, courseType]);
 
   useEffect(() => {
-    if (!courseId) {
-      setPhases([]);
-      setPhaseId("");
+    if (!courseId || singleAssignedManche) {
+      if (!courseId) {
+        setPhases([]);
+        setPhaseId("");
+      }
       return;
     }
     fetchPhasesByCourse(Number(courseId))
       .then((list) => {
-        setPhases(list);
-        setPhaseId(list[0]?.id ?? "");
+        let filtered = list;
+        if (isCollaborateur && hasMancheAssignments) {
+          const phaseIds = new Set(
+            assignedManches
+              .filter((m) => m.courseId === Number(courseId))
+              .map((m) => m.phaseId)
+          );
+          filtered = list.filter((p) => phaseIds.has(p.id));
+        }
+        setPhases(filtered);
+        setPhaseId(filtered[0]?.id ?? "");
       })
       .catch(() => {
         setPhases([]);
         setPhaseId("");
       });
-  }, [courseId]);
+  }, [
+    courseId,
+    isCollaborateur,
+    hasMancheAssignments,
+    assignedManches,
+    singleAssignedManche,
+  ]);
 
   useEffect(() => {
-    if (!phaseId) {
-      setManches([]);
-      setMancheId("");
+    if (!phaseId || singleAssignedManche) {
+      if (!phaseId && !singleAssignedManche) {
+        setManches([]);
+        setMancheId("");
+      }
       return;
     }
     fetchManchesByPhase(Number(phaseId))
       .then((list) => {
-        setManches(list);
-        setMancheId(list[0]?.id ?? "");
+        let filtered = list;
+        if (isCollaborateur && hasMancheAssignments) {
+          const mancheIds = new Set(
+            assignedManches
+              .filter((m) => m.phaseId === Number(phaseId))
+              .map((m) => m.id)
+          );
+          filtered = list.filter((m) => mancheIds.has(m.id));
+        }
+        setManches(filtered);
+        setMancheId(filtered[0]?.id ?? "");
       })
       .catch(() => {
         setManches([]);
         setMancheId("");
       });
-  }, [phaseId]);
+  }, [
+    phaseId,
+    isCollaborateur,
+    hasMancheAssignments,
+    assignedManches,
+    singleAssignedManche,
+  ]);
+
+  useEffect(() => {
+    if (!singleAssignedManche) return;
+    setPhases([
+      {
+        id: singleAssignedManche.phaseId,
+        label: singleAssignedManche.phaseLabel,
+      },
+    ]);
+    setManches([
+      { id: singleAssignedManche.id, label: singleAssignedManche.label },
+    ]);
+  }, [singleAssignedManche]);
 
   const loadParticipants = useCallback(async () => {
     if (!courseId || !phaseId || !mancheId || !courseType || courseType === "TRAIL") {
@@ -237,13 +318,18 @@ export const CheckpointScan = () => {
     `${formatParticipantName(p.prenom, p.nom)} (dossard ${p.numDossard})`;
 
   async function handleStart() {
-    if (!selected || !mancheId || startedAt != null) return;
+    if (!selected || !mancheId || startedAt != null || operatorId == null) return;
     const recordedAt = captureClientTimestamp();
     const clickedAt = Date.now();
     resetMessages();
     setBusy(true);
     try {
-      const result = await recordDepart(selected.id, Number(mancheId), recordedAt);
+      const result = await recordDepart(
+        selected.id,
+        Number(mancheId),
+        recordedAt,
+        operatorId
+      );
       setLocalRun({ participantId: selected.id, startedAt: clickedAt });
       setSuccess(
         `${participantLabel(selected)} — Départ à ${formatTimeShort(result.tempsDepart)}`
@@ -258,14 +344,19 @@ export const CheckpointScan = () => {
   }
 
   async function handleStop() {
-    if (!selected || !mancheId) return;
+    if (!selected || !mancheId || operatorId == null) return;
     const recordedAt = captureClientTimestamp();
     const label = participantLabel(selected);
     const localElapsed = startedAt != null ? Date.now() - startedAt : 0;
     resetMessages();
     setBusy(true);
     try {
-      const result = await recordArriveDH(selected.id, Number(mancheId), recordedAt);
+      const result = await recordArriveDH(
+        selected.id,
+        Number(mancheId),
+        recordedAt,
+        operatorId
+      );
       const serverMs = durationMs(result.tempsDepart, result.tempsArrive);
       const elapsedMs = serverMs ?? localElapsed;
 
@@ -293,7 +384,7 @@ export const CheckpointScan = () => {
 
   async function handleCancelTimed() {
     const participantId = finishedRun?.participantId ?? selected?.id;
-    if (!participantId || !mancheId) return;
+    if (!participantId || !mancheId || operatorId == null) return;
 
     const label =
       finishedRun?.participantLabel ??
@@ -313,7 +404,7 @@ export const CheckpointScan = () => {
     resetMessages();
     setBusy(true);
     try {
-      await cancelResultatManche(participantId, Number(mancheId));
+      await cancelResultatManche(participantId, Number(mancheId), operatorId);
       setLocalRun(null);
       setFinishedRun(null);
       if (isFullRun) {
@@ -334,7 +425,7 @@ export const CheckpointScan = () => {
   }
 
   async function handleCancelXc() {
-    if (!xcRecorded || !mancheId) return;
+    if (!xcRecorded || !mancheId || operatorId == null) return;
 
     if (
       !window.confirm(
@@ -347,7 +438,11 @@ export const CheckpointScan = () => {
     resetMessages();
     setBusy(true);
     try {
-      await cancelResultatManche(xcRecorded.participantId, Number(mancheId));
+      await cancelResultatManche(
+        xcRecorded.participantId,
+        Number(mancheId),
+        operatorId
+      );
       setXcRecorded(null);
       setSuccess(`Arrivée annulée pour ${xcRecorded.participantLabel}`);
       await loadParticipants();
@@ -409,7 +504,7 @@ export const CheckpointScan = () => {
               setCourseId(v ? Number(v) : "");
               resetMessages();
             }}
-            disabled={isCollaborateur && !!assignedCourseId}
+            disabled={courseSelectLocked}
           >
             <option value="">Sélectionner une course…</option>
             {visibleCourses.map((c) => (
@@ -418,6 +513,14 @@ export const CheckpointScan = () => {
               </option>
             ))}
           </select>
+          {isCollaborateur &&
+            !hasMancheAssignments &&
+            !assignedCourseId && (
+              <p className="text-xs text-amber-700 mt-1">
+                Aucune manche assignée. Demandez à un admin de configurer vos
+                assignations.
+              </p>
+            )}
         </div>
 
         {needsPhaseManche && courseId && (
@@ -432,7 +535,7 @@ export const CheckpointScan = () => {
                   setPhaseId(v ? Number(v) : "");
                   resetMessages();
                 }}
-                disabled={phases.length === 0}
+                disabled={phaseMancheLocked || phases.length === 0}
               >
                 <option value="">
                   {phases.length === 0
@@ -450,7 +553,7 @@ export const CheckpointScan = () => {
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-600">
                 Manche
-                {phaseId && manches.length > 0 && (
+                {phaseId && manches.length > 0 && !phaseMancheLocked && (
                   <span className="font-normal text-slate-400 ml-1">
                     (de la phase sélectionnée)
                   </span>
@@ -464,7 +567,7 @@ export const CheckpointScan = () => {
                   setMancheId(v ? Number(v) : "");
                   resetMessages();
                 }}
-                disabled={manches.length === 0}
+                disabled={phaseMancheLocked || manches.length === 0}
               >
                 <option value="">
                   {manches.length === 0

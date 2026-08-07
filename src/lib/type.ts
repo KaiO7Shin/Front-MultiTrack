@@ -140,6 +140,36 @@ export type TypeCourse = {
   bibEnd?: number;
 };
 
+export type AssignedManche = {
+  id: number;
+  label: string;
+  phaseId: number;
+  phaseLabel: string;
+  courseId: number;
+  courseLabel: string;
+  courseType: CourseType | string;
+};
+
+export type Pointeur = {
+  id: number;
+  libelle: string;
+  role: number;
+  hasTrailControlPoint: boolean;
+  trailControlPointId?: number;
+  assignedManches: AssignedManche[];
+  passcode?: string;
+};
+
+export type PointeurCreateDTO = {
+  libelle: string;
+  passcode?: string;
+};
+
+export type PointeurUpdateDTO = {
+  libelle?: string;
+  passcode?: string;
+};
+
 export type RenderResponse<T> = {
   code: number;
   message: string;

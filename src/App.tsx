@@ -13,7 +13,15 @@ export default function App() {
   const role = user?.role;
   const isAdmin = role === ROLE_ADMIN;
   const isCollaborateur = role === ROLE_CHECKPOINT;
-  const pcName = user?.assignedControlPoint?.label ?? null;
+  const assignedManches = user?.assignedManches ?? [];
+  const collaborateurLabel =
+    user?.libelle?.trim() ||
+    user?.assignedControlPoint?.label ||
+    (assignedManches.length === 1
+      ? `${assignedManches[0].courseLabel} / ${assignedManches[0].label}`
+      : assignedManches.length > 1
+        ? `${assignedManches.length} manches`
+        : null);
 
   useEffect(() => {
     if (isCollaborateur && !location.pathname.startsWith("/checkpoint")) {
@@ -55,9 +63,9 @@ export default function App() {
               <span className="hidden sm:inline badge-live">Checkpoint</span>
               <span
                 className="inline-flex max-w-[10rem] sm:max-w-none items-center gap-1 truncate rounded-full border border-border bg-white px-2.5 py-1 text-xs text-muted-foreground"
-                title="Point de contrôle assigné"
+                title="Pointeur / point de contrôle assigné"
               >
-                {pcName ?? "—"}
+                {collaborateurLabel ?? "—"}
               </span>
               <button onClick={handleLogout} className="btn-secondary px-3 py-1.5 text-xs shrink-0">
                 Déconnexion
@@ -128,6 +136,7 @@ export default function App() {
             <Item to="/categories" label="Catégories" end />
             <Item to="/participants" label="Participants" />
             <Item to="/checkpoint/scan" label="Checkpoint" end />
+            {isAdmin && <Item to="/pointeurs" label="Pointeurs" end />}
             <Item to="/leaderboard" label="Classement" end />
           </nav>
         </aside>

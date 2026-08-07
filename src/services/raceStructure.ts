@@ -120,11 +120,12 @@ export async function fetchCheckpointEligibleParticipants(
 export async function recordDepart(
   participantId: number,
   mancheId: number,
-  recordedAt: string
+  recordedAt: string,
+  operatorId: number
 ): Promise<ResultatManche> {
   const { data } = await api.post<RenderResponse<ResultatManche>>(
     API.resultatMancheDepart,
-    { participantId, mancheId, recordedAt }
+    { participantId, mancheId, recordedAt, operatorId }
   );
   return data.data!;
 }
@@ -132,11 +133,12 @@ export async function recordDepart(
 export async function recordArriveDH(
   participantId: number,
   mancheId: number,
-  recordedAt: string
+  recordedAt: string,
+  operatorId: number
 ): Promise<ResultatManche> {
   const { data } = await api.post<RenderResponse<ResultatManche>>(
     API.resultatMancheArrivee,
-    { participantId, mancheId, mode: "DH", recordedAt }
+    { participantId, mancheId, mode: "DH", recordedAt, operatorId }
   );
   return data.data!;
 }
@@ -154,7 +156,12 @@ export async function recordArriveXC(
 
 export async function cancelResultatManche(
   participantId: number,
-  mancheId: number
+  mancheId: number,
+  operatorId: number
 ): Promise<void> {
-  await api.post(API.resultatMancheAnnuler, { participantId, mancheId });
+  await api.post(API.resultatMancheAnnuler, {
+    participantId,
+    mancheId,
+    operatorId,
+  });
 }

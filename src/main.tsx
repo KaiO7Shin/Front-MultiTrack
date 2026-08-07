@@ -15,8 +15,9 @@ import { CheckpointScan } from "./pages/Checkpoint/CheckpointScan";
 import { CheckpointHistory } from "./pages/Checkpoint/CheckpointHistory";
 import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
 import { LoginPage } from "./pages/Auth/LoginPage";
+import { PointeursList } from "./pages/Pointeurs/PointeursList";
 
-import { AuthProvider, RequireAuth } from "./lib/auth";
+import { AuthProvider, RequireAuth, RequireRole, ROLE_ADMIN } from "./lib/auth";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -44,6 +45,15 @@ const router = createBrowserRouter([
 
       { path: "checkpoint/scan", element: <CheckpointScan /> },
       { path: "checkpoint/history", element: <CheckpointHistory /> },
+
+      {
+        path: "pointeurs",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <PointeursList />
+          </RequireRole>
+        ),
+      },
 
       { path: "leaderboard", element: <LeaderboardPage /> },
     ],

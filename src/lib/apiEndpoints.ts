@@ -50,4 +50,9 @@ export const API = {
 
   checkingPc: "/checking/pc",
   checkingFinishline: "/checking/finishline",
+
+  pointeurs: "/pointeurs",
+  pointeur: "/pointeur",
+  pointeurById: (id: number) => `/pointeur/${id}`,
+  pointeurManches: (id: number) => `/pointeur/${id}/manches`,
 } as const;
