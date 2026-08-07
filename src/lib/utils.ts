@@ -6,15 +6,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** Horodatage local au clic (ISO sans fuseau) : yyyy-MM-dd'T'HH:mm:ss.SSS */
+/** Horodatage UTC au clic (ISO-8601) : ex. 2026-08-07T10:20:00.123Z */
 export function captureClientTimestamp(): string {
-  const d = new Date();
-  const pad = (n: number, len = 2) => String(n).padStart(len, "0");
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
-    `.${pad(d.getMilliseconds(), 3)}`
-  );
+  return new Date().toISOString();
 }
 
 /** Affichage chrono indicatif : hh:mm:ss.mss */
