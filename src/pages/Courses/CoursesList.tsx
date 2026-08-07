@@ -301,6 +301,12 @@ function CourseCard({
               {course.elevation != null ? ` • D+ ${course.elevation} m` : ""}
             </>
           )}
+          {course.bibStart != null && course.bibEnd != null && (
+            <div className="text-xs text-slate-500 mt-0.5">
+              Dossards {String(course.bibStart).padStart(3, "0")}–
+              {String(course.bibEnd).padStart(3, "0")}
+            </div>
+          )}
         </div>
       </div>
 

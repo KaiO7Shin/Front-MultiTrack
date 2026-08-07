@@ -287,6 +287,8 @@ export function normalizeCourseFull(raw: any): Course {
     dureeBarriereHoraire:
       raw?.dureeBarriereHoraire ?? raw?.duree_barriere_horaire ?? raw?.barrier_time,
     nomSequence: raw?.nomSequence ?? raw?.nom_sequence,
+    bibStart: numOrUndef(raw?.bibStart ?? raw?.bib_start),
+    bibEnd: numOrUndef(raw?.bibEnd ?? raw?.bib_end),
     typeCourseId: numOrUndef(raw?.typeCourseId ?? raw?.type_course_id),
   };
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import type { Course, CourseCreateDTO } from "@/lib/type";
+import type { Course, CourseCreateDTO, TypeCourse } from "@/lib/type";
 import { fetchTypesCourse } from "@/services/typesCourse";
 
 type CourseFormModalProps = {
@@ -23,13 +23,21 @@ function toTimeApi(value: string): string {
   return value.length === 5 ? `${value}:00` : value;
 }
 
+function rangesFromType(type?: TypeCourse | null): Pick<CourseCreateDTO, "bibStart" | "bibEnd"> {
+  return {
+    bibStart: type?.bibStart,
+    bibEnd: type?.bibEnd,
+  };
+}
+
 const emptyForm: CourseCreateDTO = {
   libelle: "",
   typeCourseId: 0,
   distance: 0,
   totalDenivele: 0,
   dureeBarriereHoraire: "04:00",
-  nomSequence: "",
+  bibStart: undefined,
+  bibEnd: undefined,
 };
 
 export function CourseFormModal({
@@ -42,7 +50,7 @@ export function CourseFormModal({
   onSubmit,
 }: CourseFormModalProps) {
   const [form, setForm] = useState<CourseCreateDTO>(emptyForm);
-  const [types, setTypes] = useState<{ id: number; libelle: string }[]>([]);
+  const [types, setTypes] = useState<TypeCourse[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +65,7 @@ export function CourseFormModal({
     if (mode === "edit" && initial) {
       const typeCourseId =
         initial.typeCourseId ??
-        types.find((t) => t.libelle === initial.type)?.id ??
+        types.find((t) => t.libelle.toUpperCase() === initial.type)?.id ??
         0;
 
       setForm({
@@ -66,19 +74,28 @@ export function CourseFormModal({
         distance: initial.distanceKm ?? 0,
         totalDenivele: initial.elevation ?? 0,
         dureeBarriereHoraire: toTimeInput(initial.dureeBarriereHoraire),
-        nomSequence: initial.nomSequence ?? "",
+        bibStart: initial.bibStart,
+        bibEnd: initial.bibEnd,
       });
       return;
     }
 
-    const defaultTypeId = types[0]?.id ?? 0;
+    const defaultType = types[0];
     setForm({
       ...emptyForm,
-      typeCourseId: defaultTypeId,
+      typeCourseId: defaultType?.id ?? 0,
+      ...rangesFromType(defaultType),
     });
   }, [open, mode, initial, types]);
 
   if (!open) return null;
+
+  const selectedType = types.find((t) => t.id === form.typeCourseId);
+  const rangeValid =
+    form.bibStart != null &&
+    form.bibEnd != null &&
+    form.bibStart >= 1 &&
+    form.bibEnd >= form.bibStart;
 
   const isValid =
     form.libelle.trim().length > 0 &&
@@ -86,7 +103,17 @@ export function CourseFormModal({
     form.typeCourseId > 0 &&
     form.distance > 0 &&
     form.totalDenivele >= 0 &&
-    form.dureeBarriereHoraire.length > 0;
+    form.dureeBarriereHoraire.length > 0 &&
+    rangeValid;
+
+  function applyTypeDefaults(typeCourseId: number) {
+    const type = types.find((t) => t.id === typeCourseId);
+    setForm((f) => ({
+      ...f,
+      typeCourseId,
+      ...rangesFromType(type),
+    }));
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,7 +123,8 @@ export function CourseFormModal({
       distance: form.distance,
       totalDenivele: form.totalDenivele,
       dureeBarriereHoraire: toTimeApi(form.dureeBarriereHoraire),
-      nomSequence: form.nomSequence?.trim() || undefined,
+      bibStart: form.bibStart,
+      bibEnd: form.bibEnd,
     });
   }
 
@@ -160,12 +188,7 @@ export function CourseFormModal({
               required
               className="w-full rounded-lg border px-3 py-2 text-sm"
               value={form.typeCourseId || ""}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  typeCourseId: Number(e.target.value),
-                }))
-              }
+              onChange={(e) => applyTypeDefaults(Number(e.target.value))}
               disabled={saving || types.length === 0}
             >
               {types.length === 0 ? (
@@ -252,26 +275,55 @@ export function CourseFormModal({
             </p>
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="course-sequence" className="text-xs font-medium text-slate-600">
-              Nom de séquence
-            </label>
-            <input
-              id="course-sequence"
-              maxLength={30}
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-              placeholder="Ex. trail_legende_seq"
-              value={form.nomSequence ?? ""}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, nomSequence: e.target.value }))
-              }
-              disabled={saving}
-            />
-            <p className="text-[10px] text-slate-400">
-              Identifiant PostgreSQL pour les dossards (ex. cross_country_seq).
-              Créée automatiquement à l'enregistrement de la course.
-            </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <label htmlFor="course-bib-start" className="text-xs font-medium text-slate-600">
+                Dossard début *
+              </label>
+              <input
+                id="course-bib-start"
+                type="number"
+                required
+                min={1}
+                step={1}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                value={form.bibStart ?? ""}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    bibStart: e.target.value ? Number(e.target.value) : undefined,
+                  }))
+                }
+                disabled={saving}
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="course-bib-end" className="text-xs font-medium text-slate-600">
+                Dossard fin *
+              </label>
+              <input
+                id="course-bib-end"
+                type="number"
+                required
+                min={1}
+                step={1}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                value={form.bibEnd ?? ""}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    bibEnd: e.target.value ? Number(e.target.value) : undefined,
+                  }))
+                }
+                disabled={saving}
+              />
+            </div>
           </div>
+          <p className="text-[10px] text-slate-400 -mt-2">
+            {selectedType
+              ? `${selectedType.libelle} : ${selectedType.bibStart ?? "?"}–${selectedType.bibEnd ?? "?"} par défaut — modifiable si une autre course utilise déjà cette plage.`
+              : "Plage de dossards pour cette course (ex. XC 1–100, DH 101–200, Enduro 201–300)."}
+          </p>
 
           {error && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>

@@ -76,7 +76,10 @@ export type Course = {
   status: CourseStatus;
   checkpoints: number;
   dureeBarriereHoraire?: string;
+  /** Technique (auto) — séquence PostgreSQL */
   nomSequence?: string;
+  bibStart?: number;
+  bibEnd?: number;
 };
 
 export type CourseCreateDTO = {
@@ -85,7 +88,8 @@ export type CourseCreateDTO = {
   distance: number;
   totalDenivele: number;
   dureeBarriereHoraire: string;
-  nomSequence?: string;
+  bibStart?: number;
+  bibEnd?: number;
 };
 
 export type CourseUpdateDTO = Partial<CourseCreateDTO>;
@@ -132,6 +136,8 @@ export type TypeVelo = {
 export type TypeCourse = {
   id: number;
   libelle: string;
+  bibStart?: number;
+  bibEnd?: number;
 };
 
 export type RenderResponse<T> = {
