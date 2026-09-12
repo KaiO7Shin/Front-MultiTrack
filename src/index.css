@@ -26,6 +26,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-cta: var(--brand-cta);
+  --color-navy: var(--navy);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -42,38 +47,43 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+  --background: #fdfbf7;
+  --foreground: #1a2b48;
+  --card: #ffffff;
+  --card-foreground: #1a2b48;
+  --popover: #ffffff;
+  --popover-foreground: #1a2b48;
+  --primary: #1a2b48;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f6f9;
+  --secondary-foreground: #1a2b48;
+  --muted: #f4f6f9;
+  --muted-foreground: #64748b;
+  --accent: #f4f6f9;
+  --accent-foreground: #1a2b48;
+  --destructive: #ff4d30;
+  --border: #e8ecf1;
+  --input: #e8ecf1;
+  --ring: #1a2b48;
+  --navy: #1a2b48;
+  --brand: #1a2b48;
+  --brand-dark: #1a2b48;
+  --brand-cta: #ff4d30;
+  --brand-muted: rgba(26, 43, 72, 0.06);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1a2b48;
+  --sidebar-primary: #1a2b48;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f6f9;
+  --sidebar-accent-foreground: #1a2b48;
+  --sidebar-border: #e8ecf1;
+  --sidebar-ring: #1a2b48;
 }
 
 .dark {
@@ -114,7 +124,81 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
   body {
-    @apply bg-background text-foreground;
+    @apply overflow-x-hidden;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+}
+
+@layer components {
+  .page-card {
+    @apply bg-card border border-border rounded-2xl shadow-sm;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-cta text-white px-4 py-2 text-sm font-medium transition hover:opacity-90 disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-white text-foreground px-4 py-2 text-sm font-medium transition hover:bg-brand-muted;
+  }
+
+  .badge-live {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700;
+  }
+
+  .page-section {
+    @apply space-y-4 sm:space-y-6 min-w-0;
+  }
+
+  .page-header {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between min-w-0;
+  }
+
+  .page-title {
+    @apply text-xl sm:text-2xl font-semibold tracking-tight text-brand;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-muted-foreground mt-0.5;
+  }
+
+  .page-actions {
+    @apply flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto shrink-0;
+  }
+
+  .page-actions > button,
+  .page-actions > a {
+    @apply w-full sm:w-auto justify-center;
+  }
+
+  .filter-panel {
+    @apply bg-card border border-border rounded-2xl shadow-sm p-3 sm:p-4 flex flex-col gap-3 min-w-0;
+  }
+
+  .filter-fields {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 w-full;
+  }
+
+  .filter-fields > * {
+    @apply min-w-0 w-full;
+  }
+
+  .table-scroll {
+    @apply overflow-x-auto overscroll-x-contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-scroll table {
+    @apply w-full text-sm;
+    min-width: 36rem;
+  }
+
+  .table-scroll-wide table {
+    min-width: 48rem;
   }
 }

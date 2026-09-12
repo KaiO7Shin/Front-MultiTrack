@@ -1,0 +1,14 @@
+# Option A (recommandée si le service est déjà un Static Site) :
+# Dashboard Render → front-defi-vtt → Redirects/Rewrites → Add :
+#   Source: /*   Destination: /index.html   Action: Rewrite
+#
+# Option B : Web Service Node avec serve -s (SPA native) :
+services:
+  - type: web
+    name: front-defi-vtt
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"

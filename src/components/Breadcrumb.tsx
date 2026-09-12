@@ -10,7 +10,7 @@ export function Breadcrumb({ items }: { items: Crumb[] }) {
         <span key={i} className="inline-flex items-center gap-1">
           {i > 0 && <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
           {item.to ? (
-            <Link to={item.to} className="hover:text-[#8c9962] transition-colors">
+            <Link to={item.to} className="hover:text-brand-cta transition-colors">
               {item.label}
             </Link>
           ) : (

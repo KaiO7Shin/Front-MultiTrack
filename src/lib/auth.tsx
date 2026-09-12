@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import apiClient from "./api";
+import { API } from "./apiEndpoints";
 import { Navigate, useLocation } from "react-router-dom";
+import { PageLoading } from "@/components/ui/feedback";
+import type { AssignedManche } from "@/lib/type";
 
 export type Role = "admin" | "inscriptions" | "checkpoint" | "arrival";
 
@@ -8,11 +11,14 @@ export type Role = "admin" | "inscriptions" | "checkpoint" | "arrival";
 export type SessionUser = {
   id: number;
   role: number;
+  libelle?: string | null;
   assignedControlPoint?: {
     id: number;
+    courseId?: number;
     label: string;
     controlPointNumber?: number;
   };
+  assignedManches?: AssignedManche[];
   point_de_controle_course_id?: number | null;
   name?: string | null;
 };
@@ -35,7 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // restore from storage
   useEffect(() => {
     try {
       const t = localStorage.getItem("token");
@@ -55,23 +60,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function signIn(passcode: string) {
     setLoading(true);
     try {
-        const res = await apiClient.post<{
-          data: { token: any; user: any; }; token: string; user: SessionUser 
-}>(
-        "/login/user",
-        { passcode }
-        );
+      const res = await apiClient.post<{
+        data: { token: string; user: SessionUser & Record<string, unknown> };
+      }>(API.login, { passcode });
 
-        console.log("login ok", res.data.data);
-
-        const { token, user } = res.data.data;
-        setToken(token);
-        setUser(user);
-
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
+      const { token, user: raw } = res.data.data;
+      const manchesRaw = (raw.assignedManches ??
+        (raw as { assigned_manches?: unknown }).assigned_manches ??
+        []) as Record<string, unknown>[];
+      const user: SessionUser = {
+        ...raw,
+        libelle: raw.libelle ?? null,
+        assignedManches: manchesRaw.map((m) => ({
+          id: Number(m.id),
+          label: String(m.label ?? m.libelle ?? ""),
+          phaseId: Number(m.phaseId ?? m.phase_id),
+          phaseLabel: String(m.phaseLabel ?? m.phase_label ?? ""),
+          courseId: Number(m.courseId ?? m.course_id),
+          courseLabel: String(m.courseLabel ?? m.course_label ?? ""),
+          courseType: String(m.courseType ?? m.course_type ?? ""),
+        })),
+      };
+      setToken(token);
+      setUser(user);
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   }
 
@@ -96,7 +111,7 @@ export function RequireAuth({ children }: { children: React.ReactElement }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return <div className="p-6 text-sm text-slate-500">Chargement…</div>;
+  if (loading) return <PageLoading message="Vérification de la session…" />;
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }

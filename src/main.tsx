@@ -6,6 +6,7 @@ import "./index.css";
 
 import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { CoursesList } from "./pages/Courses/CoursesList";
+import { CategoriesList } from "./pages/Categories/CategoriesList";
 import { CourseDetails } from "./pages/Courses/CourseDetails";
 import { ParticipantsList } from "./pages/Participants/ParticipantsList";
 import { ImportParticipants } from "./pages/Participants/ImportParticipants";
@@ -14,9 +15,9 @@ import { CheckpointScan } from "./pages/Checkpoint/CheckpointScan";
 import { CheckpointHistory } from "./pages/Checkpoint/CheckpointHistory";
 import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
 import { LoginPage } from "./pages/Auth/LoginPage";
+import { PointeursList } from "./pages/Pointeurs/PointeursList";
 
-import { AuthProvider, RequireAuth } from "./lib/auth"; // <== ton fichier de contexte
-
+import { AuthProvider, RequireAuth, RequireRole, ROLE_ADMIN } from "./lib/auth";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <DashboardPage /> },
 
       { path: "courses", element: <CoursesList /> },
+      { path: "categories", element: <CategoriesList /> },
       { path: "courses/:id", element: <CourseDetails /> },
 
       { path: "participants", element: <ParticipantsList /> },
@@ -43,6 +45,15 @@ const router = createBrowserRouter([
 
       { path: "checkpoint/scan", element: <CheckpointScan /> },
       { path: "checkpoint/history", element: <CheckpointHistory /> },
+
+      {
+        path: "pointeurs",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <PointeursList />
+          </RequireRole>
+        ),
+      },
 
       { path: "leaderboard", element: <LeaderboardPage /> },
     ],
