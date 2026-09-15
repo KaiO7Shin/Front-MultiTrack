@@ -1,73 +1,50 @@
-# React + TypeScript + Vite
+# MultiTrack Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Monorepo npm workspaces contenant trois applications React/Vite déployables séparément.
 
-Currently, two official plugins are available:
+## Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `apps/admin` : administration historique (participants, courses, checkpoints, classements, pointeurs et authentification par passcode).
+- `apps/public` : information événement, création de compte, connexion et inscriptions des participants.
+- `apps/organizer` : tableau de bord organisateur, suivi et export en lecture seule.
+- `packages/api-client` : requêtes HTTP authentifiées et téléchargement d’export.
+- `packages/types` : contrats TypeScript partagés.
+- `packages/ui` : composants et styles communs aux apps Public et Organizer.
 
-## React Compiler
+## Installation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Définir `VITE_API_URL` dans l’environnement de chaque application. Sans cette variable, les appels utilisent la même origine.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Développement
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev:admin       # http://localhost:5173
+npm run dev:public      # http://localhost:5174
+npm run dev:organizer   # http://localhost:5175
 ```
+
+## Build et lint
+
+```bash
+npm run build
+npm run build:admin
+npm run build:public
+npm run build:organizer
+npm run lint
+```
+
+Les sorties sont générées dans `apps/<app>/dist`.
+
+## Déploiement Render
+
+`render.yaml` déclare trois Static Sites indépendants :
+
+- Admin : `npm ci && npm run build:admin`, publication `apps/admin/dist`
+- Public : `npm ci && npm run build:public`, publication `apps/public/dist`
+- Organizer : `npm ci && npm run build:organizer`, publication `apps/organizer/dist`
+
+Configurer `VITE_API_URL` séparément sur chaque service.
