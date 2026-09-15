@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 
 type User = {
@@ -14,6 +14,7 @@ type Runner = {
   lastName: string;
   birthDate: string;
   gender: string;
+  category: string;
   race: string;
   identityDocument: string;
   medicalCertificate: string;
@@ -27,7 +28,29 @@ type Registration = {
   paymentReference: string;
   paymentMethod: "MVola" | "Orange Money";
   totalAmount: number;
-  runners: Runner[];
+  runner: Runner;
+};
+
+type RunnerDraft = {
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  gender: string;
+  race: string;
+  identityDocument: string;
+  medicalCertificate: string;
+  parentalAuthorization: string;
+};
+
+const EMPTY_DRAFT: RunnerDraft = {
+  firstName: "",
+  lastName: "",
+  birthDate: "",
+  gender: "",
+  race: "",
+  identityDocument: "",
+  medicalCertificate: "",
+  parentalAuthorization: "",
 };
 
 const RACES = [
@@ -37,6 +60,19 @@ const RACES = [
   { name: "Challenge Suprême", discipline: "VTT ou Trail", distance: "25 km", price: 55_000, duo: false, description: "Le défi majeur de TBB pour les sportifs en quête de dépassement." },
   { name: "Challenge des amoureux", discipline: "Trail ou VTT", distance: "25 km", price: 75_000, duo: true, description: "Un challenge en duo pour conjuguer effort, aventure et complicité." },
 ];
+
+const COURSE_GROUPS = [
+  {
+    title: "Challenge Trail",
+    kind: "Trail",
+    races: ["Challenge Initiation", "Challenge Explorateur", "Challenge Parent-Enfant", "Challenge Suprême", "Challenge des amoureux"],
+  },
+  {
+    title: "Challenge VTT",
+    kind: "VTT",
+    races: ["Challenge Parent-Enfant", "Challenge Suprême", "Challenge des amoureux"],
+  },
+] as const;
 
 const HIGHLIGHTS = [
   { title: "Trail Run", text: "Défiez les sommets.", icon: <TrailIcon /> },
@@ -54,12 +90,70 @@ function formatRaceLabel(race: (typeof RACES)[number]) {
   return [race.name, race.discipline, race.distance].filter(Boolean).join(" — ");
 }
 
-function calculateTotal(runners: Runner[]) {
-  return RACES.reduce((total, race) => {
-    const registrations = runners.filter((runner) => runner.race.startsWith(race.name)).length;
-    const units = race.duo ? Math.ceil(registrations / 2) : registrations;
-    return total + units * race.price;
-  }, 0);
+function findRace(raceLabel: string) {
+  return RACES.find((race) => raceLabel.startsWith(race.name));
+}
+
+function getRacePrice(raceLabel: string) {
+  return findRace(raceLabel)?.price ?? 0;
+}
+
+function isDuoRace(raceLabel: string) {
+  return Boolean(findRace(raceLabel)?.duo);
+}
+
+function isMinor(birthDate: string) {
+  if (!birthDate) return false;
+  const birthday = new Date(birthDate);
+  const limit = new Date();
+  limit.setFullYear(limit.getFullYear() - 18);
+  return birthday > limit;
+}
+
+function getAgeOnEvent(birthDate: string) {
+  const birth = new Date(birthDate);
+  const event = new Date(2026, 10, 7);
+  let age = event.getFullYear() - birth.getFullYear();
+  const beforeBirthday =
+    event.getMonth() < birth.getMonth() ||
+    (event.getMonth() === birth.getMonth() && event.getDate() < birth.getDate());
+  if (beforeBirthday) age -= 1;
+  return age;
+}
+
+function getCategory(birthDate: string, gender: string) {
+  if (!birthDate) return "";
+  const age = getAgeOnEvent(birthDate);
+  const band = age < 16 ? "Cadet" : age < 18 ? "Junior" : age < 40 ? "Senior" : "Master";
+  if (gender === "Femme") return `${band} Femme`;
+  if (gender === "Homme") return `${band} Homme`;
+  return band;
+}
+
+function isDraftComplete(draft: RunnerDraft) {
+  return Boolean(
+    draft.firstName.trim() &&
+    draft.lastName.trim() &&
+    draft.birthDate &&
+    draft.gender &&
+    draft.race &&
+    draft.identityDocument,
+  );
+}
+
+function draftToRunner(draft: RunnerDraft): Runner {
+  return {
+    id: Date.now(),
+    firstName: draft.firstName.trim(),
+    lastName: draft.lastName.trim(),
+    birthDate: draft.birthDate,
+    gender: draft.gender,
+    category: getCategory(draft.birthDate, draft.gender),
+    race: draft.race,
+    identityDocument: draft.identityDocument,
+    medicalCertificate: draft.medicalCertificate,
+    parentalAuthorization: isMinor(draft.birthDate) ? draft.parentalAuthorization || undefined : undefined,
+  };
 }
 
 function isValidEmail(email: string) {
@@ -109,26 +203,6 @@ function EyeIcon() {
     <svg className="button-icon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" />
       <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function PencilIcon() {
-  return (
-    <svg className="button-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 20h4l11-11-4-4L4 16v4Z" />
-      <path d="m13.5 6.5 4 4" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg className="button-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 7h14" />
-      <path d="M10 11v6M14 11v6" />
-      <path d="M8 7V5h8v2" />
-      <path d="M7 7l1 14h8l1-14" />
     </svg>
   );
 }
@@ -335,22 +409,38 @@ function HomePage() {
 
 function CoursesPage() {
   return (
-    <Page title="Nos 5 challenges" intro="Choisissez le défi qui vous correspond.">
-      <div className="race-grid">
-        {RACES.map((race, index) => (
-          <article className="race-card" key={race.name}>
-            <span className="race-number">0{index + 1}</span>
-            <div>
-              <h2>{race.name}</h2>
-              <p>{race.discipline && <><strong>{race.discipline}</strong> · </>}{race.description}</p>
-            </div>
-            <div className="race-meta">
-              <strong>{race.distance}</strong>
-              <span>{formatAmount(race.price)}{race.duo ? " / duo" : ""}</span>
-            </div>
-          </article>
-        ))}
-      </div>
+    <Page
+      title="Nos challenges"
+      intro="Choisissez le défi qui vous correspond."
+      compact
+    >
+      {COURSE_GROUPS.map((group) => (
+        <section className="race-group" key={group.title}>
+          <h2 className="race-group-title">{group.title}</h2>
+          <div className="race-grid">
+            {group.races.map((name, index) => {
+              const race = RACES.find((item) => item.name === name);
+              if (!race) return null;
+              return (
+                <article className="race-card" key={`${group.title}-${race.name}`}>
+                  <div className="race-index">
+                    <span className="race-kind">{group.kind}</span>
+                    <span className="race-number">0{index + 1}</span>
+                  </div>
+                  <div>
+                    <h3>{race.name}</h3>
+                    <p>{race.description}</p>
+                  </div>
+                  <div className="race-meta">
+                    <strong>{race.distance}</strong>
+                    <span>{formatAmount(race.price)}{race.duo ? " / duo" : ""}</span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </Page>
   );
 }
@@ -612,6 +702,10 @@ function RegistrationsPage({
         <div>
           <p className="eyebrow">DOSSIERS</p>
           <h2>Mes inscriptions</h2>
+          <p className="section-lead">
+            Vous pouvez en créer plusieurs, une à la fois. Chaque dossier
+            concerne un seul participant.
+          </p>
         </div>
         <button className="button button-dark" onClick={() => setCreating(true)}>Nouvelle inscription</button>
       </div>
@@ -621,7 +715,8 @@ function RegistrationsPage({
             <tr>
               <th>Inscription</th>
               <th>Date</th>
-              <th>Participants</th>
+              <th>Participant</th>
+              <th>Course</th>
               <th>Montant</th>
               <th>Statut</th>
               <th><span className="sr-only">Action</span></th>
@@ -630,7 +725,7 @@ function RegistrationsPage({
           <tbody>
             {registrations.length === 0 ? (
               <tr>
-                <td colSpan={6} className="empty-table">
+                <td colSpan={7} className="empty-table">
                   Aucune inscription pour le moment. Commencez par une nouvelle inscription.
                 </td>
               </tr>
@@ -638,7 +733,8 @@ function RegistrationsPage({
               <tr key={registration.id}>
                 <td><strong>{registration.id}</strong></td>
                 <td>{registration.createdAt}</td>
-                <td>{registration.runners.length}</td>
+                <td>{registration.runner.firstName} {registration.runner.lastName}</td>
+                <td>{registration.runner.race}</td>
                 <td>{formatAmount(registration.totalAmount)}</td>
                 <td><span className="status-pill">{registration.status}</span></td>
                 <td><Link className="table-link" to={`/espace/inscriptions/${registration.id}`}>Consulter</Link></td>
@@ -678,27 +774,22 @@ function RegistrationDetailPage({ registrations }: { registrations: Registration
         <div><dt>Date d’inscription</dt><dd>{registration.createdAt}</dd></div>
         <div><dt>Mode de paiement</dt><dd>{registration.paymentMethod}</dd></div>
         <div><dt>Référence de paiement</dt><dd>{registration.paymentReference}</dd></div>
-        <div><dt>Montant total</dt><dd>{formatAmount(registration.totalAmount)}</dd></div>
+        <div><dt>Montant</dt><dd>{formatAmount(registration.totalAmount)}</dd></div>
       </dl>
-      <h3>Participants ({registration.runners.length})</h3>
-      <div className="registration-table-wrap">
-        <table className="registration-table">
-          <thead>
-            <tr><th>Participant</th><th>Naissance</th><th>Genre</th><th>Course</th><th>Documents</th></tr>
-          </thead>
-          <tbody>
-            {registration.runners.map((runner) => (
-              <tr key={runner.id}>
-                <td><strong>{runner.firstName} {runner.lastName}</strong></td>
-                <td>{new Date(runner.birthDate).toLocaleDateString("fr-FR")}</td>
-                <td>{runner.gender}</td>
-                <td>{runner.race}</td>
-                <td>Ajoutés</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <h3>Participant</h3>
+      <dl className="registration-metadata">
+        <div><dt>Nom</dt><dd>{registration.runner.lastName}</dd></div>
+        <div><dt>Prénom</dt><dd>{registration.runner.firstName}</dd></div>
+        <div><dt>Date de naissance</dt><dd>{new Date(registration.runner.birthDate).toLocaleDateString("fr-FR")}</dd></div>
+        <div><dt>Genre</dt><dd>{registration.runner.gender}</dd></div>
+        <div><dt>Catégorie</dt><dd>{registration.runner.category}</dd></div>
+        <div><dt>Course choisie</dt><dd>{registration.runner.race}</dd></div>
+        <div><dt>Pièce d’identité</dt><dd>{registration.runner.identityDocument}</dd></div>
+        <div><dt>Certificat médical</dt><dd>{registration.runner.medicalCertificate || "Non fourni"}</dd></div>
+        {registration.runner.parentalAuthorization && (
+          <div><dt>Autorisation parentale</dt><dd>{registration.runner.parentalAuthorization}</dd></div>
+        )}
+      </dl>
     </div>
   );
 }
@@ -712,14 +803,9 @@ function RegistrationWizard({
 }) {
   const [step, setStep] = useState(1);
   const [rulesAccepted, setRulesAccepted] = useState(false);
-  const [paymentAccepted, setPaymentAccepted] = useState(false);
-  const [runners, setRunners] = useState<Runner[]>([]);
+  const [draft, setDraft] = useState<RunnerDraft>(EMPTY_DRAFT);
   const [paymentOpen, setPaymentOpen] = useState(false);
-  const totalAmount = calculateTotal(runners);
-
-  function addRunner(runner: Omit<Runner, "id">) {
-    setRunners((current) => [...current, { ...runner, id: Date.now() }]);
-  }
+  const totalAmount = getRacePrice(draft.race);
 
   function validate(paymentMethod: Registration["paymentMethod"], paymentReference: string) {
     onValidate({
@@ -729,7 +815,7 @@ function RegistrationWizard({
       paymentReference,
       paymentMethod,
       totalAmount,
-      runners,
+      runner: draftToRunner(draft),
     });
   }
 
@@ -738,12 +824,12 @@ function RegistrationWizard({
       <div className="wizard-header">
         <div>
           <p className="eyebrow">NOUVELLE INSCRIPTION</p>
-          <h2>Étape {step} sur 4</h2>
+          <h2>Étape {step} sur 3</h2>
         </div>
         <button className="text-button" onClick={onCancel}>Quitter</button>
       </div>
       <ol className="stepper" aria-label="Progression">
-        {["Règlement", "Participants", "Paiement", "Résumé"].map((label, index) => (
+        {["Règlement", "Participant", "Résumé"].map((label, index) => (
           <li className={step === index + 1 ? "active" : step > index + 1 ? "done" : ""} key={label}>
             <span>{index + 1}</span>{label}
           </li>
@@ -756,7 +842,7 @@ function RegistrationWizard({
           <h3>Avant de commencer</h3>
           <p>
             Prenez connaissance du règlement fictif de l’événement avant
-            d’ajouter les participants.
+            de renseigner le participant.
           </p>
           <div className="document-row">
             <div><strong>Règlement de l’événement</strong><span>Document de démonstration · TXT</span></div>
@@ -778,12 +864,8 @@ function RegistrationWizard({
 
       {step === 2 && (
         <RunnerStep
-          runners={runners}
-          onAdd={addRunner}
-          onUpdate={(id, runner) =>
-            setRunners((current) => current.map((item) => (item.id === id ? { ...item, ...runner } : item)))
-          }
-          onRemove={(id) => setRunners((current) => current.filter((runner) => runner.id !== id))}
+          draft={draft}
+          onChange={setDraft}
           onPrevious={() => setStep(1)}
           onNext={() => setStep(3)}
         />
@@ -791,36 +873,18 @@ function RegistrationWizard({
 
       {step === 3 && (
         <section className="wizard-panel">
-          <p className="eyebrow">03 — CONFIRMATION ET PAIEMENT</p>
-          <h3>Modalités de paiement</h3>
-          <p>
-            Le paiement en ligne sera demandé après la vérification et la
-            validation du résumé de votre inscription.
-          </p>
-          <div className="payment-box">
-            <div><span>Moyens acceptés</span><strong>MVola ou Orange Money</strong></div>
-            <div><span>Montant actuel</span><strong>{formatAmount(totalAmount)}</strong></div>
-          </div>
-          <Check checked={paymentAccepted} onChange={setPaymentAccepted}>
-            J’accepte l’intégralité des modalités et du règlement.
-          </Check>
-          <WizardActions
-            onPrevious={() => setStep(2)}
-            nextDisabled={!paymentAccepted}
-            onNext={() => setStep(4)}
-          />
-        </section>
-      )}
-
-      {step === 4 && (
-        <section className="wizard-panel">
-          <p className="eyebrow">04 — RÉSUMÉ</p>
+          <p className="eyebrow">03 — RÉSUMÉ</p>
           <h3>Vérifiez votre inscription</h3>
-          <Summary runners={runners} totalAmount={totalAmount} />
-          <WizardActions onPrevious={() => setStep(3)} />
-          <div className="final-actions">
-            <button className="button button-light" onClick={onCancel}>Annuler</button>
-            <button className="button button-dark" onClick={() => setPaymentOpen(true)}>Valider et payer</button>
+          <p>Contrôlez les informations du participant avant de valider.</p>
+          <Summary runner={draftToRunner(draft)} totalAmount={totalAmount} />
+          <div className="wizard-actions">
+            <button type="button" className="button button-light" onClick={() => setStep(2)}>
+              <ArrowLeftIcon /> Retour
+            </button>
+            <div className="final-actions">
+              <button type="button" className="button button-light" onClick={onCancel}>Annuler</button>
+              <button type="button" className="button button-dark" onClick={() => setPaymentOpen(true)}>Valider et payer</button>
+            </div>
           </div>
         </section>
       )}
@@ -836,99 +900,39 @@ function RegistrationWizard({
 }
 
 function RunnerStep({
-  runners,
-  onAdd,
-  onUpdate,
-  onRemove,
+  draft,
+  onChange,
   onPrevious,
   onNext,
 }: {
-  runners: Runner[];
-  onAdd: (runner: Omit<Runner, "id">) => void;
-  onUpdate: (id: number, runner: Omit<Runner, "id">) => void;
-  onRemove: (id: number) => void;
+  draft: RunnerDraft;
+  onChange: (draft: RunnerDraft) => void;
   onPrevious: () => void;
   onNext: () => void;
 }) {
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [lastName, setLastName] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [gender, setGender] = useState("");
-  const [race, setRace] = useState("");
-  const [identityName, setIdentityName] = useState("");
-  const [medicalName, setMedicalName] = useState("");
-  const [parentalName, setParentalName] = useState("");
-  const editing = editingId !== null;
-  const minor = useMemo(() => {
-    if (!birthDate) return false;
-    const birthday = new Date(birthDate);
-    const limit = new Date();
-    limit.setFullYear(limit.getFullYear() - 18);
-    return birthday > limit;
-  }, [birthDate]);
+  const minor = isMinor(draft.birthDate);
+  const category = getCategory(draft.birthDate, draft.gender);
 
-  function resetForm() {
-    setEditingId(null);
-    setLastName("");
-    setFirstName("");
-    setBirthDate("");
-    setGender("");
-    setRace("");
-    setIdentityName("");
-    setMedicalName("");
-    setParentalName("");
-  }
-
-  function startEdit(runner: Runner) {
-    setEditingId(runner.id);
-    setLastName(runner.lastName);
-    setFirstName(runner.firstName);
-    setBirthDate(runner.birthDate);
-    setGender(runner.gender);
-    setRace(runner.race);
-    setIdentityName(runner.identityDocument);
-    setMedicalName(runner.medicalCertificate);
-    setParentalName(runner.parentalAuthorization ?? "");
-  }
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!lastName.trim() || !firstName.trim() || !birthDate || !gender || !race || !identityName) return;
-
-    const payload: Omit<Runner, "id"> = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      birthDate,
-      gender,
-      race,
-      identityDocument: identityName,
-      medicalCertificate: medicalName,
-      parentalAuthorization: minor ? parentalName || undefined : undefined,
-    };
-
-    if (editingId) onUpdate(editingId, payload);
-    else onAdd(payload);
-    resetForm();
-    event.currentTarget.reset();
+  function update<K extends keyof RunnerDraft>(key: K, value: RunnerDraft[K]) {
+    onChange({ ...draft, [key]: value });
   }
 
   return (
     <section className="wizard-panel">
-      <p className="eyebrow">02 — PARTICIPANTS</p>
-      <h3>{editing ? "Modifier un coureur" : "Ajouter un coureur"}</h3>
+      <p className="eyebrow">02 — PARTICIPANT</p>
+      <h3>Renseigner le participant</h3>
       <p className="required-note">Les champs marqués d’un * sont obligatoires.</p>
-      <form className="form-grid" onSubmit={submit}>
+      <div className="form-grid">
         <div className="two-columns">
-          <Field label="Nom *"><input name="lastName" value={lastName} onChange={(event) => setLastName(event.target.value)} required /></Field>
-          <Field label="Prénom *"><input name="firstName" value={firstName} onChange={(event) => setFirstName(event.target.value)} required /></Field>
+          <Field label="Nom *"><input name="lastName" value={draft.lastName} onChange={(event) => update("lastName", event.target.value)} required /></Field>
+          <Field label="Prénom *"><input name="firstName" value={draft.firstName} onChange={(event) => update("firstName", event.target.value)} required /></Field>
         </div>
         <div className="two-columns">
           <Field label="Date de naissance *">
-            <input name="birthDate" type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} required />
+            <input name="birthDate" type="date" value={draft.birthDate} onChange={(event) => update("birthDate", event.target.value)} required />
           </Field>
           <Field label="Genre *">
-            <select name="gender" value={gender} onChange={(event) => setGender(event.target.value)} required>
+            <select name="gender" value={draft.gender} onChange={(event) => update("gender", event.target.value)} required>
               <option value="" disabled>Choisir</option>
               <option value="Femme">Femme</option>
               <option value="Homme">Homme</option>
@@ -936,22 +940,39 @@ function RunnerStep({
             </select>
           </Field>
         </div>
-        <Field label="Course à faire *">
-          <select name="race" value={race} onChange={(event) => setRace(event.target.value)} required>
-            <option value="" disabled>Choisir une course</option>
-            {RACES.map((item) => <option key={item.name} value={formatRaceLabel(item)}>{formatRaceLabel(item)}</option>)}
-          </select>
-        </Field>
+        <div className="race-block">
+          <div className="two-columns">
+            <Field label="Catégorie">
+              <span className={category ? "readonly-value" : "readonly-value is-placeholder"}>
+                {category || "Déduite de la date de naissance et du genre"}
+              </span>
+            </Field>
+            <Field label="Course choisie *">
+              <select name="race" value={draft.race} onChange={(event) => update("race", event.target.value)} required>
+                <option value="" disabled>Choisir une course</option>
+                {RACES.map((item) => <option key={item.name} value={formatRaceLabel(item)}>{formatRaceLabel(item)}</option>)}
+              </select>
+            </Field>
+          </div>
+          {draft.race && (
+            <small className="file-hint">
+              {formatAmount(getRacePrice(draft.race))}
+              {isDuoRace(draft.race)
+                ? " — tarif duo. Ce challenge se court à deux : chaque personne crée sa propre inscription."
+                : " — un seul participant pour cette inscription."}
+            </small>
+          )}
+        </div>
         <div className="file-grid">
           <Field label="Pièce d’identité (CIN/Carte étudiant) *">
             <input
               name="identityDocument"
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-              required={!identityName}
-              onChange={(event) => setIdentityName(event.target.files?.[0]?.name ?? "")}
+              required={!draft.identityDocument}
+              onChange={(event) => update("identityDocument", event.target.files?.[0]?.name ?? "")}
             />
-            {identityName && <small className="file-hint">Fichier actuel : {identityName}</small>}
+            {draft.identityDocument && <small className="file-hint">Fichier actuel : {draft.identityDocument}</small>}
             <small className="file-hint">Formats acceptés : PDF, PNG, JPG, JPEG.</small>
           </Field>
           <Field label="Certificat médical">
@@ -959,9 +980,9 @@ function RunnerStep({
               name="medicalCertificate"
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-              onChange={(event) => setMedicalName(event.target.files?.[0]?.name ?? medicalName)}
+              onChange={(event) => update("medicalCertificate", event.target.files?.[0]?.name ?? draft.medicalCertificate)}
             />
-            {medicalName && <small className="file-hint">Fichier actuel : {medicalName}</small>}
+            {draft.medicalCertificate && <small className="file-hint">Fichier actuel : {draft.medicalCertificate}</small>}
             <small className="file-hint">Formats acceptés : PDF, PNG, JPG, JPEG.</small>
           </Field>
           {minor && (
@@ -970,84 +991,39 @@ function RunnerStep({
                 name="parentalAuthorization"
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                onChange={(event) => setParentalName(event.target.files?.[0]?.name ?? parentalName)}
+                onChange={(event) => update("parentalAuthorization", event.target.files?.[0]?.name ?? draft.parentalAuthorization)}
               />
-              {parentalName && <small className="file-hint">Fichier actuel : {parentalName}</small>}
+              {draft.parentalAuthorization && <small className="file-hint">Fichier actuel : {draft.parentalAuthorization}</small>}
               <small className="file-hint">Formats acceptés : PDF, PNG, JPG, JPEG.</small>
             </Field>
           )}
         </div>
-        <div className="inline-actions">
-          <button className="button button-light add-runner">{editing ? "Enregistrer les modifications" : "+ Ajouter ce participant"}</button>
-          {editing && <button type="button" className="button button-ghost" onClick={resetForm}>Annuler la modification</button>}
-        </div>
-      </form>
-
-      {runners.length > 0 && (
-        <div className="runner-list">
-          <h4>Participants ajoutés ({runners.length})</h4>
-          {runners.map((runner) => (
-            <div className="runner-row" key={runner.id}>
-              <div><strong>{runner.firstName} {runner.lastName}</strong><span>{runner.race}</span></div>
-              <div className="runner-actions">
-                <button
-                  className="icon-action"
-                  type="button"
-                  aria-label="Modifier"
-                  data-tooltip="Modifier"
-                  onClick={() => startEdit(runner)}
-                >
-                  <PencilIcon />
-                </button>
-                <button
-                  className="icon-action"
-                  type="button"
-                  aria-label="Retirer"
-                  data-tooltip="Retirer"
-                  onClick={() => { if (editingId === runner.id) resetForm(); onRemove(runner.id); }}
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      <WizardActions onPrevious={onPrevious} nextDisabled={runners.length === 0} onNext={onNext} />
+      </div>
+      <WizardActions onPrevious={onPrevious} nextDisabled={!isDraftComplete(draft)} onNext={onNext} />
     </section>
   );
 }
 
-function Summary({ runners, totalAmount }: { runners: Runner[]; totalAmount: number }) {
+function Summary({ runner, totalAmount }: { runner: Runner; totalAmount: number }) {
   return (
     <div className="summary">
-      <div className="summary-block">
-        <span>Règlement</span>
-        <strong>Accepté</strong>
-      </div>
-      {runners.map((runner) => (
-        <article className="summary-runner" key={runner.id}>
-          <div>
-            <span>Participant</span>
-            <strong>{runner.firstName} {runner.lastName}</strong>
-          </div>
-          <div>
-            <span>Naissance</span>
-            <strong>{new Date(runner.birthDate).toLocaleDateString("fr-FR")}</strong>
-          </div>
-          <div>
-            <span>Course</span>
-            <strong>{runner.race}</strong>
-          </div>
-          <div>
-            <span>Documents</span>
-            <strong>Ajoutés</strong>
-          </div>
-        </article>
-      ))}
-      <div className="summary-block summary-total">
-        <span>Montant total</span>
-        <strong>{formatAmount(totalAmount)}</strong>
+      <dl className="summary-facts">
+        <div><dt>Nom</dt><dd>{runner.lastName}</dd></div>
+        <div><dt>Prénom</dt><dd>{runner.firstName}</dd></div>
+        <div><dt>Date de naissance</dt><dd>{new Date(runner.birthDate).toLocaleDateString("fr-FR")}</dd></div>
+        <div><dt>Genre</dt><dd>{runner.gender}</dd></div>
+        <div><dt>Catégorie</dt><dd>{runner.category}</dd></div>
+        <div><dt>Course choisie</dt><dd>{runner.race}</dd></div>
+      </dl>
+      <div className="summary-payment">
+        <p className="summary-payment-methods">
+          <span>Moyens acceptés sur ce site</span>
+          <strong>MVola ou Orange Money</strong>
+        </p>
+        <p className="summary-payment-amount">
+          <span>Montant</span>
+          <strong>{formatAmount(totalAmount)}</strong>
+        </p>
       </div>
     </div>
   );
