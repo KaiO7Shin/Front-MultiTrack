@@ -8,6 +8,13 @@ export function formatDistanceKm(distance: number | string | null | undefined) {
   return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value)} km`;
 }
 
+export function formatAgeBound(age: number | null | undefined, empty = "–") {
+  if (age === null || age === undefined || Number.isNaN(Number(age))) {
+    return empty;
+  }
+  return String(age);
+}
+
 export function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email);
 }

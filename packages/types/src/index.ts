@@ -15,6 +15,24 @@ export interface CourseListItem {
   type_course: string;
 }
 
+export interface CategoryListItem {
+  id: number;
+  libelle: string;
+  alias: string;
+  age_min: number | null;
+  age_max: number | null;
+}
+
+export interface EligibleCategoryItem {
+  libelle_categorie: string;
+}
+
+export interface CourseEligibleCategories {
+  libelle_course: string;
+  nom_course: string;
+  categories_eligibles: EligibleCategoryItem[];
+}
+
 export interface EventInformation {
   name?: string;
   title?: string;

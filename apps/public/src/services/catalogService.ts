@@ -1,5 +1,5 @@
 import { API, ApiError, apiRequest } from "@multitrack/api-client";
-import type { CourseListItem, RenderResponse } from "@multitrack/types";
+import type { CategoryListItem, CourseEligibleCategories, CourseListItem, RenderResponse } from "@multitrack/types";
 import { CATEGORIES, CATEGORY_ELIGIBILITY, COURSE_GROUPS, RACES } from "../data/catalog";
 import type { Race } from "../types";
 
@@ -8,15 +8,40 @@ export type CourseTypeGroup = {
   courses: CourseListItem[];
 };
 
-export async function fetchCourses(): Promise<CourseListItem[]> {
-  const payload = await apiRequest<RenderResponse<CourseListItem[]>>(API.courses);
+function readRenderList<T>(payload: RenderResponse<T[]>, fallbackMessage: string): T[] {
   if (payload.code !== 200) {
     throw new ApiError(
-      payload.message ?? payload.error ?? "Impossible de récupérer les courses",
+      payload.message ?? payload.error ?? fallbackMessage,
       payload.code,
     );
   }
   return payload.data ?? [];
+}
+
+export async function fetchCourses(): Promise<CourseListItem[]> {
+  const payload = await apiRequest<RenderResponse<CourseListItem[]>>(API.courses);
+  return readRenderList(payload, "Impossible de récupérer les courses");
+}
+
+export async function fetchCategoriesList(): Promise<CategoryListItem[]> {
+  const payload = await apiRequest<RenderResponse<CategoryListItem[]>>(API.categories);
+  return readRenderList(payload, "Impossible de récupérer les catégories");
+}
+
+export async function fetchEligibleCategoriesByCourse(): Promise<CourseEligibleCategories[]> {
+  const payload = await apiRequest<RenderResponse<CourseEligibleCategories[]>>(
+    API.courseEligibleCategories,
+  );
+  return readRenderList(payload, "Impossible de récupérer les catégories éligibles");
+}
+
+export function isCategoryEligibleForCourse(
+  course: CourseEligibleCategories,
+  categoryLibelle: string,
+) {
+  return course.categories_eligibles.some(
+    (category) => category.libelle_categorie === categoryLibelle,
+  );
 }
 
 export function groupCoursesByType(courses: CourseListItem[]): CourseTypeGroup[] {
@@ -40,8 +65,8 @@ export function courseGroupTitle(typeCourse: string) {
 }
 
 /**
- * Catalogue public actuel : données TBB locales pour catégories et inscriptions.
- * Les courses affichées sur /courses viennent de `fetchCourses()`.
+ * Catalogue public actuel : données TBB locales pour l’éligibilité et les inscriptions.
+ * Les listes /courses et /categories viennent de l’API.
  */
 export function getRaces(): Race[] {
   return RACES;
