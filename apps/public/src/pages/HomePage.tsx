@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Countdown } from "../components/Countdown";
 import { BeerIcon, BikeIcon, TrailIcon } from "../components/icons";
 import { HIGHLIGHTS } from "../data/catalog";
 
@@ -27,6 +28,11 @@ export function HomePage() {
               <Link className="button button-outline" to="/a-propos">En savoir plus</Link>
             </div>
           </div>
+        </div>
+      </section>
+      <section className="countdown-section">
+        <div className="site-shell">
+          <Countdown />
         </div>
       </section>
       <section className="section highlights">

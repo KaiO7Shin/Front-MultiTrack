@@ -1,9 +1,13 @@
 import type { Category, CourseGroup, Race } from "../types";
 
+/** 07/11/2026 00:00 — date et heure de l’événement TBB, immuable. */
+export const EVENT_START_AT = "2026-11-07T00:00:00+03:00" as const;
+
 export const EVENT_INFO = {
   name: "TBB · Trail Bike Beer",
   dateLabel: "Samedi 07 novembre 2026",
   date: "2026-11-07",
+  startAt: EVENT_START_AT,
   location: "Ambatomanga",
 } as const;
 

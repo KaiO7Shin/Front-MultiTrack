@@ -295,6 +295,67 @@ html[data-theme="dark"] .hero-copy { color: var(--mt-slate); }
   margin-top: 40px;
 }
 
+.countdown-section {
+  padding: 88px 0;
+  background: var(--theme-bg);
+  border-block: 1px solid var(--theme-border);
+  text-align: center;
+}
+
+.countdown-section .eyebrow {
+  margin-bottom: 12px;
+}
+
+.countdown-section h2 {
+  margin: 0 auto 36px;
+  font-size: clamp(30px, 3.4vw, 42px);
+  letter-spacing: .01em;
+  text-transform: none;
+  color: var(--theme-text);
+}
+
+.countdown {
+  margin: 0 auto;
+  max-width: 640px;
+}
+
+.countdown-track {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.countdown-unit {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 0 22px;
+}
+
+.countdown-unit + .countdown-unit {
+  border-left: 1px solid var(--theme-border);
+}
+
+.countdown-value {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 600;
+  letter-spacing: .02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-text);
+}
+
+.countdown-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted);
+}
+
 .event-facts {
   margin: 28px 0 0;
   display: flex;
@@ -1383,6 +1444,9 @@ html[data-theme="dark"] .menu-toggle span { background: var(--theme-panel-text);
   .header-actions .text-link { display: none; }
   .header-actions { gap: 8px; }
   .hero h1 { font-size: clamp(44px, 13vw, 66px); }
+  .countdown-section { padding: 56px 0; }
+  .countdown { max-width: none; }
+  .countdown-unit { padding: 0 10px; }
   .event-facts { flex-direction: column; gap: 18px; }
   .event-facts div { padding: 0; }
   .hero-actions .button { width: 100%; }
