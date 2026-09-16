@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/main.tsx"],"version":"5.8.3"}
+{"root":["./src/App.tsx","./src/main.tsx","./src/hooks/useAuth.ts","./src/hooks/useOrganizerDashboard.ts","./src/pages/DashboardPage.tsx","./src/pages/LoginPage.tsx","./src/services/authService.ts","./src/services/organizerService.ts"],"version":"5.8.3"}

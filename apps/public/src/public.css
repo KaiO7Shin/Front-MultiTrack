@@ -507,7 +507,65 @@ html[data-theme="dark"] .button-dark:hover {
   color: var(--theme-text);
 }
 
+.page-heading-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px 32px;
+  flex-wrap: wrap;
+}
+
+.page-heading-title .button {
+  flex: none;
+  margin-bottom: 10px;
+}
+
 .page-heading > p:not(.eyebrow) { margin: 24px 0 0; color: var(--theme-text-muted); font-size: 18px; }
+
+.category-block + .category-block { margin-top: 72px; }
+
+.eligibility-table th:not(:first-child),
+.eligibility-table td:not(:first-child) {
+  text-align: center;
+  width: 16%;
+}
+
+.eligibility-race-meta {
+  display: block;
+  margin-top: 4px;
+  color: var(--mt-olive);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.eligibility-cell { vertical-align: middle; }
+
+.eligibility-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+  margin: 0 auto;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.eligibility-yes { stroke: var(--mt-olive); }
+.eligibility-no { stroke: #e85d4c; }
+
+.category-note {
+  max-width: 680px;
+  margin: 28px 0 0;
+  padding: 16px 18px;
+  background: var(--theme-bg-muted);
+  border-left: 3px solid var(--mt-olive);
+  color: var(--theme-text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
 
 .race-group + .race-group { margin-top: 80px; }
 
@@ -1341,6 +1399,7 @@ html[data-theme="dark"] .menu-toggle span { background: var(--theme-panel-text);
   .account-page { padding: 48px 0 80px; }
   .account-nav { margin-inline: -14px; }
   .content-title-row, .wizard-header { align-items: flex-start; flex-direction: column; }
+  .page-heading-title .button { width: 100%; }
   .stepper li { font-size: 0; }
   .stepper li span { font-size: 12px; }
   .document-row { align-items: flex-start; flex-direction: column; }

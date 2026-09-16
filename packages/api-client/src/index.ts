@@ -1,3 +1,5 @@
+export { API } from "./endpoints";
+
 const TOKEN_KEY = "multitrack_token";
 
 export class ApiError extends Error {
@@ -73,4 +75,18 @@ export async function downloadAuthenticated(
   link.download = filename;
   link.click();
   URL.revokeObjectURL(objectUrl);
+}
+
+export function listFrom<T>(payload: T[] | { data?: T[] }): T[] {
+  return Array.isArray(payload) ? payload : payload.data ?? [];
+}
+
+export function unwrapData<T>(payload: T | { data: T }): T {
+  return payload !== null && typeof payload === "object" && "data" in payload
+    ? (payload as { data: T }).data
+    : payload;
+}
+
+export function toErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
 }

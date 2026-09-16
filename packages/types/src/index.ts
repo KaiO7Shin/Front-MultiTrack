@@ -1,55 +1,97 @@
 export interface EventInformation {
-  id?: string | number;
   name?: string;
   title?: string;
   description?: string;
   startDate?: string;
   endDate?: string;
   location?: string;
-  [key: string]: unknown;
 }
 
 export interface PublicRace {
-  id: string | number;
+  id: number | string;
   label?: string;
   status?: string;
   type?: string;
   distance?: number;
   elevation?: number;
   startAt?: string;
-  [key: string]: unknown;
+  nomSequence?: string;
+  dureeBarriereHoraire?: string;
+  tarif?: number;
+  description?: string;
+}
+
+export interface Account {
+  id?: number | string;
+  email: string;
+  phone?: string;
 }
 
 export interface User {
-  id?: string | number;
+  id?: number | string;
   email: string;
   displayName?: string;
   role?: string;
   enabled?: boolean;
-  [key: string]: unknown;
+  phone?: string;
 }
 
 export interface AuthResponse {
   token?: string;
   accessToken?: string;
   user?: User;
-  [key: string]: unknown;
+  account?: Account;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  phone: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
 
 export interface Registration {
-  id: string | number;
-  courseId?: string | number;
+  id: number | string;
+  courseId?: number | string;
   courseLabel?: string;
   firstName?: string;
   lastName?: string;
   birthDate?: string;
   gender?: string;
+  genderId?: number;
+  tShirtSize?: string;
+  tShirtSizeId?: number;
+  identityDocumentUrl?: string;
+  medicalCertificateUrl?: string;
+  parentalAuthorizationUrl?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
   phone?: string;
+  accountId?: number | string;
   accountEmail?: string;
+  accountPhone?: string;
   accountDisplayName?: string;
   status?: string;
   createdAt?: string;
-  [key: string]: unknown;
+}
+
+export interface CreateRegistrationRequest {
+  courseId: number;
+  lastName: string;
+  firstName?: string;
+  birthDate: string;
+  genderId: number;
+  tShirtSizeId: number;
+  identityDocumentUrl: string;
+  medicalCertificateUrl?: string;
+  parentalAuthorizationUrl?: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  status?: string;
 }
 
 export interface OrganizerDashboard {
@@ -59,5 +101,4 @@ export interface OrganizerDashboard {
   submittedCount?: number;
   validatedCount?: number;
   cancelledCount?: number;
-  [key: string]: unknown;
 }
