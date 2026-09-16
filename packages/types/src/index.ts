@@ -1,3 +1,20 @@
+export interface RenderResponse<T> {
+  code: number;
+  data?: T;
+  message?: string;
+  error?: string;
+}
+
+export interface CourseListItem {
+  id: number;
+  libelle: string;
+  distance: number;
+  denivele_positif: number;
+  tarif: number | null;
+  description: string | null;
+  type_course: string;
+}
+
 export interface EventInformation {
   name?: string;
   title?: string;

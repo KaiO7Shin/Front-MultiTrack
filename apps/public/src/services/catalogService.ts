@@ -1,10 +1,47 @@
+import { API, ApiError, apiRequest } from "@multitrack/api-client";
+import type { CourseListItem, RenderResponse } from "@multitrack/types";
 import { CATEGORIES, CATEGORY_ELIGIBILITY, COURSE_GROUPS, RACES } from "../data/catalog";
 import type { Race } from "../types";
 
+export type CourseTypeGroup = {
+  typeCourse: string;
+  courses: CourseListItem[];
+};
+
+export async function fetchCourses(): Promise<CourseListItem[]> {
+  const payload = await apiRequest<RenderResponse<CourseListItem[]>>(API.courses);
+  if (payload.code !== 200) {
+    throw new ApiError(
+      payload.message ?? payload.error ?? "Impossible de récupérer les courses",
+      payload.code,
+    );
+  }
+  return payload.data ?? [];
+}
+
+export function groupCoursesByType(courses: CourseListItem[]): CourseTypeGroup[] {
+  const groups: CourseTypeGroup[] = [];
+
+  for (const course of courses) {
+    const typeCourse = course.type_course ?? "";
+    const last = groups.at(-1);
+    if (last && last.typeCourse === typeCourse) {
+      last.courses.push(course);
+      continue;
+    }
+    groups.push({ typeCourse, courses: [course] });
+  }
+
+  return groups;
+}
+
+export function courseGroupTitle(typeCourse: string) {
+  return typeCourse ? `Challenge ${typeCourse}` : "Courses";
+}
+
 /**
- * Catalogue public actuel : données TBB locales.
- * Brancher ici `apiRequest(API.publicRaces)` et `apiRequest(API.publicEvent)`
- * dès que l’API alimentera l’accueil et les courses.
+ * Catalogue public actuel : données TBB locales pour catégories et inscriptions.
+ * Les courses affichées sur /courses viennent de `fetchCourses()`.
  */
 export function getRaces(): Race[] {
   return RACES;

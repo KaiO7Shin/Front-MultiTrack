@@ -2,6 +2,12 @@ export function formatAmount(amount: number) {
   return `${new Intl.NumberFormat("fr-FR").format(amount)} Ar`;
 }
 
+export function formatDistanceKm(distance: number | string | null | undefined) {
+  const value = Number(distance);
+  if (!Number.isFinite(value)) return "—";
+  return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value)} km`;
+}
+
 export function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email);
 }
