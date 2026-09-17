@@ -1,23 +1,21 @@
-import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useSession } from "../../hooks/useSession";
 import { formatAmount } from "../../lib/utils";
 import { findRegistration } from "../../services/registrationService";
-import { RegistrationWizard } from "./RegistrationWizard";
+
+const REGISTRATION_SOON_MESSAGE = "Les inscriptions sur ce site seront bientôt disponibles.";
 
 export function RegistrationsPage() {
-  const { registrations, addRegistration } = useSession();
-  const [creating, setCreating] = useState(false);
+  const { registrations } = useSession();
 
-  if (creating) {
+  if (registrations.length === 0) {
     return (
-      <RegistrationWizard
-        onCancel={() => setCreating(false)}
-        onValidate={(registration) => {
-          addRegistration(registration);
-          setCreating(false);
-        }}
-      />
+      <div className="account-content empty-results">
+        <p className="eyebrow">DOSSIERS</p>
+        <span className="empty-number">—</span>
+        <h2>{REGISTRATION_SOON_MESSAGE}</h2>
+        <p>La création d’une nouvelle inscription n’est pas encore ouverte.</p>
+      </div>
     );
   }
 
@@ -27,12 +25,8 @@ export function RegistrationsPage() {
         <div>
           <p className="eyebrow">DOSSIERS</p>
           <h2>Mes inscriptions</h2>
-          <p className="section-lead">
-            Vous pouvez en créer plusieurs, une à la fois. Chaque dossier
-            concerne un seul participant.
-          </p>
+          <p className="section-lead">{REGISTRATION_SOON_MESSAGE}</p>
         </div>
-        <button className="button button-dark" onClick={() => setCreating(true)}>Nouvelle inscription</button>
       </div>
       <div className="registration-table-wrap">
         <table className="registration-table">
@@ -48,13 +42,7 @@ export function RegistrationsPage() {
             </tr>
           </thead>
           <tbody>
-            {registrations.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="empty-table">
-                  Aucune inscription pour le moment. Commencez par une nouvelle inscription.
-                </td>
-              </tr>
-            ) : registrations.map((registration) => (
+            {registrations.map((registration) => (
               <tr key={registration.id}>
                 <td><strong>{registration.id}</strong></td>
                 <td>{registration.createdAt}</td>

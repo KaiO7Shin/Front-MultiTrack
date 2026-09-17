@@ -10,7 +10,7 @@ export type SessionContextValue = {
   register: (input: RegisterInput) => Promise<Result<PublicUser>>;
   login: (input: LoginInput) => Promise<Result<PublicUser>>;
   logout: () => Promise<void>;
-  updateProfile: (input: ProfileInput) => Result<PublicUser>;
+  updateProfile: (input: ProfileInput) => Promise<Result<PublicUser>>;
   addRegistration: (registration: Registration) => void;
 };
 
