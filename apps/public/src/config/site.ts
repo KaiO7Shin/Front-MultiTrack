@@ -25,6 +25,15 @@ export const PAYMENT = {
   },
 } as const satisfies Record<PaymentMethod, { number: string; logo: string; alt: string }>;
 
+/** Official TBB rules PDF hosted on Google Drive. */
+export const RULES_DOCUMENT = {
+  title: "Règlement de l’événement",
+  subtitle: "Document officiel · PDF",
+  fileId: "1XaXEiNX9ufEf-Ot3p98wpdVcJRG_UUtV",
+  viewUrl: "https://drive.google.com/file/d/1XaXEiNX9ufEf-Ot3p98wpdVcJRG_UUtV/view?usp=sharing",
+  downloadUrl: "https://drive.google.com/uc?export=download&id=1XaXEiNX9ufEf-Ot3p98wpdVcJRG_UUtV",
+} as const;
+
 /** Transfer label to use when paying by MVola or Orange Money. */
 export const PAYMENT_MOTIF = {
   pattern: "TBB-VotrePrénom",

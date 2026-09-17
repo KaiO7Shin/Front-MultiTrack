@@ -1,4 +1,5 @@
 import { Page } from "../components/Layout";
+import { RulesDocumentLinks } from "../components/RulesDocumentLinks";
 import { ORGANIZER_CONTACTS } from "../config/site";
 import { EVENT_INFO } from "../data/catalog";
 
@@ -42,6 +43,15 @@ export function AboutPage() {
           </p>
         </div>
       </div>
+      <section className="about-rules" aria-labelledby="about-rules-title">
+        <p className="eyebrow">RÈGLEMENT</p>
+        <h2 id="about-rules-title">Consulter le règlement</h2>
+        <p>
+          Le règlement officiel de TBB — Trail Bike Beer est disponible en
+          lecture ou en téléchargement.
+        </p>
+        <RulesDocumentLinks />
+      </section>
     </Page>
   );
 }

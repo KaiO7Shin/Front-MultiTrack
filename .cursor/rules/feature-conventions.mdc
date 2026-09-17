@@ -1,0 +1,32 @@
+---
+description: Conventions permanentes pour toute nouvelle fonctionnalité MultiTrack (charte, formulaires, erreurs RenderResponse)
+alwaysApply: true
+---
+
+# Fonctionnalités — front-end
+
+Respecter l’architecture et la charte graphique existantes (public, admin, organizer). Ne pas introduire un autre design system.
+
+- Public : tokens de `apps/public/src/public.css` (navy `#0f172b`, olive `#8c9962`).
+- Admin : `Alert`, `FormField`, `Modal`, tokens `brand`.
+- Organizer : classes `mt-*` de `packages/ui`.
+
+Avant d’implémenter : demander les infos manquantes ou importantes (champs, messages, flux, droits).
+
+## Erreurs de formulaire
+
+Sur **tout formulaire**, afficher une boîte d’erreur **au-dessus du premier champ** (`role="alert"`).
+
+- Style rouge un peu rose : fond `#fff0ee` / `rose-50`, texte `#a72a1f` / `rose-800`. Réutiliser `Alert` / `.mt-error` calés sur cette teinte, pas de rouge vif.
+- Texte = `RenderResponse.message` (fallback `error` seulement si `message` est vide).
+- Ne pas utiliser `alert()` pour les erreurs de formulaire.
+- Valider côté client les contraintes évidentes ; afficher aussi les erreurs métier renvoyées par l’API.
+
+```tsx
+<form>
+  {error && (
+    <Alert variant="error" role="alert">{error}</Alert>
+  )}
+  {/* premier champ ensuite */}
+</form>
+```

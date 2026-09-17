@@ -58,6 +58,7 @@ export interface PublicRace {
 
 export interface Account {
   id?: number | string;
+  username?: string;
   email: string;
   phone?: string;
 }
@@ -79,6 +80,7 @@ export interface AuthResponse {
 }
 
 export interface RegisterRequest {
+  username: string;
   email: string;
   password: string;
   phone: string;

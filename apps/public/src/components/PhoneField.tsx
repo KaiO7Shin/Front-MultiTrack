@@ -18,12 +18,14 @@ export function PhoneField({
   disabled,
   required = true,
   label = "Numéro de téléphone",
+  placeholder = "34 00 000 00",
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   required?: boolean;
   label?: string;
+  placeholder?: string;
 }) {
   return (
     <label className="field phone-field">
@@ -38,6 +40,7 @@ export function PhoneField({
           name: "phone",
           required,
           autoComplete: "tel",
+          placeholder,
         }}
       />
     </label>

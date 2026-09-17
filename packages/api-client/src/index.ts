@@ -52,7 +52,11 @@ export async function apiRequest<T>(
   }
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(url(path), { ...options, headers });
+  const response = await fetch(url(path), {
+    ...options,
+    headers,
+    credentials: options.credentials ?? "include",
+  });
   if (!response.ok) throw new ApiError(await errorMessage(response), response.status);
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
@@ -65,6 +69,7 @@ export async function downloadAuthenticated(
   const token = getToken();
   const response = await fetch(url(path), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: "include",
   });
   if (!response.ok) throw new ApiError(await errorMessage(response), response.status);
 

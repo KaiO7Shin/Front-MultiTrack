@@ -6,6 +6,7 @@ export const API = {
   courseEligibleCategories: "/api/course/categories_eligibles",
   register: "/api/auth/register",
   login: "/api/auth/login",
+  logout: "/api/auth/logout",
   me: "/api/me",
   myRegistrations: "/api/me/registrations",
   organizerDashboard: "/api/organizer/dashboard",
