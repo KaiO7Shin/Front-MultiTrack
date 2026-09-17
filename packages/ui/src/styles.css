@@ -1,0 +1,39 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #17233b;
+  background: #f6f7f9;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input, select { font: inherit; }
+a { color: inherit; }
+
+.mt-shell { width: min(1100px, calc(100% - 2rem)); margin: 0 auto; }
+.mt-header { background: #17233b; color: white; }
+.mt-header-inner { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.mt-brand { font-weight: 800; text-decoration: none; letter-spacing: .02em; }
+.mt-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.mt-nav a { text-decoration: none; opacity: .85; }
+.mt-nav a.active { opacity: 1; text-decoration: underline; }
+.mt-main { padding-block: 2rem 4rem; }
+.mt-grid { display: grid; gap: 1rem; }
+.mt-grid-cards { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.mt-card { background: white; border: 1px solid #e3e6eb; border-radius: 14px; padding: 1.25rem; box-shadow: 0 2px 8px #17233b0c; }
+.mt-form { display: grid; gap: 1rem; max-width: 560px; }
+.mt-field { display: grid; gap: .4rem; font-weight: 600; }
+.mt-field input, .mt-field select { width: 100%; border: 1px solid #cbd1da; border-radius: 8px; padding: .7rem .8rem; background: white; }
+.mt-button { border: 0; border-radius: 8px; padding: .7rem 1rem; color: white; background: #ef5538; font-weight: 700; cursor: pointer; }
+.mt-button:disabled { opacity: .55; cursor: wait; }
+.mt-button-secondary { background: #35415a; }
+.mt-status { color: #5b6577; }
+.mt-error { color: #a72a1f; background: #fff0ee; border-radius: 8px; padding: .75rem; }
+.mt-table-wrap { overflow-x: auto; }
+.mt-table { width: 100%; border-collapse: collapse; }
+.mt-table th, .mt-table td { padding: .75rem; border-bottom: 1px solid #e3e6eb; text-align: left; }
+.mt-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+
+@media (max-width: 650px) {
+  .mt-header-inner { align-items: flex-start; flex-direction: column; padding-block: 1rem; }
+}
