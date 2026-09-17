@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { EligibleIcon, IneligibleIcon } from "../components/icons";
+import { LoadingOverlay } from "../components/LoadingOverlay";
 import { Page } from "../components/Layout";
 import { useCategories } from "../hooks/useCategories";
 import { useEligibleCategories } from "../hooks/useEligibleCategories";
@@ -13,6 +14,7 @@ export function CategoriesPage() {
     loading: eligibilityLoading,
     error: eligibilityError,
   } = useEligibleCategories();
+  const pageLoading = loading || eligibilityLoading;
 
   return (
     <Page
@@ -25,9 +27,9 @@ export function CategoriesPage() {
         </Link>
       }
     >
+      <LoadingOverlay visible={pageLoading} />
       <section className="category-block">
         <h2 className="race-group-title">Liste des catégories</h2>
-        {loading && <p className="section-lead">Chargement des catégories…</p>}
         {error && (
           <div className="empty-results">
             <span className="empty-number">!</span>
@@ -69,7 +71,6 @@ export function CategoriesPage() {
 
       <section className="category-block">
         <h2 className="race-group-title">Catégories éligibles par course</h2>
-        {eligibilityLoading && <p className="section-lead">Chargement des catégories éligibles…</p>}
         {eligibilityError && (
           <div className="empty-results">
             <span className="empty-number">!</span>

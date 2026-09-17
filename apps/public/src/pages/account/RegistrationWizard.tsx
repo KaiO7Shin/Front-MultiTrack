@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { ArrowLeftIcon } from "../../components/icons";
+import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { WIZARD_STEPS } from "../../data/catalog";
 import { draftToRunner } from "../../lib/participant";
+import { MOCK_REQUEST_DELAY_MS, wait } from "../../lib/utils";
 import { createRegistration } from "../../services/registrationService";
 import { getRacePrice } from "../../services/catalogService";
 import { EMPTY_DRAFT, type Registration, type RunnerDraft } from "../../types";
@@ -19,20 +21,24 @@ export function RegistrationWizard({
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [draft, setDraft] = useState<RunnerDraft>(EMPTY_DRAFT);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const totalAmount = getRacePrice(draft.race);
 
-  function validate(paymentMethod: Registration["paymentMethod"], paymentReference: string) {
+  async function validate(paymentMethod: Registration["paymentMethod"], paymentReference: string) {
+    setLoading(true);
+    await wait(MOCK_REQUEST_DELAY_MS);
     onValidate(createRegistration(draft, { method: paymentMethod, reference: paymentReference }));
   }
 
   return (
     <div className="wizard">
+      <LoadingOverlay visible={loading} />
       <div className="wizard-header">
         <div>
           <p className="eyebrow">NOUVELLE INSCRIPTION</p>
           <h2>Étape {step} sur 3</h2>
         </div>
-        <button className="text-button" onClick={onCancel}>Quitter</button>
+        <button className="text-button" onClick={onCancel} disabled={loading}>Quitter</button>
       </div>
       <ol className="stepper" aria-label="Progression">
         {WIZARD_STEPS.map((label, index) => (
@@ -66,12 +72,12 @@ export function RegistrationWizard({
           <p>Contrôlez les informations du participant avant de valider.</p>
           <Summary runner={draftToRunner(draft)} totalAmount={totalAmount} />
           <div className="wizard-actions">
-            <button type="button" className="button button-light" onClick={() => setStep(2)}>
+            <button type="button" className="button button-light" onClick={() => setStep(2)} disabled={loading}>
               <ArrowLeftIcon /> Retour
             </button>
             <div className="final-actions">
-              <button type="button" className="button button-light" onClick={onCancel}>Annuler</button>
-              <button type="button" className="button button-dark" onClick={() => setPaymentOpen(true)}>Valider et payer</button>
+              <button type="button" className="button button-light" onClick={onCancel} disabled={loading}>Annuler</button>
+              <button type="button" className="button button-dark" onClick={() => setPaymentOpen(true)} disabled={loading}>Valider et payer</button>
             </div>
           </div>
         </section>
@@ -79,7 +85,8 @@ export function RegistrationWizard({
       {paymentOpen && (
         <PaymentModal
           totalAmount={totalAmount}
-          onClose={() => setPaymentOpen(false)}
+          busy={loading}
+          onClose={() => { if (!loading) setPaymentOpen(false); }}
           onValidate={validate}
         />
       )}

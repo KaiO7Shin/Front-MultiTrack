@@ -31,19 +31,21 @@ export function Summary({ runner, totalAmount }: { runner: Runner; totalAmount: 
 
 export function PaymentModal({
   totalAmount,
+  busy = false,
   onClose,
   onValidate,
 }: {
   totalAmount: number;
+  busy?: boolean;
   onClose: () => void;
-  onValidate: (method: Registration["paymentMethod"], reference: string) => void;
+  onValidate: (method: Registration["paymentMethod"], reference: string) => void | Promise<void>;
 }) {
   const [method, setMethod] = useState<PaymentMethod>("MVola");
   const [reference, setReference] = useState("");
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!reference.trim()) return;
+    if (busy || !reference.trim()) return;
     onValidate(method, reference.trim());
   }
 
@@ -56,7 +58,7 @@ export function PaymentModal({
         aria-labelledby="payment-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <button className="modal-close" type="button" aria-label="Fermer" onClick={onClose}>×</button>
+        <button className="modal-close" type="button" aria-label="Fermer" onClick={onClose} disabled={busy}>×</button>
         <p className="eyebrow">PAIEMENT EN LIGNE · DÉMONSTRATION</p>
         <h3 id="payment-title">Finaliser le paiement</h3>
         <p>Sélectionnez votre opérateur et saisissez la référence reçue après votre paiement.</p>
@@ -70,6 +72,7 @@ export function PaymentModal({
                   name="paymentMethod"
                   value={option}
                   checked={method === option}
+                  disabled={busy}
                   onChange={() => setMethod(option)}
                 />
                 <img
@@ -90,10 +93,11 @@ export function PaymentModal({
               value={reference}
               onChange={(event) => setReference(event.target.value)}
               placeholder="Ex. TBB-123456"
+              disabled={busy}
               required
             />
           </Field>
-          <button className="button button-dark button-full">Confirmer le paiement</button>
+          <button className="button button-dark button-full" disabled={busy}>Confirmer le paiement</button>
         </form>
       </section>
     </div>

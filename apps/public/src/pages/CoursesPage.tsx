@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LoadingOverlay } from "../components/LoadingOverlay";
 import { Page } from "../components/Layout";
 import { useCourses } from "../hooks/useCourses";
 import { formatAmount, formatDistanceKm } from "../lib/utils";
@@ -18,7 +19,7 @@ export function CoursesPage() {
         </Link>
       }
     >
-      {loading && <p className="section-lead">Chargement des courses…</p>}
+      <LoadingOverlay visible={loading} />
       {error && (
         <div className="empty-results">
           <span className="empty-number">!</span>

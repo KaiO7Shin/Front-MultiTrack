@@ -1275,6 +1275,61 @@ html[data-theme="dark"] .button-dark:hover {
   cursor: pointer;
 }
 
+/* ── Confirm modal ── */
+.confirm-modal {
+  position: relative;
+  width: min(440px, 100%);
+  padding: 36px 32px 28px;
+  background: var(--theme-secondary);
+  color: var(--theme-panel-text);
+  border-top: 5px solid var(--mt-olive);
+  box-shadow: 0 30px 80px rgba(15, 23, 43, .25);
+  text-align: center;
+}
+
+.confirm-modal-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--mt-olive);
+  border-radius: 50%;
+  color: var(--mt-olive);
+}
+
+.confirm-modal-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.confirm-modal h2 {
+  margin: 0;
+  font-size: clamp(26px, 4vw, 34px);
+  color: var(--theme-panel-text);
+}
+
+.confirm-modal p {
+  margin: 12px auto 0;
+  max-width: 34ch;
+  color: var(--mt-slate);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.confirm-modal-actions {
+  margin-top: 28px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .payment-total {
   margin: 24px 0;
   padding: 18px 20px;
@@ -1388,6 +1443,56 @@ html[data-theme="dark"] .button-dark:hover {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* ── Loading overlay ── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 43, .42);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  user-select: none;
+  cursor: wait;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loading-spinner-ring {
+  width: 36px;
+  height: 36px;
+  border: 2.5px solid rgba(248, 250, 247, .28);
+  border-top-color: var(--mt-olive);
+  border-radius: 50%;
+  animation: loading-spin .7s linear infinite;
+}
+
+.loading-spinner-label {
+  margin: 0;
+  color: var(--mt-white);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: none;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(1turn); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner-ring { animation: none; border-color: var(--mt-olive); }
 }
 
 /* ── Footer ── */
@@ -1528,6 +1633,9 @@ html[data-theme="dark"] .menu-toggle span { background: var(--theme-panel-text);
   .registration-metadata, .payment-methods { grid-template-columns: 1fr; }
   .registration-metadata div { border-right: 0; }
   .payment-modal { padding: 42px 22px 26px; }
+  .confirm-modal { padding: 32px 20px 22px; }
+  .confirm-modal-actions { flex-direction: column; }
+  .confirm-modal-actions .button { width: 100%; }
   .modal-backdrop { padding: 12px; }
   .wizard-actions { align-items: stretch; flex-direction: column-reverse; }
   .wizard-actions > div, .wizard-actions .button { width: 100%; }

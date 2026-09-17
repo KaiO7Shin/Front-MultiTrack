@@ -1,17 +1,19 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Field } from "../components/form";
+import { LoadingOverlay } from "../components/LoadingOverlay";
 import { useSession } from "../hooks/useSession";
-import { formValues } from "../lib/utils";
+import { formValues, MOCK_REQUEST_DELAY_MS, wait } from "../lib/utils";
 import type { AuthTab } from "../types";
 
 export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
   const [tab, setTab] = useState(initialTab);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { register, login } = useSession();
 
-  function submitRegister(event: FormEvent<HTMLFormElement>) {
+  async function submitRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const values = formValues(event.currentTarget);
     const result = register({
@@ -25,10 +27,12 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
       setError(result.error);
       return;
     }
+    setLoading(true);
+    await wait(MOCK_REQUEST_DELAY_MS);
     navigate("/espace/inscriptions");
   }
 
-  function submitLogin(event: FormEvent<HTMLFormElement>) {
+  async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const values = formValues(event.currentTarget);
     const result = login({
@@ -39,22 +43,26 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
       setError(result.error);
       return;
     }
+    setLoading(true);
+    await wait(MOCK_REQUEST_DELAY_MS);
     navigate("/espace/inscriptions");
   }
 
   function changeTab(nextTab: AuthTab) {
+    if (loading) return;
     setTab(nextTab);
     setError("");
   }
 
   return (
     <section className="auth-page">
+      <LoadingOverlay visible={loading} />
       <div className="auth-box">
         <div className="auth-tabs" role="tablist" aria-label="Accès au compte">
-          <button className={tab === "register" ? "active" : ""} onClick={() => changeTab("register")}>
+          <button className={tab === "register" ? "active" : ""} onClick={() => changeTab("register")} disabled={loading}>
             S’inscrire
           </button>
-          <button className={tab === "login" ? "active" : ""} onClick={() => changeTab("login")}>
+          <button className={tab === "login" ? "active" : ""} onClick={() => changeTab("login")} disabled={loading}>
             Se connecter
           </button>
         </div>
@@ -76,14 +84,14 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
               <Field label="Mot de passe"><input name="password" type="password" minLength={8} autoComplete="new-password" required /></Field>
               <Field label="Confirmer le mot de passe"><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" required /></Field>
               {error && <p className="form-error" role="alert">{error}</p>}
-              <button className="button button-dark button-full">Créer mon compte</button>
+              <button className="button button-dark button-full" disabled={loading}>Créer mon compte</button>
             </form>
           ) : (
             <form className="form-grid" onSubmit={submitLogin}>
               <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" required /></Field>
               <Field label="Mot de passe"><input name="password" type="password" autoComplete="current-password" required /></Field>
               {error && <p className="form-error" role="alert">{error}</p>}
-              <button className="button button-dark button-full">Se connecter</button>
+              <button className="button button-dark button-full" disabled={loading}>Se connecter</button>
             </form>
           )}
         </div>

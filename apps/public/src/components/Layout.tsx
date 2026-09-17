@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useSession } from "../hooks/useSession";
 import type { Theme } from "../types";
-import { MoonIcon, SunIcon } from "./icons";
+import { ConfirmModal } from "./ConfirmModal";
+import { LogoutIcon, MoonIcon, SunIcon } from "./icons";
 
 export function ThemeSwitcher({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   const isDark = theme === "dark";
@@ -22,7 +23,24 @@ export function ThemeSwitcher({ theme, onToggle }: { theme: Theme; onToggle: () 
 
 export function SiteHeader() {
   const { authenticated, logout } = useSession();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+
+  function requestLogout() {
+    setMenuOpen(false);
+    setLogoutOpen(true);
+  }
+
+  function cancelLogout() {
+    setLogoutOpen(false);
+  }
+
+  function confirmLogout() {
+    setLogoutOpen(false);
+    logout();
+    navigate("/", { replace: true });
+  }
 
   return (
     <header className="site-header">
@@ -53,7 +71,7 @@ export function SiteHeader() {
           {authenticated ? (
             <div className="header-actions">
               <Link className="text-link" to="/espace/inscriptions" onClick={() => setMenuOpen(false)}>Mon espace</Link>
-              <button className="button button-ghost button-small" onClick={() => { setMenuOpen(false); logout(); }}>
+              <button className="button button-ghost button-small" onClick={requestLogout}>
                 Déconnexion
               </button>
             </div>
@@ -64,6 +82,15 @@ export function SiteHeader() {
           )}
         </div>
       </div>
+      <ConfirmModal
+        open={logoutOpen}
+        title="Se déconnecter ?"
+        message="Voulez-vous vraiment vous déconnecter de votre compte ?"
+        confirmLabel="Se déconnecter"
+        icon={<LogoutIcon />}
+        onCancel={cancelLogout}
+        onConfirm={confirmLogout}
+      />
     </header>
   );
 }
