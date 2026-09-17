@@ -91,6 +91,13 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface UpdateAccountRequest {
+  username: string;
+  email: string;
+  phone: string;
+  password?: string;
+}
+
 export interface Registration {
   id: number | string;
   courseId?: number | string;

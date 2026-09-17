@@ -1,7 +1,9 @@
-import { API, ApiError, apiRequest, toErrorMessage } from "@multitrack/api-client";
+import { API, ApiError, apiRequest, clearToken, setAttachStoredToken, toErrorMessage } from "@multitrack/api-client";
 import type { Account, AuthResponse, RenderResponse } from "@multitrack/types";
 import { isValidEmail, isValidPhone } from "../lib/utils";
 import type { PublicUser, Result } from "../types";
+
+setAttachStoredToken(false);
 
 export type RegisterInput = {
   username: string;
@@ -147,14 +149,17 @@ export async function logoutAccount(): Promise<void> {
     await apiRequest<RenderResponse<unknown>>(API.logout, { method: "POST" });
   } catch {
     // La session locale est tout de même effacée.
+  } finally {
+    clearToken();
   }
 }
 
-export function updateAccount(_user: PublicUser, input: ProfileInput): Result<PublicUser> {
+export function validateProfileInput(input: ProfileInput): Result<ProfileInput> {
   const username = input.username.trim();
   const email = normalizeEmail(input.email);
   const phone = input.phone.trim();
   const password = input.password;
+  const passwordConfirmation = input.passwordConfirmation;
 
   if (username.length < 2) {
     return { ok: false, error: "Saisissez un nom d’utilisateur." };
@@ -165,19 +170,41 @@ export function updateAccount(_user: PublicUser, input: ProfileInput): Result<Pu
   if (!isValidPhone(phone)) {
     return { ok: false, error: "Saisissez un numéro de téléphone valide." };
   }
-  if (password && (password.length < 8 || password !== input.passwordConfirmation)) {
-    return {
-      ok: false,
-      error: "Le nouveau mot de passe doit contenir 8 caractères et les deux saisies doivent correspondre.",
-    };
+  if (password || passwordConfirmation) {
+    if (password !== passwordConfirmation) {
+      return { ok: false, error: "Les deux mots de passe sont différents." };
+    }
+    if (password.length < 8) {
+      return { ok: false, error: "Le mot de passe doit contenir au moins 8 caractères." };
+    }
   }
 
-  return {
-    ok: true,
-    data: {
-      username,
-      email,
-      phone,
-    },
-  };
+  return { ok: true, data: { ...input, username, email, phone, password } };
+}
+
+export async function updateAccount(input: ProfileInput): Promise<Result<PublicUser>> {
+  const validation = validateProfileInput(input);
+  if (!validation.ok) return validation;
+
+  try {
+    const payload = await apiRequest<RenderResponse<Account>>(API.me, {
+      method: "PUT",
+      body: JSON.stringify({
+        username: validation.data.username,
+        email: validation.data.email,
+        phone: validation.data.phone,
+        ...(validation.data.password ? { password: validation.data.password } : {}),
+      }),
+    });
+    if (payload.code !== 200) {
+      throw new ApiError(payload.message?.trim() || payload.error?.trim() || "Impossible de mettre à jour le compte.", payload.code);
+    }
+    if (!payload.data?.email) {
+      throw new ApiError("Impossible de mettre à jour le compte.", payload.code);
+    }
+    const refreshed = await fetchCurrentAccount();
+    return { ok: true, data: refreshed ?? accountToUser(payload.data) };
+  } catch (error) {
+    return { ok: false, error: renderError(error, "Impossible de mettre à jour le compte.") };
+  }
 }

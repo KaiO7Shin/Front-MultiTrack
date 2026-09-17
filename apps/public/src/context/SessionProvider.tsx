@@ -62,11 +62,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await logoutAccount();
     setAuthenticated(false);
     setUser(null);
+    setRegistrations([]);
   }
 
-  function updateProfile(input: ProfileInput) {
-    if (!user) return { ok: false, error: "Aucun compte n’est disponible dans cette session." } as const;
-    const result = updateAccount(user, input);
+  async function updateProfile(input: ProfileInput) {
+    const result = await updateAccount(input);
     if (!result.ok) return result;
     setUser(result.data);
     return result;

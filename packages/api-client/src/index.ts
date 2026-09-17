@@ -2,6 +2,8 @@ export { API } from "./endpoints";
 
 const TOKEN_KEY = "multitrack_token";
 
+let attachStoredToken = true;
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -21,6 +23,15 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+}
+
+/** Public site: httpOnly cookie only. Organizer still attaches a stored Bearer token. */
+export function setAttachStoredToken(enabled: boolean): void {
+  attachStoredToken = enabled;
+}
+
+function storedBearerToken(): string | null {
+  return attachStoredToken ? getToken() : null;
 }
 
 function url(path: string): string {
@@ -45,7 +56,7 @@ export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token = getToken();
+  const token = storedBearerToken();
   const headers = new Headers(options.headers);
   if (options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -66,7 +77,7 @@ export async function downloadAuthenticated(
   path: string,
   filename: string,
 ): Promise<void> {
-  const token = getToken();
+  const token = storedBearerToken();
   const response = await fetch(url(path), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     credentials: "include",
