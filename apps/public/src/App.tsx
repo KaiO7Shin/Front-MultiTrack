@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { SiteFooter, SiteHeader, ThemeSwitcher } from "./components/Layout";
+import { LoadingOverlay } from "./components/LoadingOverlay";
 import { SessionProvider } from "./context/SessionProvider";
 import { useSession } from "./hooks/useSession";
 import { useTheme } from "./hooks/useTheme";
@@ -11,7 +12,11 @@ import { AboutPage, ContactPage } from "./pages/InfoPages";
 import { UserArea } from "./pages/account/UserArea";
 
 function AppRoutes() {
-  const { authenticated, user } = useSession();
+  const { authenticated, user, sessionReady } = useSession();
+
+  if (!sessionReady) {
+    return <LoadingOverlay visible />;
+  }
 
   return (
     <Routes>

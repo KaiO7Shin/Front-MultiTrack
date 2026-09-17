@@ -1,9 +1,9 @@
 import { Check, Field, WizardActions } from "../../components/form";
-import { DownloadIcon, EyeIcon } from "../../components/icons";
 import { PhoneField } from "../../components/PhoneField";
+import { RulesDocumentLinks } from "../../components/RulesDocumentLinks";
 import { ACCEPTED_FILES, GENDERS, TSHIRT_SIZES, type RunnerDraft } from "../../types";
 import { getCategory, isDraftComplete, isMinor } from "../../lib/participant";
-import { formatAmount, downloadTextFile } from "../../lib/utils";
+import { formatAmount } from "../../lib/utils";
 import { formatRaceLabel, getRacePrice, getRaces, isDuoRace } from "../../services/catalogService";
 
 export function RunnerStep({
@@ -34,8 +34,8 @@ export function RunnerStep({
         <h4>Informations pour la course</h4>
         <div className="form-grid">
           <div className="two-columns">
-            <Field label="Nom *"><input name="lastName" value={draft.lastName} onChange={(event) => update("lastName", event.target.value)} required /></Field>
-            <Field label="Prénom *"><input name="firstName" value={draft.firstName} onChange={(event) => update("firstName", event.target.value)} required /></Field>
+            <Field label="Nom *"><input name="lastName" value={draft.lastName} onChange={(event) => update("lastName", event.target.value)} placeholder="Rakoto" required /></Field>
+            <Field label="Prénom *"><input name="firstName" value={draft.firstName} onChange={(event) => update("firstName", event.target.value)} placeholder="Jean" required /></Field>
           </div>
           <div className="two-columns">
             <Field label="Date de naissance *">
@@ -126,6 +126,7 @@ export function RunnerStep({
                 name="emergencyContactName"
                 value={draft.emergencyContactName}
                 onChange={(event) => update("emergencyContactName", event.target.value)}
+                placeholder="Marie Rakoto"
                 required
               />
             </Field>
@@ -156,20 +157,10 @@ export function RulesStep({
       <p className="eyebrow">01 — RÈGLEMENT</p>
       <h3>Avant de commencer</h3>
       <p>
-        Prenez connaissance du règlement fictif de l’événement avant
+        Prenez connaissance du règlement de l’événement avant
         de renseigner le participant.
       </p>
-      <div className="document-row">
-        <div><strong>Règlement de l’événement</strong><span>Document de démonstration · TXT</span></div>
-        <div className="inline-actions">
-          <button className="button button-light" onClick={() => alert("Aperçu fictif du règlement TBB.")}>
-            Voir <EyeIcon />
-          </button>
-          <button className="button button-light" onClick={() => downloadTextFile("reglement-multitrack.txt", "RÈGLEMENT TBB — Document fictif de démonstration.")}>
-            Télécharger <DownloadIcon />
-          </button>
-        </div>
-      </div>
+      <RulesDocumentLinks />
       <Check checked={accepted} onChange={onAcceptedChange}>
         J’ai lu et j’accepte le règlement de l’événement.
       </Check>

@@ -4,7 +4,7 @@ import { Field } from "../components/form";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { PhoneField } from "../components/PhoneField";
 import { useSession } from "../hooks/useSession";
-import { formValues, MOCK_REQUEST_DELAY_MS, wait } from "../lib/utils";
+import { formValues } from "../lib/utils";
 import type { AuthTab } from "../types";
 
 export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
@@ -18,35 +18,37 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
   async function submitRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const values = formValues(event.currentTarget);
-    const result = register({
+    setError("");
+    setLoading(true);
+    const result = await register({
       username: String(values.username),
       email: String(values.email),
       phone,
       password: String(values.password),
       passwordConfirmation: String(values.passwordConfirmation),
     });
+    setLoading(false);
     if (!result.ok) {
       setError(result.error);
       return;
     }
-    setLoading(true);
-    await wait(MOCK_REQUEST_DELAY_MS);
     navigate("/espace/inscriptions");
   }
 
   async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const values = formValues(event.currentTarget);
-    const result = login({
+    setError("");
+    setLoading(true);
+    const result = await login({
       email: String(values.email),
       password: String(values.password),
     });
+    setLoading(false);
     if (!result.ok) {
       setError(result.error);
       return;
     }
-    setLoading(true);
-    await wait(MOCK_REQUEST_DELAY_MS);
     navigate("/espace/inscriptions");
   }
 
@@ -74,26 +76,26 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
           <h1>{tab === "register" ? "Créer mon espace" : "Accéder à mon espace"}</h1>
           <p className="form-intro">
             {tab === "register"
-              ? "Les données restent uniquement dans ce prototype et disparaissent au rechargement."
-              : "Connectez-vous avec le compte fictif créé pendant cette session."}
+              ? "Créez votre compte pour gérer vos inscriptions à l’événement."
+              : "Connectez-vous pour retrouver vos inscriptions."}
           </p>
           {tab === "register" ? (
             <form className="form-grid" onSubmit={submitRegister}>
-              <Field label="Nom d’utilisateur">
-                <input name="username" autoComplete="username" required />
-              </Field>
-              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" required /></Field>
-              <PhoneField value={phone} onChange={setPhone} disabled={loading} />
-              <Field label="Mot de passe"><input name="password" type="password" minLength={8} autoComplete="new-password" required /></Field>
-              <Field label="Confirmer le mot de passe"><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" required /></Field>
               {error && <p className="form-error" role="alert">{error}</p>}
+              <Field label="Nom d’utilisateur">
+                <input name="username" autoComplete="username" placeholder="User123" required />
+              </Field>
+              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="votremail@ymail.com" required /></Field>
+              <PhoneField value={phone} onChange={setPhone} disabled={loading} />
+              <Field label="Mot de passe"><input name="password" type="password" minLength={8} autoComplete="new-password" placeholder="MotDePasse123" required /></Field>
+              <Field label="Confirmer le mot de passe"><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" placeholder="MotDePasse123" required /></Field>
               <button className="button button-dark button-full" disabled={loading}>Créer mon compte</button>
             </form>
           ) : (
             <form className="form-grid" onSubmit={submitLogin}>
-              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" required /></Field>
-              <Field label="Mot de passe"><input name="password" type="password" autoComplete="current-password" required /></Field>
               {error && <p className="form-error" role="alert">{error}</p>}
+              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="votremail@ymail.com" required /></Field>
+              <Field label="Mot de passe"><input name="password" type="password" autoComplete="current-password" placeholder="MotDePasse123" required /></Field>
               <button className="button button-dark button-full" disabled={loading}>Se connecter</button>
             </form>
           )}

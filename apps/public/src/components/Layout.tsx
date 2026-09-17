@@ -36,9 +36,9 @@ export function SiteHeader() {
     setLogoutOpen(false);
   }
 
-  function confirmLogout() {
+  async function confirmLogout() {
     setLogoutOpen(false);
-    logout();
+    await logout();
     navigate("/", { replace: true });
   }
 

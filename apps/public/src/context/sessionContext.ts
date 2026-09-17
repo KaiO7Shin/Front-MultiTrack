@@ -5,10 +5,11 @@ import type { PublicUser, Registration, Result } from "../types";
 export type SessionContextValue = {
   user: PublicUser | null;
   authenticated: boolean;
+  sessionReady: boolean;
   registrations: Registration[];
-  register: (input: RegisterInput) => Result<PublicUser>;
-  login: (input: LoginInput) => Result<PublicUser>;
-  logout: () => void;
+  register: (input: RegisterInput) => Promise<Result<PublicUser>>;
+  login: (input: LoginInput) => Promise<Result<PublicUser>>;
+  logout: () => Promise<void>;
   updateProfile: (input: ProfileInput) => Result<PublicUser>;
   addRegistration: (registration: Registration) => void;
 };
