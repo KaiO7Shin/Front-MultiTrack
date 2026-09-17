@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Field } from "../components/form";
 import { LoadingOverlay } from "../components/LoadingOverlay";
+import { PhoneField } from "../components/PhoneField";
 import { useSession } from "../hooks/useSession";
 import { formValues, MOCK_REQUEST_DELAY_MS, wait } from "../lib/utils";
 import type { AuthTab } from "../types";
@@ -10,6 +11,7 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
   const [tab, setTab] = useState(initialTab);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [phone, setPhone] = useState("");
   const navigate = useNavigate();
   const { register, login } = useSession();
 
@@ -17,9 +19,9 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
     event.preventDefault();
     const values = formValues(event.currentTarget);
     const result = register({
-      firstName: String(values.firstName),
-      lastName: String(values.lastName),
+      username: String(values.username),
       email: String(values.email),
+      phone,
       password: String(values.password),
       passwordConfirmation: String(values.passwordConfirmation),
     });
@@ -52,6 +54,7 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
     if (loading) return;
     setTab(nextTab);
     setError("");
+    setPhone("");
   }
 
   return (
@@ -76,11 +79,11 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
           </p>
           {tab === "register" ? (
             <form className="form-grid" onSubmit={submitRegister}>
-              <div className="two-columns">
-                <Field label="Nom"><input name="lastName" autoComplete="family-name" required /></Field>
-                <Field label="Prénom"><input name="firstName" autoComplete="given-name" required /></Field>
-              </div>
+              <Field label="Nom d’utilisateur">
+                <input name="username" autoComplete="username" required />
+              </Field>
               <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" required /></Field>
+              <PhoneField value={phone} onChange={setPhone} disabled={loading} />
               <Field label="Mot de passe"><input name="password" type="password" minLength={8} autoComplete="new-password" required /></Field>
               <Field label="Confirmer le mot de passe"><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" required /></Field>
               {error && <p className="form-error" role="alert">{error}</p>}

@@ -1,10 +1,10 @@
-import { isValidEmail } from "../lib/utils";
+import { isValidEmail, isValidPhone } from "../lib/utils";
 import type { PublicUser, Result } from "../types";
 
 export type RegisterInput = {
-  firstName: string;
-  lastName: string;
+  username: string;
   email: string;
+  phone: string;
   password: string;
   passwordConfirmation: string;
 };
@@ -15,9 +15,9 @@ export type LoginInput = {
 };
 
 export type ProfileInput = {
-  firstName: string;
-  lastName: string;
+  username: string;
   email: string;
+  phone: string;
   password: string;
   passwordConfirmation: string;
 };
@@ -32,11 +32,19 @@ function normalizeEmail(email: string) {
  * lorsque le compte public sera branché sur le backend.
  */
 export function registerAccount(input: RegisterInput): Result<PublicUser> {
+  const username = input.username.trim();
   const email = normalizeEmail(input.email);
+  const phone = input.phone.trim();
   const password = input.password;
 
+  if (username.length < 2) {
+    return { ok: false, error: "Saisissez un nom d’utilisateur." };
+  }
   if (!isValidEmail(email)) {
     return { ok: false, error: "Saisissez une adresse e-mail valide." };
+  }
+  if (!isValidPhone(phone)) {
+    return { ok: false, error: "Saisissez un numéro de téléphone valide." };
   }
   if (password.length < 8) {
     return { ok: false, error: "Le mot de passe doit contenir au moins 8 caractères." };
@@ -48,9 +56,9 @@ export function registerAccount(input: RegisterInput): Result<PublicUser> {
   return {
     ok: true,
     data: {
-      firstName: input.firstName.trim(),
-      lastName: input.lastName.trim(),
+      username,
       email,
+      phone,
       password,
     },
   };
@@ -70,11 +78,19 @@ export function loginAccount(user: PublicUser | null, input: LoginInput): Result
 }
 
 export function updateAccount(user: PublicUser, input: ProfileInput): Result<PublicUser> {
+  const username = input.username.trim();
   const email = normalizeEmail(input.email);
+  const phone = input.phone.trim();
   const password = input.password;
 
+  if (username.length < 2) {
+    return { ok: false, error: "Saisissez un nom d’utilisateur." };
+  }
   if (!isValidEmail(email)) {
     return { ok: false, error: "Saisissez une adresse e-mail valide." };
+  }
+  if (!isValidPhone(phone)) {
+    return { ok: false, error: "Saisissez un numéro de téléphone valide." };
   }
   if (password && (password.length < 8 || password !== input.passwordConfirmation)) {
     return {
@@ -86,9 +102,9 @@ export function updateAccount(user: PublicUser, input: ProfileInput): Result<Pub
   return {
     ok: true,
     data: {
-      firstName: input.firstName,
-      lastName: input.lastName,
+      username,
       email,
+      phone,
       password: password || user.password,
     },
   };

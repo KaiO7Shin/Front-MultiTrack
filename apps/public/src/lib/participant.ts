@@ -1,5 +1,6 @@
 import { EVENT_INFO } from "../data/catalog";
 import type { Runner, RunnerDraft } from "../types";
+import { isValidPhone } from "./utils";
 
 export function isMinor(birthDate: string) {
   if (!birthDate) return false;
@@ -36,7 +37,10 @@ export function isDraftComplete(draft: RunnerDraft) {
     draft.birthDate &&
     draft.gender &&
     draft.race &&
-    draft.identityDocument,
+    draft.identityDocument &&
+    draft.tshirtSize &&
+    draft.emergencyContactName.trim() &&
+    isValidPhone(draft.emergencyContactPhone),
   );
 }
 
@@ -52,5 +56,8 @@ export function draftToRunner(draft: RunnerDraft): Runner {
     identityDocument: draft.identityDocument,
     medicalCertificate: draft.medicalCertificate,
     parentalAuthorization: isMinor(draft.birthDate) ? draft.parentalAuthorization || undefined : undefined,
+    tshirtSize: draft.tshirtSize,
+    emergencyContactName: draft.emergencyContactName.trim(),
+    emergencyContactPhone: draft.emergencyContactPhone,
   };
 }

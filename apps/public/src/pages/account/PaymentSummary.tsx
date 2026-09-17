@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Field } from "../../components/form";
-import { PAYMENT_NUMBER } from "../../data/catalog";
+import { InfoIcon } from "../../components/icons";
+import { PAYMENT, PAYMENT_MOTIF } from "../../config/site";
 import { formatAmount } from "../../lib/utils";
 import { PAYMENT_METHODS, type PaymentMethod, type Registration, type Runner } from "../../types";
 
@@ -14,6 +15,9 @@ export function Summary({ runner, totalAmount }: { runner: Runner; totalAmount: 
         <div><dt>Genre</dt><dd>{runner.gender}</dd></div>
         <div><dt>Catégorie</dt><dd>{runner.category}</dd></div>
         <div><dt>Course choisie</dt><dd>{runner.race}</dd></div>
+        <div><dt>Taille de t-shirt finisher</dt><dd>{runner.tshirtSize}</dd></div>
+        <div><dt>Nom du contact d’urgence</dt><dd>{runner.emergencyContactName}</dd></div>
+        <div><dt>Téléphone du contact d’urgence</dt><dd>{runner.emergencyContactPhone}</dd></div>
       </dl>
       <div className="summary-payment">
         <p className="summary-payment-methods">
@@ -66,7 +70,11 @@ export function PaymentModal({
         <form className="form-grid" onSubmit={submit}>
           <div className="payment-methods" role="radiogroup" aria-label="Mode de paiement">
             {PAYMENT_METHODS.map((option) => (
-              <label className={method === option ? "payment-method active" : "payment-method"} key={option}>
+              <label
+                className={method === option ? "payment-method active" : "payment-method"}
+                data-operator={option}
+                key={option}
+              >
                 <input
                   type="radio"
                   name="paymentMethod"
@@ -75,17 +83,23 @@ export function PaymentModal({
                   disabled={busy}
                   onChange={() => setMethod(option)}
                 />
-                <img
-                  src={option === "MVola" ? "/mvola-placeholder.svg" : "/orange-money-placeholder.svg"}
-                  alt={`${option} — visuel fictif`}
-                />
+                <img src={PAYMENT[option].logo} alt={PAYMENT[option].alt} />
               </label>
             ))}
           </div>
           <div className="payment-instructions">
             <span>Numéro de paiement</span>
-            <strong>{PAYMENT_NUMBER}</strong>
+            <strong>{PAYMENT[method].number}</strong>
             <small>Informations fictives pour le prototype.</small>
+            <aside className="payment-tip" aria-label="Conseil de paiement">
+              <InfoIcon />
+              <div>
+                <p className="payment-tip-title">Conseil de paiement</p>
+                <p>
+                  Lors du paiement, indiquez comme motif : <strong>{PAYMENT_MOTIF.example}</strong>
+                </p>
+              </div>
+            </aside>
           </div>
           <Field label="Référence de paiement *">
             <input

@@ -53,6 +53,4 @@ export const HIGHLIGHTS = [
   { title: "Beer Event", text: "Festif et convivial.", icon: "beer" },
 ] as const;
 
-export const PAYMENT_NUMBER = "034 00 000 00";
-
 export const WIZARD_STEPS = ["Règlement", "Participant", "Résumé"] as const;

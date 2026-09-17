@@ -854,6 +854,37 @@ html[data-theme="dark"] .button-dark:hover {
 .file-hint { color: var(--theme-text-muted); font-size: 11px; line-height: 1.45; }
 .required-note { margin: 12px 0 26px !important; color: #e85d4c !important; font-size: 13px; font-weight: 700; }
 
+.phone-field .react-international-phone-input-container {
+  width: 100%;
+  --react-international-phone-height: 49px;
+  --react-international-phone-background-color: var(--theme-input-bg);
+  --react-international-phone-text-color: var(--theme-input-text);
+  --react-international-phone-font-size: 16px;
+  --react-international-phone-border-radius: 0;
+  --react-international-phone-border-color: var(--theme-border);
+  --react-international-phone-selected-dropdown-item-background-color: var(--theme-bg-muted);
+}
+
+.phone-field .react-international-phone-country-selector-button {
+  padding-inline: 10px;
+}
+
+.phone-field .react-international-phone-input {
+  width: 100%;
+  font: inherit;
+}
+
+.phone-field .react-international-phone-input-container:focus-within {
+  --react-international-phone-border-color: var(--mt-olive);
+}
+
+.phone-field .react-international-phone-country-selector-dropdown {
+  z-index: 30;
+  border-color: var(--theme-border);
+  background: var(--theme-input-bg);
+  color: var(--theme-input-text);
+}
+
 .auth-box .file-hint,
 .auth-box .form-intro { color: var(--mt-slate); }
 .auth-box .field > span { color: var(--theme-panel-text); }
@@ -1111,6 +1142,29 @@ html[data-theme="dark"] .button-dark:hover {
   color: var(--theme-text);
 }
 
+.wizard-subsection {
+  display: grid;
+  gap: 12px;
+}
+
+.wizard-subsection + .wizard-subsection {
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: 1px solid var(--mt-border);
+}
+
+.wizard-subsection .eyebrow {
+  margin-bottom: 0;
+}
+
+.wizard-subsection h4 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--theme-text);
+}
+
 .wizard-panel > p:not(.eyebrow) {
   max-width: 620px;
   margin: 16px 0 30px;
@@ -1348,15 +1402,47 @@ html[data-theme="dark"] .button-dark:hover {
 
 .payment-method {
   position: relative;
-  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: 18px 16px;
   border: 2px solid var(--mt-border);
   cursor: pointer;
-  transition: border-color .15s ease;
+  transition: border-color .15s ease, background .15s ease;
 }
 
 .payment-method.active { border-color: var(--mt-olive); }
 .payment-method input { position: absolute; opacity: 0; pointer-events: none; }
-.payment-method img { display: block; width: 100%; height: 86px; object-fit: contain; }
+
+.payment-method img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* MVola is taller/denser (139×44); keep it optically close to the wide Orange lockup. */
+.payment-method[data-operator="MVola"] {
+  padding: 24px 28px;
+}
+
+.payment-method[data-operator="MVola"] img {
+  max-width: 118px;
+  max-height: 34px;
+}
+
+/* Orange Money light variant: navy card so the white wordmark stays readable. */
+.payment-method[data-operator="Orange Money"] {
+  background: var(--mt-navy);
+  padding: 22px 14px;
+}
+
+.payment-method[data-operator="Orange Money"] img {
+  max-width: 200px;
+  max-height: 26px;
+}
 
 .payment-instructions {
   padding: 18px 20px;
@@ -1369,6 +1455,49 @@ html[data-theme="dark"] .button-dark:hover {
 .payment-instructions span { color: var(--mt-slate); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
 .payment-instructions strong { color: var(--mt-navy); font-size: 19px; }
 .payment-instructions small { color: var(--mt-slate); }
+
+.payment-tip {
+  margin-top: 8px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: color-mix(in srgb, var(--mt-navy) 6%, var(--mt-off-white));
+  border-radius: 8px;
+  color: var(--mt-navy);
+}
+
+.payment-tip svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  fill: none;
+  stroke: var(--mt-olive);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.payment-tip-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.payment-tip p {
+  margin: 0;
+  color: var(--mt-slate);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.payment-tip p strong {
+  color: var(--mt-navy);
+  font-size: inherit;
+  font-weight: 700;
+}
 
 .profile { max-width: 760px; }
 .profile-details { margin: 0; border-top: 2px solid var(--theme-text); }

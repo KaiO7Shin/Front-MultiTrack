@@ -110,11 +110,14 @@ export function RegistrationDetailPage() {
         <div><dt>Genre</dt><dd>{registration.runner.gender}</dd></div>
         <div><dt>Catégorie</dt><dd>{registration.runner.category}</dd></div>
         <div><dt>Course choisie</dt><dd>{registration.runner.race}</dd></div>
+        <div><dt>Taille de t-shirt finisher</dt><dd>{registration.runner.tshirtSize}</dd></div>
         <div><dt>Pièce d’identité</dt><dd>{registration.runner.identityDocument}</dd></div>
         <div><dt>Certificat médical</dt><dd>{registration.runner.medicalCertificate || "Non fourni"}</dd></div>
         {registration.runner.parentalAuthorization && (
           <div><dt>Autorisation parentale</dt><dd>{registration.runner.parentalAuthorization}</dd></div>
         )}
+        <div><dt>Nom du contact d’urgence</dt><dd>{registration.runner.emergencyContactName}</dd></div>
+        <div><dt>Téléphone du contact d’urgence</dt><dd>{registration.runner.emergencyContactPhone}</dd></div>
       </dl>
     </div>
   );

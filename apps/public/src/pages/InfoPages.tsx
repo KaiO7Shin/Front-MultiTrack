@@ -1,4 +1,5 @@
 import { Page } from "../components/Layout";
+import { ORGANIZER_CONTACTS } from "../config/site";
 import { EVENT_INFO } from "../data/catalog";
 
 export function AboutPage() {
@@ -49,8 +50,14 @@ export function ContactPage() {
   return (
     <Page title="Contact" intro="Une question sur votre participation ?">
       <div className="contact-block">
-        <div><span>E-mail</span><a href="mailto:revynatioravelo@gmail.com">revynatioravelo@gmail.com</a></div>
-        <div><span>Téléphone</span><a href="tel:+261348893536">+261 34 88 935 36</a></div>
+        <div>
+          <span>E-mail</span>
+          <a href={`mailto:${ORGANIZER_CONTACTS.email}`}>{ORGANIZER_CONTACTS.email}</a>
+        </div>
+        <div>
+          <span>Téléphone</span>
+          <a href={`tel:${ORGANIZER_CONTACTS.phoneTel}`}>{ORGANIZER_CONTACTS.phone}</a>
+        </div>
       </div>
     </Page>
   );

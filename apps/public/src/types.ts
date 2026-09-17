@@ -5,9 +5,9 @@ export type PaymentMethod = "MVola" | "Orange Money";
 export type AuthTab = "register" | "login";
 
 export type PublicUser = {
-  firstName: string;
-  lastName: string;
+  username: string;
   email: string;
+  phone: string;
   password: string;
 };
 
@@ -22,6 +22,9 @@ export type Runner = {
   identityDocument: string;
   medicalCertificate: string;
   parentalAuthorization?: string;
+  tshirtSize: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
 };
 
 export type Registration = {
@@ -43,6 +46,9 @@ export type RunnerDraft = {
   identityDocument: string;
   medicalCertificate: string;
   parentalAuthorization: string;
+  tshirtSize: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
 };
 
 export type Race = {
@@ -79,9 +85,14 @@ export const EMPTY_DRAFT: RunnerDraft = {
   identityDocument: "",
   medicalCertificate: "",
   parentalAuthorization: "",
+  tshirtSize: "",
+  emergencyContactName: "",
+  emergencyContactPhone: "",
 };
 
 export const GENDERS = ["Femme", "Homme", "Non précisé"] as const;
+
+export const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
 export const PAYMENT_METHODS: readonly PaymentMethod[] = ["MVola", "Orange Money"];
 

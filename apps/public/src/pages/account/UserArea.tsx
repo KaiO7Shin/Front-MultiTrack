@@ -12,7 +12,7 @@ export function UserArea() {
       <div className="site-shell">
         <header className="account-heading">
           <p className="eyebrow">ESPACE PARTICIPANT</p>
-          <h1>Bonjour, {user.firstName}</h1>
+          <h1>Bonjour, {user.username}</h1>
         </header>
         <nav className="account-nav" aria-label="Navigation de l’espace participant">
           <NavLink to="/espace/inscriptions">Mes inscriptions</NavLink>
