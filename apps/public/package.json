@@ -10,9 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@multitrack/api-client": "*",
+    "@multitrack/types": "*",
     "@vitejs/plugin-react": "^5.0.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-international-phone": "^4.8.0",
     "react-router-dom": "^7.9.1",
     "vite": "^7.1.7"
   },
