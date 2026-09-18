@@ -4,7 +4,13 @@ import { createPortal } from "react-dom";
 /** Overlay appears only after loading lasts longer than this delay. */
 export const OVERLAY_SHOW_DELAY_MS = 2_000;
 
-export function LoadingOverlay({ visible }: { visible: boolean }) {
+export function LoadingOverlay({
+  visible,
+  delayMs = OVERLAY_SHOW_DELAY_MS,
+}: {
+  visible: boolean;
+  delayMs?: number;
+}) {
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -13,14 +19,19 @@ export function LoadingOverlay({ visible }: { visible: boolean }) {
       return undefined;
     }
 
+    if (delayMs <= 0) {
+      setShown(true);
+      return undefined;
+    }
+
     const timeoutId = window.setTimeout(() => {
       setShown(true);
-    }, OVERLAY_SHOW_DELAY_MS);
+    }, delayMs);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [visible]);
+  }, [visible, delayMs]);
 
   useEffect(() => {
     if (!shown) return undefined;

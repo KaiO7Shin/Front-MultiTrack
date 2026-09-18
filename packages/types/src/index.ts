@@ -121,6 +121,9 @@ export interface Registration {
   accountDisplayName?: string;
   status?: string;
   createdAt?: string;
+  paymentMethod?: string;
+  paymentReference?: string;
+  totalAmount?: number;
 }
 
 export interface CreateRegistrationRequest {
@@ -130,7 +133,7 @@ export interface CreateRegistrationRequest {
   birthDate: string;
   genderId: number;
   tShirtSizeId: number;
-  identityDocumentUrl: string;
+  identityDocumentUrl?: string;
   medicalCertificateUrl?: string;
   parentalAuthorizationUrl?: string;
   emergencyContactName: string;
@@ -138,11 +141,42 @@ export interface CreateRegistrationRequest {
   status?: string;
 }
 
+export interface InscriptionResponse {
+  id: number;
+  courseId: number;
+  courseLabel: string;
+  firstName?: string;
+  lastName: string;
+  birthDate: string;
+  genderId: number;
+  gender: string;
+  tShirtSizeId: number;
+  tShirtSize: string;
+  identityDocumentUrl?: string | null;
+  medicalCertificateUrl?: string | null;
+  parentalAuthorizationUrl?: string | null;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  status: string;
+  submittedAt?: string | null;
+  paymentMethod: string;
+  paymentReference: string;
+  totalAmount: number;
+}
+
 export interface OrganizerDashboard {
   raceCount?: number;
   registrationCount?: number;
-  draftCount?: number;
-  submittedCount?: number;
+  sentCount?: number;
+  pendingValidationCount?: number;
   validatedCount?: number;
-  cancelledCount?: number;
+  refusedCount?: number;
 }
+
+export {
+  INSCRIPTION_STATUS,
+  inscriptionStatusPresentation,
+  type InscriptionStatusPresentation,
+  type InscriptionStatusTone,
+} from "./inscriptionStatus";
+

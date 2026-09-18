@@ -42,6 +42,11 @@ function url(path: string): string {
   return `${base}${path}`;
 }
 
+/** Même base que `apiRequest` (`VITE_API_URL`). */
+export function apiUrl(path: string): string {
+  return url(path);
+}
+
 async function errorMessage(response: Response): Promise<string> {
   const fallback = `La requête a échoué (${response.status})`;
   try {
@@ -58,7 +63,7 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const token = storedBearerToken();
   const headers = new Headers(options.headers);
-  if (options.body && !headers.has("Content-Type")) {
+  if (options.body && !(options.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
   if (token) headers.set("Authorization", `Bearer ${token}`);

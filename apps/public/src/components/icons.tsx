@@ -117,3 +117,13 @@ export function InfoIcon() {
     </svg>
   );
 }
+
+export function DocumentIcon() {
+  return (
+    <svg className="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 3.5h7l5 5V20a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5Z" />
+      <path d="M14 3.5V9h5.5" />
+      <path d="M9 13h6M9 17h4" />
+    </svg>
+  );
+}

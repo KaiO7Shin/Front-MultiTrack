@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Countdown } from "../components/Countdown";
 import { BeerIcon, BikeIcon, TrailIcon } from "../components/icons";
@@ -9,11 +10,43 @@ const ICONS = {
   beer: <BeerIcon />,
 };
 
+const HERO_CROSSFADE_INTERVAL_MS = 5_000;
+
 export function HomePage() {
+  const [showAltHero, setShowAltHero] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let intervalId: number | undefined;
+
+    const stop = () => {
+      if (intervalId !== undefined) {
+        window.clearInterval(intervalId);
+        intervalId = undefined;
+      }
+    };
+
+    const syncMotion = () => {
+      stop();
+      setShowAltHero(false);
+      if (media.matches) return;
+      intervalId = window.setInterval(() => {
+        setShowAltHero((current) => !current);
+      }, HERO_CROSSFADE_INTERVAL_MS);
+    };
+
+    syncMotion();
+    media.addEventListener("change", syncMotion);
+    return () => {
+      stop();
+      media.removeEventListener("change", syncMotion);
+    };
+  }, []);
+
   return (
     <>
       <section className="hero">
-        <div className="hero-visual" aria-hidden="true">
+        <div className={`hero-visual${showAltHero ? " is-alt" : ""}`} aria-hidden="true">
           <img className="hero-photo hero-photo-trail" src="/hero-trail.png" alt="" />
           <img className="hero-photo hero-photo-vtt" src="/hero-vtt.png" alt="" />
         </div>

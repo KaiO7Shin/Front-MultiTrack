@@ -23,7 +23,7 @@ export function ProfilePage() {
     setLoading(true);
     const result = await updateProfile({
       username: String(values.username),
-      email: String(values.email),
+      email: user.email,
       phone,
       password: String(values.password),
       passwordConfirmation: String(values.passwordConfirmation),
@@ -63,7 +63,14 @@ export function ProfilePage() {
             <input name="username" defaultValue={user.username} autoComplete="username" required disabled={loading} />
           </Field>
           <Field label="Adresse e-mail">
-            <input name="email" type="email" defaultValue={user.email} autoComplete="email" required disabled={loading} />
+            <input
+              name="email"
+              type="text"
+              value={user.email}
+              readOnly
+              autoComplete="email"
+              aria-readonly="true"
+            />
           </Field>
           <PhoneField value={phone} onChange={setPhone} disabled={loading} />
           <Field label="Nouveau mot de passe">

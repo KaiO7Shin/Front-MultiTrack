@@ -4,8 +4,10 @@ import { Field } from "../components/form";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { PhoneField } from "../components/PhoneField";
 import { useSession } from "../hooks/useSession";
-import { formValues } from "../lib/utils";
+import { formValues, wait } from "../lib/utils";
 import type { AuthTab } from "../types";
+
+const LOGIN_MIN_OVERLAY_MS = 3_000;
 
 export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
   const [tab, setTab] = useState(initialTab);
@@ -40,15 +42,17 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
     const values = formValues(event.currentTarget);
     setError("");
     setLoading(true);
+    const minOverlay = wait(LOGIN_MIN_OVERLAY_MS);
     const result = await login({
       email: String(values.email),
       password: String(values.password),
     });
-    setLoading(false);
     if (!result.ok) {
+      setLoading(false);
       setError(result.error);
       return;
     }
+    await minOverlay;
     navigate("/espace/inscriptions");
   }
 
@@ -61,7 +65,7 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
 
   return (
     <section className="auth-page">
-      <LoadingOverlay visible={loading} />
+      <LoadingOverlay visible={loading} delayMs={tab === "login" ? 0 : undefined} />
       <div className="auth-box">
         <div className="auth-tabs" role="tablist" aria-label="Accès au compte">
           <button className={tab === "register" ? "active" : ""} onClick={() => changeTab("register")} disabled={loading}>
@@ -83,19 +87,19 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
             <form className="form-grid" onSubmit={submitRegister}>
               {error && <p className="form-error" role="alert">{error}</p>}
               <Field label="Nom d’utilisateur">
-                <input name="username" autoComplete="username" placeholder="User123" required />
+                <input name="username" autoComplete="username" placeholder="jean.rakoto" required />
               </Field>
-              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="votremail@ymail.com" required /></Field>
+              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="jean.rakoto@email.com" required /></Field>
               <PhoneField value={phone} onChange={setPhone} disabled={loading} />
-              <Field label="Mot de passe"><input name="password" type="password" minLength={8} autoComplete="new-password" placeholder="MotDePasse123" required /></Field>
-              <Field label="Confirmer le mot de passe"><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" placeholder="MotDePasse123" required /></Field>
+              <Field label="Mot de passe"><input name="password" type="password" minLength={8} autoComplete="new-password" required /></Field>
+              <Field label="Confirmer le mot de passe"><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" required /></Field>
               <button className="button button-dark button-full" disabled={loading}>Créer mon compte</button>
             </form>
           ) : (
             <form className="form-grid" onSubmit={submitLogin}>
               {error && <p className="form-error" role="alert">{error}</p>}
-              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="votremail@ymail.com" required /></Field>
-              <Field label="Mot de passe"><input name="password" type="password" autoComplete="current-password" placeholder="MotDePasse123" required /></Field>
+              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="jean.rakoto@email.com" required /></Field>
+              <Field label="Mot de passe"><input name="password" type="password" autoComplete="current-password" required /></Field>
               <button className="button button-dark button-full" disabled={loading}>Se connecter</button>
             </form>
           )}

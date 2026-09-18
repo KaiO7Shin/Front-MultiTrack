@@ -23,6 +23,17 @@ export function isValidPhone(phone: string) {
   return /^\+\d{8,15}$/.test(phone.replace(/[\s()-]/g, ""));
 }
 
+export function isHttpUrl(value: string | null | undefined) {
+  return Boolean(value && /^https?:\/\//i.test(value));
+}
+
+export function formatInscriptionDate(value: string | null | undefined) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("fr-FR");
+}
+
 export function downloadTextFile(filename: string, content: string) {
   const url = URL.createObjectURL(new Blob([content], { type: "text/plain;charset=utf-8" }));
   const link = document.createElement("a");
@@ -35,9 +46,6 @@ export function downloadTextFile(filename: string, content: string) {
 export function formValues(form: HTMLFormElement) {
   return Object.fromEntries(new FormData(form).entries());
 }
-
-/** Délai fictif pour les écrans pas encore branchés au back-end. */
-export const MOCK_REQUEST_DELAY_MS = 4_000;
 
 export function wait(ms: number) {
   return new Promise<void>((resolve) => {

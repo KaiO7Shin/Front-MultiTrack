@@ -7,6 +7,7 @@ export type SessionContextValue = {
   authenticated: boolean;
   sessionReady: boolean;
   registrations: Registration[];
+  loadRegistrations: () => Promise<void>;
   register: (input: RegisterInput) => Promise<Result<PublicUser>>;
   login: (input: LoginInput) => Promise<Result<PublicUser>>;
   logout: () => Promise<void>;

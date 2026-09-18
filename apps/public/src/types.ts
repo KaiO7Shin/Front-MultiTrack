@@ -29,9 +29,9 @@ export type Runner = {
 export type Registration = {
   id: string;
   createdAt: string;
-  status: "Validée";
+  status: string;
   paymentReference: string;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethod | "";
   totalAmount: number;
   runner: Runner;
 };
@@ -41,10 +41,11 @@ export type RunnerDraft = {
   lastName: string;
   birthDate: string;
   gender: string;
+  courseId: number | "";
   race: string;
-  identityDocument: string;
-  medicalCertificate: string;
-  parentalAuthorization: string;
+  identityFile: File | null;
+  medicalFile: File | null;
+  parentalFile: File | null;
   tshirtSize: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
@@ -80,19 +81,35 @@ export const EMPTY_DRAFT: RunnerDraft = {
   lastName: "",
   birthDate: "",
   gender: "",
+  courseId: "",
   race: "",
-  identityDocument: "",
-  medicalCertificate: "",
-  parentalAuthorization: "",
+  identityFile: null,
+  medicalFile: null,
+  parentalFile: null,
   tshirtSize: "",
   emergencyContactName: "",
   emergencyContactPhone: "",
 };
 
-export const GENDERS = ["Femme", "Homme", "Non précisé"] as const;
+/** Ids stables du seed TBB (`genre` : Homme=1, Femme=2). */
+export const GENDERS = [
+  { id: 2, label: "Femme" },
+  { id: 1, label: "Homme" },
+] as const;
 
-export const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+/** Ids stables du seed TBB (`taille_t_shirt` : XS=1 … XXL=6). */
+export const TSHIRT_SIZES = [
+  { id: 1, alias: "XS" },
+  { id: 2, alias: "S" },
+  { id: 3, alias: "M" },
+  { id: 4, alias: "L" },
+  { id: 5, alias: "XL" },
+  { id: 6, alias: "XXL" },
+] as const;
 
 export const PAYMENT_METHODS: readonly PaymentMethod[] = ["MVola", "Orange Money"];
+
+/** Longueur de la colonne `info_paiement.reference` côté API. */
+export const PAYMENT_REFERENCE_MAX_LENGTH = 30;
 
 export const ACCEPTED_FILES = ".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg";
