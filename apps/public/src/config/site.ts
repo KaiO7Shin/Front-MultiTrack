@@ -8,22 +8,22 @@ export const ORGANIZER_CONTACTS = {
 } as const;
 
 /**
- * Demo Madagascar-style payment numbers for the prototype.
- * 034 = Telma / MVola (reused from the previous single PAYMENT_NUMBER).
- * 032 = Orange Money (distinct demo number).
+ * Numéros MVola / Orange Money affichés à l’étape paiement.
  */
 export const PAYMENT = {
   MVola: {
     number: "038 17 664 91",
+    recipient: "Sylvio Kevin",
     logo: "/mvola.svg",
     alt: "MVola",
   },
   "Orange Money": {
     number: "037 79 161 59",
+    recipient: "Syvio Kevin",
     logo: "/orange-money.svg",
     alt: "Orange Money",
   },
-} as const satisfies Record<PaymentMethod, { number: string; logo: string; alt: string }>;
+} as const satisfies Record<PaymentMethod, { number: string; recipient: string; logo: string; alt: string }>;
 
 /** Official TBB rules PDF hosted on Google Drive. */
 export const RULES_DOCUMENT = {

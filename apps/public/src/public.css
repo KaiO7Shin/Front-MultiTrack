@@ -1580,6 +1580,13 @@ html[data-theme="dark"] .button-dark:hover {
 
 .payment-instructions span { color: var(--mt-slate); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
 .payment-instructions strong { color: var(--mt-navy); font-size: 19px; }
+.payment-recipient {
+  margin: 0;
+  color: var(--mt-slate);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
 .payment-instructions small { color: var(--mt-slate); }
 
 .payment-tip {

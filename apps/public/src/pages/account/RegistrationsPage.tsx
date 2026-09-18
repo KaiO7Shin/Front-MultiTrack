@@ -6,7 +6,7 @@ import { StatusPill } from "../../components/StatusPill";
 import { useRegistrationDraft } from "../../hooks/useRegistrationDraft";
 import { useSession } from "../../hooks/useSession";
 import { isMinor, participantFullName } from "../../lib/participant";
-import { formatAmount, isHttpUrl } from "../../lib/utils";
+import { formatAmount } from "../../lib/utils";
 import { findRegistration } from "../../services/registrationService";
 import { RegistrationWizard } from "./RegistrationWizard";
 
@@ -195,7 +195,7 @@ export function RegistrationDetailPage() {
 }
 
 function DocumentValue({ url }: { url?: string }) {
-  if (!isHttpUrl(url)) {
+  if (!isApiDocumentUrl(url)) {
     return "Non fourni";
   }
   return (
@@ -209,6 +209,12 @@ function DocumentValue({ url }: { url?: string }) {
       Ouvrir
     </a>
   );
+}
+
+function isApiDocumentUrl(url?: string) {
+  if (!url) return false;
+  if (/drive\.google\.com/i.test(url)) return false;
+  return /\/api\/me\/registrations\/[^/]+\/documents\//.test(url);
 }
 
 function formatBirthDate(value: string) {

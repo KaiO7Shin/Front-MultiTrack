@@ -47,9 +47,6 @@ export function formValues(form: HTMLFormElement) {
   return Object.fromEntries(new FormData(form).entries());
 }
 
-/** Délai fictif pour les écrans pas encore branchés au back-end. */
-export const MOCK_REQUEST_DELAY_MS = 4_000;
-
 export function wait(ms: number) {
   return new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms);

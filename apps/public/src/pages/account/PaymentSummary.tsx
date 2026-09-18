@@ -78,7 +78,7 @@ export function PaymentModal({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <button className="modal-close" type="button" aria-label="Fermer" onClick={onClose} disabled={busy}>×</button>
-        <p className="eyebrow">PAIEMENT EN LIGNE · DÉMONSTRATION</p>
+        <p className="eyebrow">PAIEMENT EN LIGNE</p>
         <h3 id="payment-title">Finaliser le paiement</h3>
         <p>Sélectionnez votre opérateur et saisissez la référence reçue après votre paiement.</p>
         <div className="payment-total"><span>Total à payer</span><strong>{formatAmount(totalAmount)}</strong></div>
@@ -106,7 +106,7 @@ export function PaymentModal({
           <div className="payment-instructions">
             <span>Numéro de paiement</span>
             <strong>{PAYMENT[method].number}</strong>
-            <small>Informations fictives pour le prototype.</small>
+            <p className="payment-recipient">Au nom de {PAYMENT[method].recipient}</p>
             <aside className="payment-tip" aria-label="Conseil de paiement">
               <InfoIcon />
               <div>

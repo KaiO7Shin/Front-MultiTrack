@@ -87,19 +87,19 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
             <form className="form-grid" onSubmit={submitRegister}>
               {error && <p className="form-error" role="alert">{error}</p>}
               <Field label="Nom d’utilisateur">
-                <input name="username" autoComplete="username" placeholder="User123" required />
+                <input name="username" autoComplete="username" placeholder="jean.rakoto" required />
               </Field>
-              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="votremail@ymail.com" required /></Field>
+              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="jean.rakoto@email.com" required /></Field>
               <PhoneField value={phone} onChange={setPhone} disabled={loading} />
-              <Field label="Mot de passe"><input name="password" type="password" minLength={8} autoComplete="new-password" placeholder="MotDePasse123" required /></Field>
-              <Field label="Confirmer le mot de passe"><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" placeholder="MotDePasse123" required /></Field>
+              <Field label="Mot de passe"><input name="password" type="password" minLength={8} autoComplete="new-password" required /></Field>
+              <Field label="Confirmer le mot de passe"><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" required /></Field>
               <button className="button button-dark button-full" disabled={loading}>Créer mon compte</button>
             </form>
           ) : (
             <form className="form-grid" onSubmit={submitLogin}>
               {error && <p className="form-error" role="alert">{error}</p>}
-              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="votremail@ymail.com" required /></Field>
-              <Field label="Mot de passe"><input name="password" type="password" autoComplete="current-password" placeholder="MotDePasse123" required /></Field>
+              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="jean.rakoto@email.com" required /></Field>
+              <Field label="Mot de passe"><input name="password" type="password" autoComplete="current-password" required /></Field>
               <button className="button button-dark button-full" disabled={loading}>Se connecter</button>
             </form>
           )}

@@ -1,4 +1,4 @@
-import { API, ApiError, apiRequest, listFrom, toErrorMessage } from "@multitrack/api-client";
+import { API, ApiError, apiRequest, apiUrl, listFrom, toErrorMessage } from "@multitrack/api-client";
 import type { InscriptionResponse, RenderResponse } from "@multitrack/types";
 import { draftToRunner, isMinor, validateDraft } from "../lib/participant";
 import { formatInscriptionDate } from "../lib/utils";
@@ -69,14 +69,25 @@ export function mapInscription(item: InscriptionResponse): Registration {
       gender: item.gender,
       category: "",
       race: item.courseLabel,
-      identityDocument: item.identityDocumentUrl ?? "",
-      medicalCertificate: item.medicalCertificateUrl ?? "",
-      parentalAuthorization: item.parentalAuthorizationUrl || undefined,
+      identityDocument: documentHref(item.id, "identite", item.identityDocumentUrl),
+      medicalCertificate: documentHref(item.id, "certificat", item.medicalCertificateUrl),
+      parentalAuthorization: documentHref(item.id, "autorisation", item.parentalAuthorizationUrl) || undefined,
       tshirtSize: item.tShirtSize,
       emergencyContactName: item.emergencyContactName,
       emergencyContactPhone: item.emergencyContactPhone,
     },
   };
+}
+
+function documentHref(
+  inscriptionId: number,
+  type: "identite" | "certificat" | "autorisation",
+  provided: string | null | undefined,
+): string {
+  if (!provided?.trim()) {
+    return "";
+  }
+  return apiUrl(API.myRegistrationDocument(inscriptionId, type));
 }
 
 export async function listMyRegistrations(): Promise<Registration[]> {

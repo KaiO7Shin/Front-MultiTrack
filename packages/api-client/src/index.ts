@@ -42,6 +42,11 @@ function url(path: string): string {
   return `${base}${path}`;
 }
 
+/** Même base que `apiRequest` (`VITE_API_URL`). */
+export function apiUrl(path: string): string {
+  return url(path);
+}
+
 async function errorMessage(response: Response): Promise<string> {
   const fallback = `La requête a échoué (${response.status})`;
   try {
