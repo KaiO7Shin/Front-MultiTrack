@@ -1,25 +1,31 @@
 {
-  "name": "multitrack-frontend",
+  "name": "vite-project",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
-    "dev": "npm run dev:admin",
-    "dev:admin": "npm run dev --workspace @multitrack/admin",
-    "dev:public": "npm run dev --workspace @multitrack/public",
-    "dev:organizer": "npm run dev --workspace @multitrack/organizer",
-    "build": "npm run build --workspaces --if-present",
-    "build:admin": "npm run build --workspace @multitrack/admin",
-    "build:public": "npm run build --workspace @multitrack/public",
-    "build:organizer": "npm run build --workspace @multitrack/organizer",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "lint:admin": "npm run lint --workspace @multitrack/admin",
-    "lint:public": "npm run lint --workspace @multitrack/public",
-    "lint:organizer": "npm run lint --workspace @multitrack/organizer"
+    "preview": "vite preview",
+    "start": "serve -s dist -l $PORT"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
+    "@tailwindcss/vite": "^4.1.13",
+    "axios": "^1.12.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^0.544.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.1",
+    "recharts": "^3.2.1",
+    "serve": "^14.2.6",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^4.1.13"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
