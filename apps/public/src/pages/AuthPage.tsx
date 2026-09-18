@@ -4,8 +4,10 @@ import { Field } from "../components/form";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { PhoneField } from "../components/PhoneField";
 import { useSession } from "../hooks/useSession";
-import { formValues } from "../lib/utils";
+import { formValues, wait } from "../lib/utils";
 import type { AuthTab } from "../types";
+
+const LOGIN_MIN_OVERLAY_MS = 3_000;
 
 export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
   const [tab, setTab] = useState(initialTab);
@@ -40,15 +42,17 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
     const values = formValues(event.currentTarget);
     setError("");
     setLoading(true);
+    const minOverlay = wait(LOGIN_MIN_OVERLAY_MS);
     const result = await login({
       email: String(values.email),
       password: String(values.password),
     });
-    setLoading(false);
     if (!result.ok) {
+      setLoading(false);
       setError(result.error);
       return;
     }
+    await minOverlay;
     navigate("/espace/inscriptions");
   }
 
@@ -61,7 +65,7 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
 
   return (
     <section className="auth-page">
-      <LoadingOverlay visible={loading} />
+      <LoadingOverlay visible={loading} delayMs={tab === "login" ? 0 : undefined} />
       <div className="auth-box">
         <div className="auth-tabs" role="tablist" aria-label="Accès au compte">
           <button className={tab === "register" ? "active" : ""} onClick={() => changeTab("register")} disabled={loading}>

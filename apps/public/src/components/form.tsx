@@ -1,8 +1,29 @@
 import type { ReactNode } from "react";
 import { ArrowLeftIcon, ArrowRightIcon } from "./icons";
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <label className="field"><span>{label}</span>{children}</label>;
+export function Field({
+  label,
+  action,
+  children,
+}: {
+  label: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  const heading = action ? (
+    <span className="field-label-row">
+      <span>{label}</span>
+      {action}
+    </span>
+  ) : (
+    <span>{label}</span>
+  );
+
+  if (action) {
+    return <div className="field">{heading}{children}</div>;
+  }
+
+  return <label className="field">{heading}{children}</label>;
 }
 
 export function Check({
