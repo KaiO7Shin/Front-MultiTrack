@@ -89,7 +89,12 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
               <Field label="Nom d’utilisateur">
                 <input name="username" autoComplete="username" placeholder="jean.rakoto" required />
               </Field>
-              <Field label="Adresse e-mail"><input name="email" type="email" autoComplete="email" placeholder="jean.rakoto@email.com" required /></Field>
+              <Field label="Adresse e-mail">
+                <input name="email" type="email" autoComplete="email" placeholder="jean.rakoto@email.com" required />
+                <small className="form-message" role="note">
+                  Vérifiez bien cet e-mail : il servira à envoyer la confirmation d’inscription.
+                </small>
+              </Field>
               <PhoneField value={phone} onChange={setPhone} disabled={loading} />
               <Field label="Mot de passe"><input name="password" type="password" minLength={8} autoComplete="new-password" required /></Field>
               <Field label="Confirmer le mot de passe"><input name="passwordConfirmation" type="password" minLength={8} autoComplete="new-password" required /></Field>
