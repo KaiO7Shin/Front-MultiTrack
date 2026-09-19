@@ -986,6 +986,8 @@ html[data-theme="dark"] .button-dark:hover {
   font-size: 13px;
 }
 
+.field .form-message { display: block; margin: 0; }
+
 /* ── Account ── */
 .account-page { min-height: 75vh; padding: 72px 0 120px; background: var(--theme-bg); }
 .account-heading { padding-bottom: 40px; }
