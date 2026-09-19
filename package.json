@@ -3,9 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "apps/public",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
+    "dev:public": "npm run dev --workspace @multitrack/public",
     "build": "tsc -b && vite build",
+    "build:public": "npm run build --workspace @multitrack/public",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "serve -s dist -l $PORT"

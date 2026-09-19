@@ -6,14 +6,20 @@ import { defineConfig } from "vite";
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  root: rootDir,
   plugins: [react()],
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+  },
   resolve: {
     alias: {
       "@multitrack/api-client": path.resolve(rootDir, "../../packages/api-client/src/index.ts"),
+      "@multitrack/types": path.resolve(rootDir, "../../packages/types/src/index.ts"),
     },
   },
   optimizeDeps: {
-    exclude: ["@multitrack/api-client"],
+    exclude: ["@multitrack/api-client", "@multitrack/types"],
   },
   server: {
     host: true,
