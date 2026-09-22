@@ -79,8 +79,20 @@ html[data-theme="dark"] {
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--theme-bg); color: var(--theme-text); }
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+body {
+  margin: 0;
+  min-width: 320px;
+  max-width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--theme-bg);
+  color: var(--theme-text);
+}
 button, input, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; }
@@ -93,14 +105,21 @@ h1, h2, h3, h4 {
 
 .public-app {
   min-height: 100vh;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
   background: var(--theme-bg);
   color: var(--theme-text);
 }
 
-.public-app main { flex: 1; }
-.site-shell { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
+.public-app main { flex: 1; min-width: 0; }
+.site-shell {
+  width: min(1180px, calc(100% - 48px));
+  max-width: 100%;
+  min-width: 0;
+  margin: 0 auto;
+}
 
 /* ── Header ── */
 .site-header {
@@ -184,6 +203,7 @@ h1, h2, h3, h4 {
 .header-actions { display: flex; align-items: center; gap: 20px; }
 .header-actions .text-link { color: var(--theme-text-muted); }
 .header-actions .text-link:hover { color: var(--theme-text); }
+.nav-account-link { display: none; }
 
 /* ── Hero ── */
 .hero {
@@ -933,8 +953,11 @@ html[data-theme="dark"] .button-dark:hover {
 .file-hint { color: var(--theme-text-muted); font-size: 11px; line-height: 1.45; }
 .required-note { margin: 12px 0 26px !important; color: #e85d4c !important; font-size: 13px; font-weight: 700; }
 
+.phone-field { min-width: 0; max-width: 100%; }
 .phone-field .react-international-phone-input-container {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   --react-international-phone-height: 49px;
   --react-international-phone-background-color: var(--theme-input-bg);
   --react-international-phone-text-color: var(--theme-input-text);
@@ -989,7 +1012,14 @@ html[data-theme="dark"] .button-dark:hover {
 .field .form-message { display: block; margin: 0; }
 
 /* ── Account ── */
-.account-page { min-height: 75vh; padding: 72px 0 120px; background: var(--theme-bg); }
+.account-page {
+  min-height: 75vh;
+  max-width: 100%;
+  min-width: 0;
+  padding: 72px 0 120px;
+  overflow-x: hidden;
+  background: var(--theme-bg);
+}
 .account-heading { padding-bottom: 40px; }
 
 .account-heading h1 {
@@ -1023,7 +1053,12 @@ html[data-theme="dark"] .button-dark:hover {
 .account-nav a.active { background: var(--theme-primary); color: var(--mt-white); }
 .account-nav a:hover:not(.active) { color: var(--theme-text); background: var(--theme-hover-bg); }
 
-.account-content, .wizard { padding-top: 58px; }
+.account-content, .wizard {
+  max-width: 100%;
+  min-width: 0;
+  padding-top: 58px;
+  scroll-margin-top: calc(var(--header-height) + 8px);
+}
 
 .content-title-row, .wizard-header {
   display: flex;
@@ -1053,7 +1088,14 @@ html[data-theme="dark"] .button-dark:hover {
 
 .registration-list { border-bottom: 2px solid var(--theme-text); }
 
-.registration-table-wrap { width: 100%; overflow-x: auto; border-top: 2px solid var(--theme-text); }
+.registration-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-top: 2px solid var(--theme-text);
+}
 
 .registration-table {
   width: 100%;
@@ -1842,6 +1884,48 @@ html[data-theme="dark"] .menu-toggle span { background: var(--theme-panel-text);
   .main-nav a { padding: 15px 0; border-bottom: 1px solid var(--mt-border); }
   .main-nav a::after { display: none; }
   .main-nav a.active { color: var(--mt-olive); }
+  .main-nav .nav-account-link { display: block; }
+  .account-nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+  .account-nav a {
+    white-space: normal;
+    text-align: center;
+    padding: 16px 10px;
+    line-height: 1.35;
+  }
+  .account-content .registration-table { min-width: 0; }
+  .account-content .registration-table thead { display: none; }
+  .account-content .registration-table,
+  .account-content .registration-table tbody {
+    display: block;
+    width: 100%;
+  }
+  .account-content .registration-table tr {
+    display: grid;
+    gap: 10px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--theme-border);
+  }
+  .account-content .registration-table td {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    border: 0;
+  }
+  .account-content .registration-table td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--mt-slate);
+  }
+  .account-content .registration-table tbody tr:hover { background: transparent; }
   .hero { display: flex; flex-direction: column; }
   .hero::before, .hero::after { display: none; }
   .hero-inner { order: 1; min-height: 0; padding: 56px 0 48px; overflow: hidden; }
@@ -1867,8 +1951,16 @@ html[data-theme="dark"] .menu-toggle span { background: var(--theme-panel-text);
   .brand-event { display: none; }
   .main-nav { padding-inline: 14px; }
   .main-nav a { font-size: 12px; }
-  .header-actions .text-link { display: none; }
-  .header-actions { gap: 8px; }
+  .header-actions {
+    gap: 8px;
+    min-width: 0;
+  }
+  .header-actions .text-link {
+    font-size: 11px;
+    letter-spacing: .06em;
+    white-space: nowrap;
+  }
+  .header-actions .button-small { padding: 8px 10px; }
   .hero h1 { font-size: clamp(44px, 13vw, 66px); }
   .countdown-section { padding: 56px 0; }
   .countdown { max-width: none; }
@@ -1888,6 +1980,11 @@ html[data-theme="dark"] .menu-toggle span { background: var(--theme-panel-text);
   .auth-content { padding: 30px 22px; }
   .account-page { padding: 48px 0 80px; }
   .account-nav { margin-inline: -14px; }
+  .account-nav a {
+    padding: 14px 8px;
+    font-size: 11px;
+    letter-spacing: .08em;
+  }
   .content-title-row, .wizard-header { align-items: flex-start; flex-direction: column; }
   .page-heading-title .button { width: 100%; }
   .stepper li { font-size: 0; }
