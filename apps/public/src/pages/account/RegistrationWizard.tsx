@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeftIcon } from "../../components/icons";
 import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { WIZARD_STEPS } from "../../data/catalog";
@@ -37,9 +37,22 @@ export function RegistrationWizard({
   const [stepError, setStepError] = useState("");
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const wizardRef = useRef<HTMLDivElement>(null);
   const { courses } = useCourses();
   const selectedCourse = courses.find((course) => course.id === draft.courseId);
   const totalAmount = selectedCourse?.tarif ?? findRace(draft.race)?.price ?? 0;
+
+  useLayoutEffect(() => {
+    const node = wizardRef.current;
+    if (!node) return;
+    const header =
+      Number.parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--header-height"),
+      ) || 72;
+    const top = window.scrollY + node.getBoundingClientRect().top - header - 8;
+    const maxTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    window.scrollTo({ top: Math.min(Math.max(0, top), maxTop), behavior: "auto" });
+  }, [step]);
 
   function goToStep(next: number) {
     setStepError("");
@@ -83,7 +96,7 @@ export function RegistrationWizard({
   }
 
   return (
-    <div className="wizard">
+    <div className="wizard" ref={wizardRef}>
       <LoadingOverlay visible={loading} />
       <div className="wizard-header">
         <div>

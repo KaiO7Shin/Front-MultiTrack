@@ -67,6 +67,11 @@ export function SiteHeader() {
             <NavLink to="/courses" onClick={() => setMenuOpen(false)}>Courses</NavLink>
             <NavLink to="/a-propos" onClick={() => setMenuOpen(false)}>À propos</NavLink>
             <NavLink to="/contact" onClick={() => setMenuOpen(false)}>Contact</NavLink>
+            {authenticated && (
+              <NavLink className="nav-account-link" to="/espace/inscriptions" onClick={() => setMenuOpen(false)}>
+                Mon espace
+              </NavLink>
+            )}
           </nav>
           {authenticated ? (
             <div className="header-actions">

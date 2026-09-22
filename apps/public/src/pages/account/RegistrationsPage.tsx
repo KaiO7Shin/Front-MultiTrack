@@ -44,7 +44,7 @@ export function RegistrationsPage() {
         onStepChange={setStep}
         onRulesAcceptedChange={setRulesAccepted}
         onDraftChange={setDraft}
-        onCancel={() => setWizardOpen(false)}
+        onCancel={() => { void clearDraft(); }}
         onClearDraft={clearDraft}
         onValidate={(registration) => {
           addRegistration(registration);
@@ -95,11 +95,11 @@ export function RegistrationsPage() {
           <tbody>
             {registrations.map((registration) => (
               <tr key={registration.id}>
-                <td>{registration.createdAt}</td>
-                <td><strong>{participantFullName(registration.runner)}</strong></td>
-                <td>{registration.runner.race}</td>
-                <td><StatusPill status={registration.status} /></td>
-                <td><Link className="table-link" to={`/espace/inscriptions/${registration.id}`}>Consulter</Link></td>
+                <td data-label="Date d’inscription">{registration.createdAt}</td>
+                <td data-label="Participant"><strong>{participantFullName(registration.runner)}</strong></td>
+                <td data-label="Course">{registration.runner.race}</td>
+                <td data-label="Statut"><StatusPill status={registration.status} /></td>
+                <td data-label="Action"><Link className="table-link" to={`/espace/inscriptions/${registration.id}`}>Consulter</Link></td>
               </tr>
             ))}
           </tbody>

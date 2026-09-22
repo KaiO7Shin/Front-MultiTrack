@@ -45,6 +45,7 @@ export function useRegistrationDraft() {
   useEffect(() => {
     if (!hydrated || !persistEnabled.current) return;
     const timer = window.setTimeout(() => {
+      if (!persistEnabled.current) return;
       void saveRegistrationDraft({ wizardOpen, step, rulesAccepted, draft });
     }, 150);
     return () => window.clearTimeout(timer);
