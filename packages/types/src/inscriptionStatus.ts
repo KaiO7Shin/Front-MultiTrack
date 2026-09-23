@@ -1,6 +1,7 @@
 /** Libellés API (`statut.libelle`) → pastille UI (classe CSS + label court). */
 
 export const INSCRIPTION_STATUS = {
+  /** Conservé en base / affichage historique. Plus utilisé par le flux. */
   SENT: "Envoyée",
   PENDING: "Attente validation",
   VALIDATED: "Validée",

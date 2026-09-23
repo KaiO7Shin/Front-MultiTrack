@@ -167,7 +167,6 @@ export interface InscriptionResponse {
 export interface OrganizerDashboard {
   raceCount?: number;
   registrationCount?: number;
-  sentCount?: number;
   pendingValidationCount?: number;
   validatedCount?: number;
   refusedCount?: number;

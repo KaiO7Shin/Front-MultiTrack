@@ -1,5 +1,5 @@
 import { API, ApiError, apiRequest, apiUrl, listFrom, toErrorMessage } from "@multitrack/api-client";
-import type { InscriptionResponse, RenderResponse } from "@multitrack/types";
+import { INSCRIPTION_STATUS, type InscriptionResponse, type RenderResponse } from "@multitrack/types";
 import { draftToRunner, isMinor, validateDraft } from "../lib/participant";
 import { formatInscriptionDate } from "../lib/utils";
 import {
@@ -40,7 +40,7 @@ export function createRegistration(
   return {
     id: extras?.id ?? `TBB-${String(Date.now()).slice(-6)}`,
     createdAt: new Date().toLocaleDateString("fr-FR"),
-    status: extras?.status ?? "Envoyée",
+    status: extras?.status ?? INSCRIPTION_STATUS.PENDING,
     paymentReference: payment.reference,
     paymentMethod: payment.method,
     totalAmount: extras?.totalAmount ?? 0,
