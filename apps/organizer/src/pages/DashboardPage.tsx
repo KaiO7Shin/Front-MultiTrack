@@ -40,7 +40,6 @@ export function DashboardPage({ onLogout }: { onLogout: () => void }) {
           <div className="mt-grid mt-grid-cards">
             <Card><strong>Courses</strong><p>{dashboard.raceCount ?? "—"}</p></Card>
             <Card><strong>Total</strong><p>{dashboard.registrationCount ?? registrations.length}</p></Card>
-            <Card><strong>Envoyées</strong><p>{dashboard.sentCount ?? "—"}</p></Card>
             <Card><strong>Attente validation</strong><p>{dashboard.pendingValidationCount ?? "—"}</p></Card>
             <Card><strong>Validées</strong><p>{dashboard.validatedCount ?? "—"}</p></Card>
             <Card><strong>Refusées</strong><p>{dashboard.refusedCount ?? "—"}</p></Card>
