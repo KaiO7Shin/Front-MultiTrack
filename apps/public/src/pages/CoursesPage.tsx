@@ -7,6 +7,7 @@ import {
   RacePinIcon,
 } from "../components/icons";
 import { useState, type MouseEvent } from "react";
+import { apiUrl } from "@multitrack/api-client";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { Page } from "../components/Layout";
 import { useCourses } from "../hooks/useCourses";
@@ -17,15 +18,19 @@ function courseGpxFilename(libelle: string) {
   return name.toLowerCase().endsWith(".gpx") ? name : `${name}.gpx`;
 }
 
+function courseGpxPath(courseId: number) {
+  return apiUrl(`/api/courses/${courseId}/gpx`);
+}
+
 async function downloadCourseGpx(courseId: number, libelle: string) {
   let response: Response;
   try {
-    response = await fetch(`/api/courses/${courseId}/gpx`);
+    response = await fetch(courseGpxPath(courseId), { credentials: "include" });
   } catch {
     throw new Error("Impossible de télécharger le fichier GPX. Vérifiez votre connexion.");
   }
   const contentType = response.headers.get("content-type") ?? "";
-  if (!response.ok || contentType.includes("application/json")) {
+  if (!response.ok || contentType.includes("application/json") || contentType.includes("text/html")) {
     let message = "Impossible de télécharger le fichier GPX";
     if (contentType.includes("application/json")) {
       try {
@@ -37,10 +42,15 @@ async function downloadCourseGpx(courseId: number, libelle: string) {
     }
     throw new Error(message);
   }
-  const blob = await response.blob();
-  if (blob.size === 0) {
+  const buffer = await response.arrayBuffer();
+  if (buffer.byteLength === 0) {
     throw new Error("Le fichier GPX est introuvable ou inaccessible");
   }
+  const preview = new TextDecoder("utf-8").decode(buffer.slice(0, 200)).trimStart();
+  if (preview.startsWith("<!DOCTYPE") || preview.startsWith("<html")) {
+    throw new Error("Impossible de télécharger le fichier GPX");
+  }
+  const blob = new Blob([buffer], { type: "application/octet-stream" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -149,7 +159,7 @@ export function CoursesPage() {
                     </div>
                     <a
                       className="race-gpx"
-                      href={`/api/courses/${course.id}/gpx`}
+                      href={courseGpxPath(course.id)}
                       onClick={(event) => handleGpxDownload(event, course.id, course.libelle)}
                       aria-label={`Télécharger le GPX de ${course.libelle}`}
                     >
