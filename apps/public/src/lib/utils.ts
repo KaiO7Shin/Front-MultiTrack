@@ -8,6 +8,12 @@ export function formatDistanceKm(distance: number | string | null | undefined) {
   return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value)} km`;
 }
 
+export function formatElevationMeters(elevation: number | null | undefined) {
+  const value = Number(elevation);
+  if (!Number.isFinite(value)) return "—";
+  return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(value)} m`;
+}
+
 export function formatAgeBound(age: number | null | undefined, empty = "–") {
   if (age === null || age === undefined || Number.isNaN(Number(age))) {
     return empty;

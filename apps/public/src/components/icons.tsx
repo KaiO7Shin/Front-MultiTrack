@@ -26,6 +26,52 @@ export function BeerIcon() {
   );
 }
 
+export function RaceLeafIcon() {
+  return (
+    <svg className="race-badge-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 19C5 11 10 5 19 4 19 13 14 19 5 19Z" />
+      <path d="M9 15c2-2 4-5 6-8" />
+    </svg>
+  );
+}
+
+export function RaceBikeIcon() {
+  return (
+    <svg className="race-badge-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="6" cy="17" r="3" />
+      <circle cx="18" cy="17" r="3" />
+      <path d="M6 17 11 8h4M9 17h8l-4-9" />
+    </svg>
+  );
+}
+
+export function RacePinIcon() {
+  return (
+    <svg className="race-stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" />
+      <circle cx="12" cy="10" r="2.2" />
+    </svg>
+  );
+}
+
+export function RaceMountainIcon() {
+  return (
+    <svg className="race-stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m3 18 6-10 3.2 4.2L16 7l5 11H3Z" />
+    </svg>
+  );
+}
+
+export function RaceCoinsIcon() {
+  return (
+    <svg className="race-stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <ellipse cx="12" cy="7" rx="7" ry="3" />
+      <path d="M5 7v4c0 1.7 3.1 3 7 3s7-1.3 7-3V7" />
+      <path d="M5 11v4c0 1.7 3.1 3 7 3s7-1.3 7-3v-4" />
+    </svg>
+  );
+}
+
 export function DownloadIcon() {
   return (
     <svg className="button-icon" viewBox="0 0 24 24" aria-hidden="true">
