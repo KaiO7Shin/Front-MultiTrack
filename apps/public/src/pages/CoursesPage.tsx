@@ -6,11 +6,48 @@ import {
   RaceMountainIcon,
   RacePinIcon,
 } from "../components/icons";
+import { useState, type MouseEvent } from "react";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { Page } from "../components/Layout";
-import { getCourseExtra } from "../data/courseExtras";
 import { useCourses } from "../hooks/useCourses";
 import { courseGroupTitle } from "../services/catalogService";
+
+function courseGpxFilename(libelle: string) {
+  const name = libelle.replace(/[\\/:*?"<>|]/g, " ").replace(/\s+/g, " ").trim() || "course";
+  return name.toLowerCase().endsWith(".gpx") ? name : `${name}.gpx`;
+}
+
+async function downloadCourseGpx(courseId: number, libelle: string) {
+  let response: Response;
+  try {
+    response = await fetch(`/api/courses/${courseId}/gpx`);
+  } catch {
+    throw new Error("Impossible de télécharger le fichier GPX. Vérifiez votre connexion.");
+  }
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!response.ok || contentType.includes("application/json")) {
+    let message = "Impossible de télécharger le fichier GPX";
+    if (contentType.includes("application/json")) {
+      try {
+        const payload = await response.json() as { message?: string };
+        if (payload.message) message = payload.message;
+      } catch {
+        /* message par défaut */
+      }
+    }
+    throw new Error(message);
+  }
+  const blob = await response.blob();
+  if (blob.size === 0) {
+    throw new Error("Le fichier GPX est introuvable ou inaccessible");
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = courseGpxFilename(libelle);
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 function formatStatNumber(value: number, maximumFractionDigits: number) {
   if (!Number.isFinite(value)) return "—";
@@ -25,6 +62,21 @@ function CourseBadgeIcon({ type }: { type: string }) {
 
 export function CoursesPage() {
   const { groups, loading, error } = useCourses();
+  const [gpxError, setGpxError] = useState<string | null>(null);
+
+  async function handleGpxDownload(
+    event: MouseEvent<HTMLAnchorElement>,
+    courseId: number,
+    libelle: string,
+  ) {
+    event.preventDefault();
+    setGpxError(null);
+    try {
+      await downloadCourseGpx(courseId, libelle);
+    } catch (reason: unknown) {
+      setGpxError(reason instanceof Error ? reason.message : "Impossible de télécharger le fichier GPX");
+    }
+  }
 
   return (
     <Page
@@ -36,6 +88,7 @@ export function CoursesPage() {
           Catégories
         </Link>
       }
+      meta={gpxError ? <p className="form-error" role="alert">{gpxError}</p> : null}
     >
       <LoadingOverlay visible={loading} />
       {error && (
@@ -57,8 +110,8 @@ export function CoursesPage() {
           <h2 className="race-group-title">{courseGroupTitle(group.typeCourse)}</h2>
           <div className="race-grid">
             {group.courses.map((course) => {
-              const extra = getCourseExtra(course.libelle);
               const distance = Number(course.distance);
+              const elevation = Number(course.denivele_positif);
               return (
                 <article className="race-card" key={course.id}>
                   <div className="race-card-main">
@@ -81,7 +134,7 @@ export function CoursesPage() {
                     <div className="race-stat">
                       <RaceMountainIcon />
                       <strong>
-                        {extra ? formatStatNumber(extra.denivele, 0) : "—"}
+                        {formatStatNumber(elevation, 0)}
                         <span>m</span>
                       </strong>
                       <span className="race-stat-label">Dénivelé positif</span>
@@ -94,17 +147,15 @@ export function CoursesPage() {
                       </strong>
                       <span className="race-stat-label">Tarif</span>
                     </div>
-                    {extra && (
-                      <a
-                        className="race-gpx"
-                        href={extra.gpx}
-                        download
-                        aria-label={`Télécharger le GPX de ${course.libelle}`}
-                      >
-                        <span className="race-gpx-icon" aria-hidden="true" />
-                        GPX
-                      </a>
-                    )}
+                    <a
+                      className="race-gpx"
+                      href={`/api/courses/${course.id}/gpx`}
+                      onClick={(event) => handleGpxDownload(event, course.id, course.libelle)}
+                      aria-label={`Télécharger le GPX de ${course.libelle}`}
+                    >
+                      <span className="race-gpx-icon" aria-hidden="true" />
+                      GPX
+                    </a>
                   </div>
                 </article>
               );
