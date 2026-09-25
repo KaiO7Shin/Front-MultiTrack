@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 type AlertVariant = "error" | "success" | "info" | "warning";
 
 const alertStyles: Record<AlertVariant, string> = {
-  error: "bg-red-50 border-red-200 text-red-800",
+  error: "bg-[#fff0ee] border-[#f4c7c3] text-[#a72a1f]",
   success: "bg-emerald-50 border-emerald-200 text-emerald-800",
   info: "bg-slate-50 border-slate-200 text-slate-700",
   warning: "bg-amber-50 border-amber-200 text-amber-800",

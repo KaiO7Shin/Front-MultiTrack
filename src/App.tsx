@@ -2,7 +2,13 @@ import { Outlet, NavLink, Link, useLocation, useNavigate } from "react-router-do
 import { useEffect, useState } from "react";
 import { CheckpointScan } from "./pages/Checkpoint/CheckpointScan";
 import multitrackLogo from "./assets/multitrack.svg";
-import { ROLE_ADMIN, ROLE_CHECKPOINT, useAuth } from "./lib/auth";
+import {
+  ROLE_ADMIN,
+  ROLE_CHECKPOINT,
+  ROLE_ORGANIZER,
+  homePathForRole,
+  useAuth,
+} from "./lib/auth";
 
 export default function App() {
   const [open, setOpen] = useState(false);
@@ -13,6 +19,7 @@ export default function App() {
   const role = user?.role;
   const isAdmin = role === ROLE_ADMIN;
   const isCollaborateur = role === ROLE_CHECKPOINT;
+  const isOrganizer = role === ROLE_ORGANIZER;
   const assignedManches = user?.assignedManches ?? [];
   const collaborateurLabel =
     user?.libelle?.trim() ||
@@ -27,7 +34,10 @@ export default function App() {
     if (isCollaborateur && !location.pathname.startsWith("/checkpoint")) {
       navigate("/checkpoint/scan", { replace: true });
     }
-  }, [isCollaborateur, location.pathname, navigate]);
+    if (isOrganizer && !location.pathname.startsWith("/organisateur")) {
+      navigate("/organisateur", { replace: true });
+    }
+  }, [isCollaborateur, isOrganizer, location.pathname, navigate]);
 
   useEffect(() => {
     setOpen(false);
@@ -48,7 +58,7 @@ export default function App() {
   }
 
   const logo = (
-    <Link to="/dashboard" className="inline-block" aria-label="Accueil MultiTrack">
+    <Link to={homePathForRole(role)} className="inline-block" aria-label="Accueil MultiTrack">
       <img src={multitrackLogo} alt="MultiTrack Logo" className="h-9 w-auto" />
     </Link>
   );
@@ -107,6 +117,11 @@ export default function App() {
                 Admin
               </span>
             )}
+            {isOrganizer && (
+              <span className="hidden sm:inline rounded-full border border-border bg-brand-muted px-2.5 py-1 text-xs font-medium text-brand">
+                Organisateur
+              </span>
+            )}
             <button onClick={handleLogout} className="btn-secondary px-3 py-1.5 text-xs">
               Déconnexion
             </button>
@@ -131,13 +146,19 @@ export default function App() {
           } md:block page-card p-2 h-max max-h-[calc(100dvh-5rem)] overflow-y-auto fixed md:static z-30 left-3 right-3 sm:left-4 sm:right-4 top-[4.5rem] md:left-auto md:right-auto md:top-auto md:max-h-none shadow-md md:shadow-sm`}
         >
           <nav className="flex flex-col gap-0.5">
-            <Item to="/dashboard" label="Dashboard" end />
-            <Item to="/courses" label="Courses" end />
-            <Item to="/categories" label="Catégories" end />
-            <Item to="/participants" label="Participants" />
-            <Item to="/checkpoint/scan" label="Checkpoint" end />
-            {isAdmin && <Item to="/pointeurs" label="Pointeurs" end />}
-            <Item to="/leaderboard" label="Classement" end />
+            {isOrganizer ? (
+              <Item to="/organisateur" label="Accueil" end />
+            ) : (
+              <>
+                <Item to="/dashboard" label="Dashboard" end />
+                <Item to="/courses" label="Courses" end />
+                <Item to="/categories" label="Catégories" end />
+                <Item to="/participants" label="Participants" />
+                <Item to="/checkpoint/scan" label="Checkpoint" end />
+                {isAdmin && <Item to="/pointeurs" label="Pointeurs" end />}
+                <Item to="/leaderboard" label="Classement" end />
+              </>
+            )}
           </nav>
         </aside>
 
