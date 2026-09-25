@@ -1,11 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import apiClient from "./api";
-import { API } from "./apiEndpoints";
 import { Navigate, useLocation } from "react-router-dom";
 import { PageLoading } from "@/components/ui/feedback";
 import type { AssignedManche } from "@/lib/type";
-
-export type Role = "admin" | "inscriptions" | "checkpoint" | "arrival";
 
 /** Utilisateur de session tel que renvoyé par l'API login */
 export type SessionUser = {
@@ -25,12 +21,35 @@ export type SessionUser = {
 
 export const ROLE_ADMIN = 0;
 export const ROLE_CHECKPOINT = 1;
+export const ROLE_ORGANIZER = 2;
+
+export const STATIC_TOKEN_PREFIX = "static-";
+
+/**
+ * Comptes staff de démo (front uniquement).
+ * À remplacer par POST /api/login/user quand le back sera branché.
+ */
+export const STATIC_STAFF = [
+  { passcode: "ADMIN", id: 1, role: ROLE_ADMIN, name: "Administrateur" },
+  { passcode: "ORGA", id: 2, role: ROLE_ORGANIZER, name: "Organisateur" },
+  { passcode: "CHECKPOINT", id: 3, role: ROLE_CHECKPOINT, name: "Pointeur" },
+] as const;
+
+export function isStaticToken(token: string | null | undefined) {
+  return Boolean(token?.startsWith(STATIC_TOKEN_PREFIX));
+}
+
+export function homePathForRole(role: number | undefined) {
+  if (role === ROLE_CHECKPOINT) return "/checkpoint/scan";
+  if (role === ROLE_ORGANIZER) return "/organisateur";
+  return "/dashboard";
+}
 
 type AuthContextType = {
   user: SessionUser | null;
   token: string | null;
   loading: boolean;
-  signIn: (passcode: string) => Promise<void>;
+  signIn: (passcode: string) => Promise<SessionUser>;
   signOut: () => void;
 };
 
@@ -60,31 +79,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function signIn(passcode: string) {
     setLoading(true);
     try {
-      const res = await apiClient.post<{
-        data: { token: string; user: SessionUser & Record<string, unknown> };
-      }>(API.login, { passcode });
+      const match = STATIC_STAFF.find(
+        (staff) => staff.passcode === passcode.trim()
+      );
+      if (!match) {
+        throw new Error("Passcode invalide");
+      }
 
-      const { token, user: raw } = res.data.data;
-      const manchesRaw = (raw.assignedManches ??
-        (raw as { assigned_manches?: unknown }).assigned_manches ??
-        []) as Record<string, unknown>[];
       const user: SessionUser = {
-        ...raw,
-        libelle: raw.libelle ?? null,
-        assignedManches: manchesRaw.map((m) => ({
-          id: Number(m.id),
-          label: String(m.label ?? m.libelle ?? ""),
-          phaseId: Number(m.phaseId ?? m.phase_id),
-          phaseLabel: String(m.phaseLabel ?? m.phase_label ?? ""),
-          courseId: Number(m.courseId ?? m.course_id),
-          courseLabel: String(m.courseLabel ?? m.course_label ?? ""),
-          courseType: String(m.courseType ?? m.course_type ?? ""),
-        })),
+        id: match.id,
+        role: match.role,
+        name: match.name,
+        libelle: match.name,
+        assignedManches: [],
       };
+      const token = `${STATIC_TOKEN_PREFIX}${match.role}-${match.id}`;
+
       setToken(token);
       setUser(user);
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
+      return user;
     } finally {
       setLoading(false);
     }
@@ -97,7 +112,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("user");
   }
 
-  const value = useMemo(() => ({ user, token, loading, signIn, signOut }), [user, token, loading]);
+  const value = useMemo(
+    () => ({ user, token, loading, signIn, signOut }),
+    [user, token, loading]
+  );
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
@@ -132,4 +150,9 @@ export function RequireRole({
     : userRole === role;
   if (!allowed) return <div className="p-6 text-sm text-red-600">Accès refusé.</div>;
   return children;
+}
+
+export function RoleHomeRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={homePathForRole(user?.role)} replace />;
 }
