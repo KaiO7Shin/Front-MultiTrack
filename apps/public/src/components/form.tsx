@@ -4,10 +4,16 @@ import { ArrowLeftIcon, ArrowRightIcon } from "./icons";
 export function Field({
   label,
   action,
+  error,
+  errorId,
+  valid = false,
   children,
 }: {
   label: string;
   action?: ReactNode;
+  error?: string;
+  errorId?: string;
+  valid?: boolean;
   children: ReactNode;
 }) {
   const heading = action ? (
@@ -18,12 +24,16 @@ export function Field({
   ) : (
     <span>{label}</span>
   );
+  const className = error ? "field is-invalid" : valid ? "field is-valid" : "field";
+  const errorNode = error ? (
+    <span id={errorId} className="field-error" role="alert">{error}</span>
+  ) : null;
 
   if (action) {
-    return <div className="field">{heading}{children}</div>;
+    return <div className={className}>{heading}{children}{errorNode}</div>;
   }
 
-  return <label className="field">{heading}{children}</label>;
+  return <label className={className}>{heading}{children}{errorNode}</label>;
 }
 
 export function Check({
