@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { PageLoading } from "@/components/ui/feedback";
+import { demoCheckpointSession } from "@/data/staticStore";
 import type { AssignedManche } from "@/lib/type";
 
 /** Utilisateur de session tel que renvoyé par l'API login */
@@ -41,7 +42,7 @@ export function isStaticToken(token: string | null | undefined) {
 
 export function homePathForRole(role: number | undefined) {
   if (role === ROLE_CHECKPOINT) return "/checkpoint/scan";
-  if (role === ROLE_ORGANIZER) return "/organisateur";
+  if (role === ROLE_ORGANIZER) return "/participants";
   return "/dashboard";
 }
 
@@ -86,12 +87,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Passcode invalide");
       }
 
+      const checkpoint =
+        match.role === ROLE_CHECKPOINT ? demoCheckpointSession() : null;
       const user: SessionUser = {
         id: match.id,
         role: match.role,
         name: match.name,
-        libelle: match.name,
-        assignedManches: [],
+        libelle: checkpoint?.libelle ?? match.name,
+        assignedControlPoint: checkpoint?.assignedControlPoint,
+        assignedManches: checkpoint?.assignedManches ?? [],
       };
       const token = `${STATIC_TOKEN_PREFIX}${match.role}-${match.id}`;
 

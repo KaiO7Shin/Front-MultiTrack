@@ -48,42 +48,44 @@
 
 :root {
   --radius: 0.75rem;
-  --background: #fdfbf7;
-  --foreground: #1a2b48;
+  --font-body: Inter, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Barlow Condensed", Inter, sans-serif;
+  --background: #f8faf7;
+  --foreground: #0f172b;
   --card: #ffffff;
-  --card-foreground: #1a2b48;
+  --card-foreground: #0f172b;
   --popover: #ffffff;
-  --popover-foreground: #1a2b48;
-  --primary: #1a2b48;
+  --popover-foreground: #0f172b;
+  --primary: #0f172b;
   --primary-foreground: #ffffff;
-  --secondary: #f4f6f9;
-  --secondary-foreground: #1a2b48;
-  --muted: #f4f6f9;
+  --secondary: #f8faf7;
+  --secondary-foreground: #0f172b;
+  --muted: #f3f5f1;
   --muted-foreground: #64748b;
-  --accent: #f4f6f9;
-  --accent-foreground: #1a2b48;
-  --destructive: #ff4d30;
-  --border: #e8ecf1;
-  --input: #e8ecf1;
-  --ring: #1a2b48;
-  --navy: #1a2b48;
-  --brand: #1a2b48;
-  --brand-dark: #1a2b48;
-  --brand-cta: #ff4d30;
-  --brand-muted: rgba(26, 43, 72, 0.06);
+  --accent: #f3f5f1;
+  --accent-foreground: #0f172b;
+  --destructive: #a72a1f;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #8c9962;
+  --navy: #0f172b;
+  --brand: #0f172b;
+  --brand-dark: #1a2744;
+  --brand-cta: #8c9962;
+  --brand-muted: rgba(140, 153, 98, 0.14);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: #ffffff;
-  --sidebar-foreground: #1a2b48;
-  --sidebar-primary: #1a2b48;
+  --sidebar-foreground: #0f172b;
+  --sidebar-primary: #0f172b;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4f6f9;
-  --sidebar-accent-foreground: #1a2b48;
-  --sidebar-border: #e8ecf1;
-  --sidebar-ring: #1a2b48;
+  --sidebar-accent: #f3f5f1;
+  --sidebar-accent-foreground: #0f172b;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #8c9962;
 }
 
 .dark {
@@ -130,21 +132,21 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "cv11", "ss01";
+    font-family: var(--font-body);
   }
 }
 
 @layer components {
   .page-card {
-    @apply bg-card border border-border rounded-2xl shadow-sm;
+    @apply bg-card border border-border rounded-xl shadow-[0_1px_2px_rgba(15,23,43,0.04)];
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-cta text-white px-4 py-2 text-sm font-medium transition hover:opacity-90 disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-navy text-white px-4 py-2 text-sm font-medium transition hover:bg-brand-dark disabled:opacity-50;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-white text-foreground px-4 py-2 text-sm font-medium transition hover:bg-brand-muted;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white text-foreground px-4 py-2 text-sm font-medium transition hover:border-brand-cta hover:text-brand-dark;
   }
 
   .badge-live {
@@ -160,7 +162,8 @@
   }
 
   .page-title {
-    @apply text-xl sm:text-2xl font-semibold tracking-tight text-brand;
+    font-family: var(--font-display);
+    @apply text-[1.75rem] sm:text-3xl font-semibold uppercase tracking-[0.04em] text-brand leading-none;
   }
 
   .page-subtitle {
@@ -200,5 +203,19 @@
 
   .table-scroll-wide table {
     min-width: 48rem;
+  }
+
+  .bo-sidebar {
+    @apply flex h-full flex-col border-r border-border bg-white;
+  }
+
+  .bo-app h1 {
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .bo-app table thead th {
+    @apply text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground;
   }
 }

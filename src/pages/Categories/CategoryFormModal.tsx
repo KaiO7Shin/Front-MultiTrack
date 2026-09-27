@@ -200,7 +200,7 @@ export function CategoryFormModal({
             <button
               type="submit"
               disabled={saving || !form.alias.trim()}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-40"
+              className="rounded-xl bg-navy px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-40"
             >
               {saving ? "Enregistrement..." : mode === "create" ? "Créer" : "Enregistrer"}
             </button>

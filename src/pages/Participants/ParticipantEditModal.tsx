@@ -321,7 +321,7 @@ export function ParticipantEditModal({
                 !form.courseChoisieId ||
                 (showBikeType && !form.typeVelo)
               }
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-40"
+              className="rounded-xl bg-navy px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-40"
             >
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>

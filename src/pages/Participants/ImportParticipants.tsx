@@ -148,7 +148,7 @@ export const ImportParticipants = () => {
           Colonne optionnelle : <span className="font-mono">prenom</span>
           <br />
           <span className="text-slate-400">
-            dtn au format jj/mm/aaaa — course = libellé exact de la course (ex. Trail Légende 21 km).
+            dtn au format jj/mm/aaaa — course = libellé exact de la course (ex. Boucle des collines).
             Le dossard et la catégorie sont calculés automatiquement.
           </span>
         </p>

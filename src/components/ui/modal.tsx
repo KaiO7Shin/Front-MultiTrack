@@ -59,14 +59,14 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "flex w-full max-h-[min(92dvh,900px)] flex-col rounded-2xl bg-white shadow-xl",
+          "flex w-full max-h-[min(92dvh,900px)] flex-col rounded-xl border border-border bg-white shadow-xl",
           sizeClasses[size],
           className
         )}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between border-b px-4 py-4 sm:px-5">
-          <h2 id={titleId} className="pr-4 text-lg font-semibold">
+          <h2 id={titleId} className="pr-4 font-[family-name:var(--font-display)] text-2xl font-semibold uppercase tracking-[0.04em] text-brand">
             {title}
           </h2>
           <button
