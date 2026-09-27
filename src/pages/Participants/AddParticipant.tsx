@@ -200,7 +200,7 @@ export const AddParticipant = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full sm:w-auto rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto rounded-xl bg-navy text-white px-4 py-2.5 text-sm disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {loading && <Spinner className="border-white" />}
             {loading ? "Enregistrement…" : "Enregistrer"}

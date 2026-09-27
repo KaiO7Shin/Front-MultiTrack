@@ -2,18 +2,8 @@ import { useState } from "react";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import multitrackLogo from "@/assets/multitrack.svg";
 import { Alert, PageLoading } from "@/components/ui/feedback";
-import {
-  ROLE_CHECKPOINT,
-  ROLE_ORGANIZER,
-  homePathForRole,
-  useAuth,
-} from "../../lib/auth";
-
-function isPathAllowedForRole(path: string, role: number) {
-  if (role === ROLE_ORGANIZER) return path.startsWith("/organisateur");
-  if (role === ROLE_CHECKPOINT) return path.startsWith("/checkpoint");
-  return true;
-}
+import { isPathAllowedForRole } from "@/config/backOfficeNav";
+import { homePathForRole, useAuth } from "../../lib/auth";
 
 export const LoginPage = () => {
   const [passcode, setPasscode] = useState("");
@@ -77,10 +67,10 @@ export const LoginPage = () => {
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-background px-3 sm:px-4 py-6">
       <div
-        className="absolute inset-0 opacity-[0.35]"
+        className="absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 20% 20%, rgba(255,77,48,0.08), transparent 40%), radial-gradient(circle at 80% 0%, rgba(26,43,72,0.06), transparent 35%)",
+            "radial-gradient(circle at 15% 10%, rgba(140,153,98,0.18), transparent 42%), radial-gradient(circle at 90% 0%, rgba(15,23,43,0.06), transparent 36%)",
         }}
         aria-hidden
       />
@@ -92,8 +82,8 @@ export const LoginPage = () => {
         <div className="text-center flex flex-col items-center justify-center space-y-3">
           <img src={multitrackLogo} alt="MultiTrack Logo" className="h-20 sm:h-24 w-auto mx-auto" />
           <div>
-            <h1 className="text-xl font-semibold text-brand tracking-tight">
-              Bienvenue sur MultiTrack
+            <h1 className="page-title text-center">
+              Bienvenue
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Gérez vos événements sportifs de A à Z
@@ -119,7 +109,7 @@ export const LoginPage = () => {
               onChange={(e) => setPasscode(e.target.value)}
               autoFocus
               placeholder="••••••"
-              className="w-full rounded-xl border border-border px-3 py-2.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-brand-cta/30"
+              className="w-full rounded-lg border border-border bg-white px-3 py-2.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-brand-cta/30"
             />
             <button
               type="button"

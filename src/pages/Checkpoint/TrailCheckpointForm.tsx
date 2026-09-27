@@ -269,7 +269,7 @@ export function TrailCheckpointForm({
         disabled={
           busy || !bib1 || !bib2 || bib1 !== bib2 || validateLocal(bib1) !== null
         }
-        className="w-full rounded-2xl bg-slate-900 text-white px-4 py-3 text-base disabled:opacity-60 flex items-center justify-center gap-2"
+        className="w-full rounded-2xl bg-navy text-white px-4 py-3 text-base disabled:opacity-60 flex items-center justify-center gap-2"
       >
         {busy && <Spinner className="border-white" />}
         {busy ? "Enregistrement..." : "Valider (ENTER)"}

@@ -145,7 +145,7 @@ export function ControlPointFormModal({
           <button
             type="submit"
             disabled={saving || !label.trim() || !numero}
-            className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40"
+            className="rounded-xl bg-navy px-4 py-2 text-sm text-white disabled:opacity-40"
           >
             {saving ? "Enregistrement…" : "Enregistrer"}
           </button>

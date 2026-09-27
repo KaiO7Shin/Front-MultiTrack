@@ -5,6 +5,11 @@ alwaysApply: true
 
 # Fonctionnalités — front-end
 
+Le projet front-end est un monorepo avec 2 applications :
+
+- back-office : admin et organisateur
+- front-office : site public
+
 Respecter l’architecture et la charte graphique existantes (public, admin, organizer). Ne pas introduire un autre design system.
 
 - Public : tokens de `apps/public/src/public.css` (navy `#0f172b`, olive `#8c9962`).
@@ -12,6 +17,12 @@ Respecter l’architecture et la charte graphique existantes (public, admin, org
 - Organizer : classes `mt-*` de `packages/ui`.
 
 Avant d’implémenter : demander les infos manquantes ou importantes (champs, messages, flux, droits).
+
+## Organisation du code
+
+Code bien organisé et factorisé : hooks, pages, services, config, context, etc. Respecter ce découpage plutôt que tout mettre dans les pages.
+
+Pas de fichiers trop longs : viser un maximum d’environ 250 lignes. Découper au-delà.
 
 ## Erreurs de formulaire
 
