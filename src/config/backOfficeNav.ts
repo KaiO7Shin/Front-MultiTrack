@@ -11,6 +11,7 @@ const ADMIN_NAV: BackOfficeNavItem[] = [
   { to: "/courses", label: "Courses", end: true },
   { to: "/categories", label: "Catégories", end: true },
   { to: "/participants", label: "Participants" },
+  { to: "/participants/identity", label: "Informations participant", end: true },
   { to: "/checkpoint/scan", label: "Checkpoint", end: true },
   { to: "/pointeurs", label: "Pointeurs", end: true },
   { to: "/leaderboard", label: "Résultats", end: true },
@@ -18,6 +19,7 @@ const ADMIN_NAV: BackOfficeNavItem[] = [
 
 const ORGANIZER_NAV: BackOfficeNavItem[] = [
   { to: "/participants/add", label: "Nouveau participant", end: true },
+  { to: "/participants/identity", label: "Informations participant", end: true },
   { to: "/participants", label: "Participants", end: true },
   { to: "/leaderboard", label: "Résultats", end: true },
 ];

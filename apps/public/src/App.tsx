@@ -8,7 +8,6 @@ import { AuthPage } from "./pages/AuthPage";
 import { CategoriesPage } from "./pages/CategoriesPage";
 import { CoursesPage } from "./pages/CoursesPage";
 import { HomePage } from "./pages/HomePage";
-import { ParticipantPage } from "./pages/ParticipantPage";
 import { AboutPage, ContactPage } from "./pages/InfoPages";
 import { UserArea } from "./pages/account/UserArea";
 
@@ -22,7 +21,6 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/participants" element={<ParticipantPage />} />
       <Route path="/courses" element={<CoursesPage />} />
       <Route path="/categories" element={<CategoriesPage />} />
       <Route path="/a-propos" element={<AboutPage />} />

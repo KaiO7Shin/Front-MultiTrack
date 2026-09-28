@@ -1,4 +1,16 @@
-import { GENDERS, TSHIRT_SIZES } from "../types";
+export const GENDERS = [
+  { id: 1, label: "Homme" },
+  { id: 2, label: "Femme" },
+] as const;
+
+export const TSHIRT_SIZES = [
+  { id: 1, alias: "XS" },
+  { id: 2, alias: "S" },
+  { id: 3, alias: "M" },
+  { id: 4, alias: "L" },
+  { id: 5, alias: "XL" },
+  { id: 6, alias: "XXL" },
+] as const;
 
 export type ParticipantGender = (typeof GENDERS)[number]["label"];
 export type ParticipantTshirtSize = (typeof TSHIRT_SIZES)[number]["alias"];
@@ -14,7 +26,7 @@ export type ParticipantIdentity = {
 export type ParticipantField = keyof ParticipantIdentity;
 export type ParticipantFormValues = Record<ParticipantField, string>;
 
-const STORAGE_KEY = "tbb.participant";
+const STORAGE_KEY = "mt.participant";
 const GENDER_LABELS = new Set<string>(GENDERS.map((item) => item.label));
 const TSHIRT_ALIASES = new Set<string>(TSHIRT_SIZES.map((item) => item.alias));
 
@@ -49,13 +61,13 @@ function parseIsoDate(value: string) {
 
 export function validateParticipantField(field: ParticipantField, value: string) {
   if (field === "lastName") {
-    return value.trim() ? "" : "Indiquez votre nom.";
+    return value.trim() ? "" : "Indiquez le nom.";
   }
   if (field === "firstName") {
-    return value.trim() ? "" : "Indiquez votre prénom.";
+    return value.trim() ? "" : "Indiquez le prénom.";
   }
   if (field === "birthDate") {
-    if (!value) return "Indiquez votre date de naissance.";
+    if (!value) return "Indiquez la date de naissance.";
     const date = parseIsoDate(value);
     if (!date || date.getFullYear() < 1900) return "Indiquez une date de naissance valide.";
     const today = new Date();

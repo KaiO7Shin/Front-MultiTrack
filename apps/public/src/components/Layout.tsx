@@ -64,7 +64,6 @@ export function SiteHeader() {
         <div className="header-right">
           <nav id="main-navigation" className={`main-nav${menuOpen ? " open" : ""}`} aria-label="Navigation principale">
             <NavLink to="/" end onClick={() => setMenuOpen(false)}>Accueil</NavLink>
-            <NavLink to="/participants" onClick={() => setMenuOpen(false)}>Participants</NavLink>
             <NavLink to="/courses" onClick={() => setMenuOpen(false)}>Courses</NavLink>
             <NavLink to="/a-propos" onClick={() => setMenuOpen(false)}>À propos</NavLink>
             <NavLink to="/contact" onClick={() => setMenuOpen(false)}>Contact</NavLink>
