@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeftIcon } from "../../components/icons";
 import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { WIZARD_STEPS } from "../../data/catalog";
@@ -42,7 +42,7 @@ export function RegistrationWizard({
   const selectedCourse = courses.find((course) => course.id === draft.courseId);
   const totalAmount = selectedCourse?.tarif ?? findRace(draft.race)?.price ?? 0;
 
-  useLayoutEffect(() => {
+  const scrollWizardIntoView = useCallback(() => {
     const node = wizardRef.current;
     if (!node) return;
     const header =
@@ -52,7 +52,16 @@ export function RegistrationWizard({
     const top = window.scrollY + node.getBoundingClientRect().top - header - 8;
     const maxTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     window.scrollTo({ top: Math.min(Math.max(0, top), maxTop), behavior: "auto" });
-  }, [step]);
+  }, []);
+
+  useLayoutEffect(() => {
+    scrollWizardIntoView();
+  }, [step, scrollWizardIntoView]);
+
+  useLayoutEffect(() => {
+    if (!stepError) return;
+    scrollWizardIntoView();
+  }, [stepError, scrollWizardIntoView]);
 
   function goToStep(next: number) {
     setStepError("");

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { Field } from "../../components/form";
 import { InfoIcon } from "../../components/icons";
 import { PAYMENT, PAYMENT_MOTIF } from "../../config/site";
@@ -55,6 +55,15 @@ export function PaymentModal({
   const [method, setMethod] = useState<PaymentMethod>("MVola");
   const [reference, setReference] = useState("");
   const [localError, setLocalError] = useState("");
+  const modalRef = useRef<HTMLElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const displayedError = localError || error || "";
+
+  useLayoutEffect(() => {
+    if (!displayedError) return;
+    modalRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    errorRef.current?.scrollIntoView({ block: "nearest", behavior: "auto" });
+  }, [displayedError]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,6 +80,7 @@ export function PaymentModal({
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
+        ref={modalRef}
         className="payment-modal"
         role="dialog"
         aria-modal="true"
@@ -83,7 +93,9 @@ export function PaymentModal({
         <p>Sélectionnez votre opérateur et saisissez la référence reçue après votre paiement.</p>
         <div className="payment-total"><span>Total à payer</span><strong>{formatAmount(totalAmount)}</strong></div>
         <form className="form-grid" onSubmit={submit} noValidate>
-          {(localError || error) && <p className="form-error" role="alert">{localError || error}</p>}
+          {displayedError && (
+            <p className="form-error" role="alert" ref={errorRef}>{displayedError}</p>
+          )}
           <div className="payment-methods" role="radiogroup" aria-label="Mode de paiement">
             {PAYMENT_METHODS.map((option) => (
               <label
