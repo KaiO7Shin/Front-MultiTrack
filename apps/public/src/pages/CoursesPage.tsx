@@ -10,6 +10,7 @@ import { useState, type MouseEvent } from "react";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { Page } from "../components/Layout";
 import { useCourses } from "../hooks/useCourses";
+import { apiDownloadHref, downloadBinary } from "../lib/downloadBinary";
 import { courseGroupTitle } from "../services/catalogService";
 
 function courseGpxFilename(libelle: string) {
@@ -17,36 +18,16 @@ function courseGpxFilename(libelle: string) {
   return name.toLowerCase().endsWith(".gpx") ? name : `${name}.gpx`;
 }
 
+function courseGpxPath(courseId: number) {
+  return `/api/courses/${courseId}/gpx`;
+}
+
 async function downloadCourseGpx(courseId: number, libelle: string) {
-  let response: Response;
-  try {
-    response = await fetch(`/api/courses/${courseId}/gpx`);
-  } catch {
-    throw new Error("Impossible de télécharger le fichier GPX. Vérifiez votre connexion.");
-  }
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!response.ok || contentType.includes("application/json")) {
-    let message = "Impossible de télécharger le fichier GPX";
-    if (contentType.includes("application/json")) {
-      try {
-        const payload = await response.json() as { message?: string };
-        if (payload.message) message = payload.message;
-      } catch {
-        /* message par défaut */
-      }
-    }
-    throw new Error(message);
-  }
-  const blob = await response.blob();
-  if (blob.size === 0) {
-    throw new Error("Le fichier GPX est introuvable ou inaccessible");
-  }
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = courseGpxFilename(libelle);
-  link.click();
-  URL.revokeObjectURL(url);
+  await downloadBinary(courseGpxPath(courseId), courseGpxFilename(libelle), {
+    networkErrorMessage: "Impossible de télécharger le fichier GPX. Vérifiez votre connexion.",
+    fallbackErrorMessage: "Impossible de télécharger le fichier GPX",
+    emptyErrorMessage: "Le fichier GPX est introuvable ou inaccessible",
+  });
 }
 
 function formatStatNumber(value: number, maximumFractionDigits: number) {
@@ -149,7 +130,7 @@ export function CoursesPage() {
                     </div>
                     <a
                       className="race-gpx"
-                      href={`/api/courses/${course.id}/gpx`}
+                      href={apiDownloadHref(courseGpxPath(course.id))}
                       onClick={(event) => handleGpxDownload(event, course.id, course.libelle)}
                       aria-label={`Télécharger le GPX de ${course.libelle}`}
                     >
