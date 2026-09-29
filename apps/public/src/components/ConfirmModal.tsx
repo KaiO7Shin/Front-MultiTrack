@@ -7,6 +7,7 @@ export function ConfirmModal({
   message,
   confirmLabel,
   cancelLabel = "Annuler",
+  showCancel = true,
   icon,
   onCancel,
   onConfirm,
@@ -16,6 +17,8 @@ export function ConfirmModal({
   message: string;
   confirmLabel: string;
   cancelLabel?: string;
+  /** When false, only the confirm button is shown (informative / acknowledge). */
+  showCancel?: boolean;
   icon?: ReactNode;
   onCancel: () => void;
   onConfirm: () => void;
@@ -56,9 +59,11 @@ export function ConfirmModal({
         <h2 id="confirm-modal-title">{title}</h2>
         <p id="confirm-modal-message">{message}</p>
         <div className="confirm-modal-actions">
-          <button type="button" className="button button-outline" onClick={onCancel}>
-            {cancelLabel}
-          </button>
+          {showCancel ? (
+            <button type="button" className="button button-outline" onClick={onCancel}>
+              {cancelLabel}
+            </button>
+          ) : null}
           <button type="button" className="button button-dark" onClick={onConfirm}>
             {confirmLabel}
           </button>

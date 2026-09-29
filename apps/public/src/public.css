@@ -1611,6 +1611,13 @@ html[data-theme="dark"] .race-card {
   stroke-linejoin: round;
 }
 
+.confirm-modal-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+}
+
 .confirm-modal h2 {
   margin: 0;
   font-size: clamp(26px, 4vw, 34px);
@@ -1658,10 +1665,14 @@ html[data-theme="dark"] .race-card {
   padding: 18px 16px;
   border: 2px solid var(--mt-border);
   cursor: pointer;
-  transition: border-color .15s ease, background .15s ease;
+  transition: border-color .15s ease, border-width .15s ease, background .15s ease, box-shadow .15s ease;
 }
 
-.payment-method.active { border-color: var(--mt-olive); }
+.payment-method.active {
+  border-color: var(--mt-olive);
+  border-width: 3px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mt-olive) 40%, transparent);
+}
 .payment-method input { position: absolute; opacity: 0; pointer-events: none; }
 
 .payment-method img {
