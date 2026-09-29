@@ -7,6 +7,7 @@ import {
   RacePinIcon,
 } from "../components/icons";
 import { useState, type MouseEvent } from "react";
+import { apiUrl } from "@multitrack/api-client";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { Page } from "../components/Layout";
 import { useCourses } from "../hooks/useCourses";
