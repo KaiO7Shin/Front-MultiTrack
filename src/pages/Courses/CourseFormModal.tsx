@@ -171,7 +171,7 @@ export function CourseFormModal({
               required
               maxLength={25}
               className="w-full rounded-lg border px-3 py-2 text-sm"
-              placeholder="Ex. Trail Légende 21 km"
+              placeholder="Ex. Boucle des collines"
               value={form.libelle}
               onChange={(e) => setForm((f) => ({ ...f, libelle: e.target.value }))}
               disabled={saving}
@@ -341,7 +341,7 @@ export function CourseFormModal({
             <button
               type="submit"
               disabled={saving || !isValid}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-40"
+              className="rounded-xl bg-navy px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-40"
             >
               {saving
                 ? "Enregistrement..."

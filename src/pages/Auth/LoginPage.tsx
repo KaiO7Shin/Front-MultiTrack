@@ -1,17 +1,28 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import multitrackLogo from "@/assets/multitrack.svg";
-import { useAuth } from "../../lib/auth";
+import { Alert, PageLoading } from "@/components/ui/feedback";
+import { isPathAllowedForRole } from "@/config/backOfficeNav";
+import { homePathForRole, useAuth } from "../../lib/auth";
 
 export const LoginPage = () => {
   const [passcode, setPasscode] = useState("");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn } = useAuth();
+  const { user, loading: sessionLoading, signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as any)?.from?.pathname || "/dashboard";
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from
+    ?.pathname;
+
+  if (sessionLoading) {
+    return <PageLoading message="Vérification de la session…" />;
+  }
+
+  if (user) {
+    return <Navigate to={homePathForRole(user.role)} replace />;
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,10 +30,35 @@ export const LoginPage = () => {
     setLoading(true);
     setError(null);
     try {
-      await signIn(passcode);                // met à jour le contexte -> re-render
-      navigate(from, { replace: true });     // va où l’utilisateur voulait aller
-    } catch (err: any) {
-      setError(err?.response?.data?.message || err?.message || "Passcode invalide");
+      const session = await signIn(passcode);
+      const fallback = homePathForRole(session.role);
+      const next =
+        from &&
+        from !== "/login" &&
+        from !== "/" &&
+        isPathAllowedForRole(from, session.role)
+          ? from
+          : fallback;
+      navigate(next, { replace: true });
+    } catch (err: unknown) {
+      const axiosMessage =
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response &&
+        err.response.data &&
+        typeof err.response.data === "object" &&
+        "message" in err.response.data &&
+        typeof err.response.data.message === "string"
+          ? err.response.data.message
+          : null;
+      const message =
+        axiosMessage ||
+        (err instanceof Error ? err.message : null) ||
+        "Passcode invalide";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -31,10 +67,10 @@ export const LoginPage = () => {
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-background px-3 sm:px-4 py-6">
       <div
-        className="absolute inset-0 opacity-[0.35]"
+        className="absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 20% 20%, rgba(255,77,48,0.08), transparent 40%), radial-gradient(circle at 80% 0%, rgba(26,43,72,0.06), transparent 35%)",
+            "radial-gradient(circle at 15% 10%, rgba(140,153,98,0.18), transparent 42%), radial-gradient(circle at 90% 0%, rgba(15,23,43,0.06), transparent 36%)",
         }}
         aria-hidden
       />
@@ -46,14 +82,20 @@ export const LoginPage = () => {
         <div className="text-center flex flex-col items-center justify-center space-y-3">
           <img src={multitrackLogo} alt="MultiTrack Logo" className="h-20 sm:h-24 w-auto mx-auto" />
           <div>
-            <h1 className="text-xl font-semibold text-brand tracking-tight">
-              Bienvenue sur MultiTrack
+            <h1 className="page-title text-center">
+              Bienvenue
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Gérez vos événements sportifs de A à Z
             </p>
           </div>
         </div>
+
+        {error && (
+          <Alert variant="error" role="alert">
+            {error}
+          </Alert>
+        )}
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-brand" htmlFor="passcode">
@@ -67,7 +109,7 @@ export const LoginPage = () => {
               onChange={(e) => setPasscode(e.target.value)}
               autoFocus
               placeholder="••••••"
-              className="w-full rounded-xl border border-border px-3 py-2.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-brand-cta/30"
+              className="w-full rounded-lg border border-border bg-white px-3 py-2.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-brand-cta/30"
             />
             <button
               type="button"
@@ -76,12 +118,10 @@ export const LoginPage = () => {
               aria-label={show ? "Masquer le passcode" : "Afficher le passcode"}
             >
               {show ? (
-                // Eye-off
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9.27-3.11-10.5-7.5a10.05 10.05 0 012.11-3.36m3.39-2.83A9.98 9.98 0 0112 5c5 0 9.27 3.11 10.5 7.5a10.05 10.05 0 01-2.11 3.36m-3.39 2.83L4.22 4.22m0 0L19.78 19.78" />
                 </svg>
               ) : (
-                // Eye
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c0 5-4.48 9-10 9S2 17 2 12s4.48-9 10-9 10 4 10 9z" />
                 </svg>
@@ -89,15 +129,10 @@ export const LoginPage = () => {
             </button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Chaque contrôleur possède un passcode lié à un point de contrôle.
+            Un même écran pour l’administrateur, l’organisateur et le pointeur.
+            Le passcode détermine l’espace ouvert.
           </p>
         </div>
-
-        {error && (
-          <div className="text-sm rounded-xl bg-red-50 text-red-700 px-3 py-2 border border-red-200">
-            {error}
-          </div>
-        )}
 
         <button
           className="btn-primary w-full py-2.5"
@@ -109,8 +144,8 @@ export const LoginPage = () => {
           {loading ? "Connexion..." : "Se connecter"}
         </button>
 
-        <div className="text-xs text-center text-muted-foreground space-y-2">
-          <p>Besoin d’aide ? Demande à l’admin de te (ré)générer un passcode.</p>
+        <div className="text-xs text-center text-muted-foreground space-y-1">
+          <p>Comptes de démo (front) : <code>ADMIN</code>, <code>ORGA</code>, <code>CHECKPOINT</code></p>
         </div>
       </form>
     </div>

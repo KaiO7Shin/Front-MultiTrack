@@ -179,7 +179,7 @@ export const PointeursList = () => {
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-sm text-white hover:opacity-90"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-navy px-3 py-2 text-sm text-white hover:opacity-90"
         >
           <Plus className="h-4 w-4" />
           Nouveau pointeur

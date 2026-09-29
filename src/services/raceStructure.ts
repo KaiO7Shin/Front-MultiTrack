@@ -1,5 +1,7 @@
-import api from "@/lib/api";
-import { API } from "@/lib/apiEndpoints";
+// API désactivée : données statiques du back-office.
+// import api from "@/lib/api";
+// import { API } from "@/lib/apiEndpoints";
+import { staticStore } from "@/data/staticStore";
 import type { CheckpointMancheMode } from "@/lib/raceRanking";
 import type {
   Manche,
@@ -9,31 +11,15 @@ import type {
   PhaseCreateDTO,
   PhaseUpdateDTO,
   PhaseWithManches,
-  RenderResponse,
   ResultatManche,
   ResultatMancheView,
   ParticipantProjection,
 } from "@/lib/type";
-import { normalizeParticipantProjection } from "@/lib/utils";
-
-function normalizeResultatMancheView(raw: Record<string, unknown>): ResultatMancheView {
-  return {
-    id: Number(raw.id ?? 0),
-    participantId: Number(raw.participantId ?? raw.participant_id ?? 0),
-    mancheId: Number(raw.mancheId ?? raw.manche_id ?? 0),
-    tempsDepart: (raw.tempsDepart ?? raw.temps_depart ?? null) as string | null,
-    tempsArrive: (raw.tempsArrive ?? raw.tempsArrivee ?? raw.temps_arrivee ?? null) as string | null,
-    numDossard: String(raw.numDossard ?? raw.num_dossard ?? ""),
-    prenom: String(raw.prenom ?? ""),
-    nom: String(raw.nom ?? ""),
-  };
-}
 
 export async function fetchPhasesByCourse(courseId: number): Promise<Phase[]> {
-  const { data } = await api.get<RenderResponse<Phase[]>>(API.phases, {
-    params: { courseId },
-  });
-  return data.data ?? [];
+  // const { data } = await api.get(API.phases, { params: { courseId } });
+  // return data.data ?? [];
+  return staticStore.listPhases(courseId);
 }
 
 export async function fetchPhasesWithManches(
@@ -50,56 +36,51 @@ export async function fetchPhasesWithManches(
 }
 
 export async function createPhase(dto: PhaseCreateDTO): Promise<Phase> {
-  const { data } = await api.post<RenderResponse<Phase>>(API.phase, dto);
-  return data.data!;
+  // const { data } = await api.post(API.phase, dto);
+  // return data.data!;
+  return staticStore.createPhase(dto);
 }
 
-export async function updatePhase(
-  id: number,
-  dto: PhaseUpdateDTO
-): Promise<Phase> {
-  const { data } = await api.put<RenderResponse<Phase>>(API.phaseById(id), dto);
-  return data.data!;
+export async function updatePhase(id: number, dto: PhaseUpdateDTO): Promise<Phase> {
+  // const { data } = await api.put(API.phaseById(id), dto);
+  // return data.data!;
+  return staticStore.updatePhase(id, dto);
 }
 
 export async function deletePhase(id: number): Promise<void> {
-  await api.delete(API.phaseById(id));
+  // await api.delete(API.phaseById(id));
+  staticStore.deletePhase(id);
 }
 
 export async function fetchManchesByPhase(phaseId: number): Promise<Manche[]> {
-  const { data } = await api.get<RenderResponse<Manche[]>>(API.manches, {
-    params: { phaseId },
-  });
-  return data.data ?? [];
+  // const { data } = await api.get(API.manches, { params: { phaseId } });
+  // return data.data ?? [];
+  return staticStore.listManches(phaseId);
 }
 
 export async function createManche(dto: MancheCreateDTO): Promise<Manche> {
-  const { data } = await api.post<RenderResponse<Manche>>(API.manche, dto);
-  return data.data!;
+  // const { data } = await api.post(API.manche, dto);
+  // return data.data!;
+  return staticStore.createManche(dto);
 }
 
-export async function updateManche(
-  id: number,
-  dto: MancheUpdateDTO
-): Promise<Manche> {
-  const { data } = await api.put<RenderResponse<Manche>>(API.mancheById(id), dto);
-  return data.data!;
+export async function updateManche(id: number, dto: MancheUpdateDTO): Promise<Manche> {
+  // const { data } = await api.put(API.mancheById(id), dto);
+  // return data.data!;
+  return staticStore.updateManche(id, dto);
 }
 
 export async function deleteManche(id: number): Promise<void> {
-  await api.delete(API.mancheById(id));
+  // await api.delete(API.mancheById(id));
+  staticStore.deleteManche(id);
 }
 
 export async function fetchResultatsByManche(
   mancheId: number
 ): Promise<ResultatMancheView[]> {
-  const { data } = await api.get<RenderResponse<ResultatMancheView[]>>(
-    API.resultatsManche,
-    { params: { mancheId } }
-  );
-  return (data.data ?? []).map((row) =>
-    normalizeResultatMancheView(row as Record<string, unknown>)
-  );
+  // const { data } = await api.get(API.resultatsManche, { params: { mancheId } });
+  // return (data.data ?? []).map(...)
+  return staticStore.listResultats(mancheId);
 }
 
 export async function fetchCheckpointEligibleParticipants(
@@ -108,60 +89,51 @@ export async function fetchCheckpointEligibleParticipants(
   mancheId: number,
   mode: CheckpointMancheMode
 ): Promise<ParticipantProjection[]> {
-  const { data } = await api.get<RenderResponse<Record<string, unknown>[]>>(
-    API.checkpointEligible,
-    { params: { courseId, phaseId, mancheId, mode } }
-  );
-  return (data.data ?? []).map((row) =>
-    normalizeParticipantProjection(row, courseId)
-  );
+  // const { data } = await api.get(API.checkpointEligible, { params: { courseId, phaseId, mancheId, mode } });
+  return staticStore.eligibleParticipants(courseId, phaseId, mancheId, mode);
 }
 
 export async function recordDepart(
   participantId: number,
   mancheId: number,
   recordedAt: string,
-  operatorId: number
+  _operatorId: number
 ): Promise<ResultatManche> {
-  const { data } = await api.post<RenderResponse<ResultatManche>>(
-    API.resultatMancheDepart,
-    { participantId, mancheId, recordedAt, operatorId }
-  );
-  return data.data!;
+  // const { data } = await api.post(API.resultatMancheDepart, { participantId, mancheId, recordedAt, operatorId });
+  // return data.data!;
+  return staticStore.recordDepart(participantId, mancheId, recordedAt);
 }
 
 export async function recordArriveDH(
   participantId: number,
   mancheId: number,
   recordedAt: string,
-  operatorId: number
+  _operatorId: number
 ): Promise<ResultatManche> {
-  const { data } = await api.post<RenderResponse<ResultatManche>>(
-    API.resultatMancheArrivee,
-    { participantId, mancheId, mode: "DH", recordedAt, operatorId }
-  );
-  return data.data!;
+  // const { data } = await api.post(API.resultatMancheArrivee, { participantId, mancheId, mode: "DH", recordedAt, operatorId });
+  // return data.data!;
+  return staticStore.recordArrive(participantId, mancheId, recordedAt, "DH");
 }
 
 export async function recordArriveXC(
   participantId: number,
   mancheId: number
 ): Promise<ResultatManche> {
-  const { data } = await api.post<RenderResponse<ResultatManche>>(
-    API.resultatMancheArrivee,
-    { participantId, mancheId, mode: "XC" }
+  // const { data } = await api.post(API.resultatMancheArrivee, { participantId, mancheId, mode: "XC" });
+  // return data.data!;
+  return staticStore.recordArrive(
+    participantId,
+    mancheId,
+    new Date().toISOString(),
+    "XC"
   );
-  return data.data!;
 }
 
 export async function cancelResultatManche(
   participantId: number,
   mancheId: number,
-  operatorId: number
+  _operatorId: number
 ): Promise<void> {
-  await api.post(API.resultatMancheAnnuler, {
-    participantId,
-    mancheId,
-    operatorId,
-  });
+  // await api.post(API.resultatMancheAnnuler, { participantId, mancheId, operatorId });
+  staticStore.cancelResultat(participantId, mancheId);
 }

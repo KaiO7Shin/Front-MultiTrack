@@ -723,7 +723,7 @@ export const CheckpointScan = () => {
             type="button"
             disabled={!selected || !mancheId || busy}
             onClick={handleXcArrivee}
-            className="w-full rounded-2xl bg-slate-900 text-white px-4 py-3 text-base disabled:opacity-50"
+            className="w-full rounded-2xl bg-navy text-white px-4 py-3 text-base disabled:opacity-50"
           >
             {busy ? "Enregistrement…" : "Enregistrer l'arrivée"}
           </button>

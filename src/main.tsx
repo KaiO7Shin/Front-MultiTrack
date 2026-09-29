@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 
@@ -17,7 +17,15 @@ import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
 import { LoginPage } from "./pages/Auth/LoginPage";
 import { PointeursList } from "./pages/Pointeurs/PointeursList";
 
-import { AuthProvider, RequireAuth, RequireRole, ROLE_ADMIN } from "./lib/auth";
+import {
+  AuthProvider,
+  RequireAuth,
+  RequireRole,
+  ROLE_ADMIN,
+  ROLE_ORGANIZER,
+  RoleHomeRedirect,
+} from "./lib/auth";
+import { OrganizerHomePage } from "./pages/Organizer/OrganizerHomePage";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -32,7 +40,7 @@ const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { index: true, element: <RoleHomeRedirect /> },
       { path: "dashboard", element: <DashboardPage /> },
 
       { path: "courses", element: <CoursesList /> },
@@ -56,10 +64,18 @@ const router = createBrowserRouter([
       },
 
       { path: "leaderboard", element: <LeaderboardPage /> },
+
+      {
+        path: "organisateur",
+        element: (
+          <RequireRole role={[ROLE_ORGANIZER, ROLE_ADMIN]}>
+            <OrganizerHomePage />
+          </RequireRole>
+        ),
+      },
     ],
   },
-  // Redirige tout le reste
-  { path: "*", element: <Navigate to="/dashboard" replace /> },
+  { path: "*", element: <RoleHomeRedirect /> },
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
