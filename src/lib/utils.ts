@@ -206,6 +206,14 @@ export function normalizeBikeType(raw: unknown): BikeType | undefined {
   return undefined;
 }
 
+const TSHIRT_ALIASES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
+
+/** Normalise une taille T-shirt vers un alias connu (XS…XXL), sinon undefined. */
+export function normalizeTshirtSize(raw: unknown): string | undefined {
+  const alias = String(raw ?? "").trim().toUpperCase();
+  return TSHIRT_ALIASES.has(alias) ? alias : undefined;
+}
+
 export function normalizeParticipantStatus(raw: unknown): ParticipantStatus {
   const s = String(raw ?? "Inscrit").trim();
   if (s === "Finisher" || s === "Finished") return "Finisher";
@@ -242,6 +250,9 @@ export function normalizeParticipantProjection(
   );
 
   const typeVelo = normalizeBikeType(raw.typeVelo ?? raw.type_velo);
+  const tailleTShirt = normalizeTshirtSize(
+    raw.tailleTShirt ?? raw.tShirtSize ?? raw.tshirtSize
+  );
 
   return {
     id: Number(raw.id ?? raw.participantId ?? 0),
@@ -262,6 +273,7 @@ export function normalizeParticipantProjection(
     ),
     nomCourse: String(raw.nomCourse ?? raw.courseLibelle ?? raw.courseName ?? ""),
     typeVelo,
+    ...(tailleTShirt ? { tailleTShirt } : {}),
   };
 }
 

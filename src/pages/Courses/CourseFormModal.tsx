@@ -171,7 +171,7 @@ export function CourseFormModal({
               required
               maxLength={25}
               className="w-full rounded-lg border px-3 py-2 text-sm"
-              placeholder="Ex. Boucle des collines"
+              placeholder="Ex. Challenge Initiation — Trail 12 km"
               value={form.libelle}
               onChange={(e) => setForm((f) => ({ ...f, libelle: e.target.value }))}
               disabled={saving}

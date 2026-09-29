@@ -199,6 +199,8 @@ export type ParticipantProjection = {
   dateNaissance: string; // yyyy-MM-dd
   nomCourse?: string;
   typeVelo?: BikeType;
+  /** Alias taille T-shirt (XS…XXL), optionnel si non renseigné */
+  tailleTShirt?: string;
 };
 
 export type ParticipantUpdateDTO = {

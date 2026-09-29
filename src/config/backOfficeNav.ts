@@ -12,6 +12,7 @@ const ADMIN_NAV: BackOfficeNavItem[] = [
   { to: "/categories", label: "Catégories", end: true },
   { to: "/participants", label: "Participants" },
   { to: "/participants/identity", label: "Informations participant", end: true },
+  { to: "/tshirts", label: "T-shirts", end: true },
   { to: "/checkpoint/scan", label: "Checkpoint", end: true },
   { to: "/pointeurs", label: "Pointeurs", end: true },
   { to: "/leaderboard", label: "Résultats", end: true },
@@ -21,6 +22,7 @@ const ORGANIZER_NAV: BackOfficeNavItem[] = [
   { to: "/participants/add", label: "Nouveau participant", end: true },
   { to: "/participants/identity", label: "Informations participant", end: true },
   { to: "/participants", label: "Participants", end: true },
+  { to: "/tshirts", label: "T-shirts", end: true },
   { to: "/leaderboard", label: "Résultats", end: true },
 ];
 
@@ -34,7 +36,12 @@ export function isPathAllowedForRole(path: string, role: number | undefined): bo
   if (role === ROLE_ADMIN) return true;
   if (role === ROLE_CHECKPOINT) return path.startsWith("/checkpoint");
   if (role === ROLE_ORGANIZER) {
-    return path === "/participants" || path.startsWith("/participants/") || path.startsWith("/leaderboard");
+    return (
+      path === "/participants" ||
+      path.startsWith("/participants/") ||
+      path === "/tshirts" ||
+      path.startsWith("/leaderboard")
+    );
   }
   return false;
 }
