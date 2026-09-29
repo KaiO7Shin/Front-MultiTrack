@@ -1925,7 +1925,8 @@ html[data-theme="dark"] .race-card {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px 18px;
+  align-items: center;
+  gap: 8px 12px;
 }
 
 .footer-legal a {
@@ -1943,22 +1944,31 @@ html[data-theme="dark"] .race-card {
   text-underline-offset: 3px;
 }
 
+.footer-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--mt-olive);
+  opacity: .7;
+  flex-shrink: 0;
+}
+
 .footer-meta {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-  gap: 6px 14px;
+  gap: 6px 12px;
   text-align: right;
 }
 
 .footer-meta p,
-.footer-meta span {
+.footer-meta span:not(.footer-dot) {
   margin: 0;
   color: var(--theme-footer-text);
 }
 
-.footer-meta span { opacity: .75; }
+.footer-meta > span:not(.footer-dot) { opacity: .75; }
 
 /* ── Legal pages ── */
 .legal-updated {
@@ -2162,13 +2172,13 @@ html[data-theme="dark"] .menu-toggle span { background: var(--theme-panel-text);
 
   .footer-legal {
     justify-content: flex-start;
-    gap: 6px 14px;
+    gap: 6px 10px;
   }
 
   .footer-meta {
     justify-content: flex-start;
     text-align: left;
-    gap: 4px 12px;
+    gap: 4px 10px;
   }
 
   .footer-tagline { letter-spacing: .14em; }

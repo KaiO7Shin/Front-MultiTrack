@@ -110,10 +110,12 @@ export function SiteFooter() {
         </div>
         <nav className="footer-legal" aria-label="Informations légales">
           <Link to="/confidentialite">Confidentialité</Link>
+          <span className="footer-dot" aria-hidden="true" />
           <Link to="/conditions">Conditions d’utilisation</Link>
         </nav>
         <div className="footer-meta">
           <p>© 2026 MultiTrack</p>
+          <span className="footer-dot" aria-hidden="true" />
           <span>Powered by Vahira</span>
         </div>
       </div>
