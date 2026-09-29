@@ -14,7 +14,7 @@
     "build:public": "npm run build --workspace @multitrack/public",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "serve -s dist -l $PORT"
+    "start": "serve -s apps/public/dist -l ${PORT:-3000}"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
