@@ -3,7 +3,6 @@ import {
   Trophy,
   Medal,
   Filter,
-  Download,
   Search,
   ChevronDown,
   ChevronUp,
@@ -21,6 +20,7 @@ import {
   buildCumulatedPodiumGroups,
   buildPodiumGroups,
   courseLabelOf,
+  formatParticipantName,
   isBikeCourse,
   toRow,
 } from "@/lib/utils";
@@ -31,12 +31,29 @@ import { EnduroLeaderboard } from "./EnduroLeaderboard";
 import { XCLeaderboard } from "./XCLeaderboard";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
+import type { ParticipantStatus } from "@/lib/type";
+import {
+  PARTICIPANT_STATUSES,
+  PARTICIPANT_STATUS_LABELS,
+  statusLabel,
+} from "@/pages/Participants/participantStatus";
 
 const COURSES_FALLBACK: { id: number; label: string }[] = [
   { id: 1, label: "Trail 12K" },
   { id: 2, label: "Trail 35K" },
 ];
+
+function formatGenderClt(rank: number | null | undefined, genre?: "Homme" | "Femme") {
+  if (rank == null) return "—";
+  const letter = genre === "Femme" ? "F" : genre === "Homme" ? "H" : "";
+  return letter ? `${rank} ${letter}` : String(rank);
+}
+
+function formatCategoryClt(rank: number | null | undefined, alias?: string) {
+  if (rank == null) return "—";
+  const cat = (alias ?? "").trim();
+  return cat ? `${rank} ${cat}` : String(rank);
+}
 
 export const LeaderboardPage: React.FC = () => {
   const [courseId, setCourseId] = useState<number | "all">(1);
@@ -44,6 +61,8 @@ export const LeaderboardPage: React.FC = () => {
   const [categoryId, setCategoryId] = useState<number | "" | null>("");
   const [searchBib, setSearchBib] = useState("");
   const [bikeType, setBikeType] = useState<"all" | BikeType>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | ParticipantStatus>("all");
+  const [cumulMode, setCumulMode] = useState<"sans_cumul" | "avec_cumul">("sans_cumul");
 
   const [courses, setCourses] = useState<{ id: number; label: string }[]>(
     COURSES_FALLBACK
@@ -125,25 +144,23 @@ const exportGeneralPdf = () => {
     head: [[
       "Rang",
       "Dossard",
-      "Prénom",
-      "Nom",
+      "Nom et prénom",
       "Cat",
       "Temps",
-      "Clt Cat",
       "Clt Genre",
+      "Clt Cat",
       "Statut",
     ]],
 
     body: filteredRows.map((r) => [
       r.rank ?? "—",
       r.dossard,
-      r.prenom,
-      r.nom,
+      formatParticipantName(r.prenom, r.nom),
       r.categorie ?? "—",
       r.raceTime ?? "—",
-      r.categoryRank ?? "—",
-      r.genderRank ?? "—",
-      r.status ?? "—",
+      formatGenderClt(r.genderRank, r.genre),
+      formatCategoryClt(r.categoryRank, r.categorie),
+      statusLabel(r.status),
     ]),
 
     styles: {
@@ -167,15 +184,14 @@ const exportGeneralPdf = () => {
     },
 
     columnStyles: {
-      0: { halign: "center", cellWidth: 12 }, // Rang
-      1: { halign: "center", cellWidth: 18 }, // Dossard
-      2: { cellWidth: 28 },                   // Prénom
-      3: { cellWidth: 33 },                   // Nom
-      4: { halign: "center", cellWidth: 18 }, // Catégorie
-      5: { halign: "center", cellWidth: 20 }, // Temps
-      6: { halign: "center", cellWidth: 18 }, // Clt Cat
-      7: { halign: "center", cellWidth: 18 }, // Clt Genre
-      8: { halign: "center", cellWidth: 22 }, // Statut
+      0: { halign: "center", cellWidth: 12 },
+      1: { halign: "center", cellWidth: 18 },
+      2: { cellWidth: 42 },
+      3: { halign: "center", cellWidth: 18 },
+      4: { halign: "center", cellWidth: 20 },
+      5: { halign: "center", cellWidth: 22 },
+      6: { halign: "center", cellWidth: 28 },
+      7: { halign: "center", cellWidth: 22 },
     },
 
     didParseCell: (data) => {
@@ -593,12 +609,45 @@ const exportGeneralPdf = () => {
     return () => clearTimeout(t);
   }, [searchBib]);
 
-  /* Filtered rows by dossard */
+  /* Filtered rows by dossard + statut ; Clt Cat selon mode cumul */
   const filteredRows = useMemo(() => {
+    let base = rows;
+    if (statusFilter !== "all") {
+      base = base.filter((r) => (r.status ?? "") === statusFilter);
+    }
     const term = debouncedSearch.trim();
-    if (!term) return rows;
-    return rows.filter((r) => r.dossard.includes(term));
-  }, [rows, debouncedSearch]);
+    if (term) {
+      base = base.filter((r) => r.dossard.includes(term));
+    }
+    if (cumulMode === "avec_cumul") return base;
+
+    // Sans cumul : les scratch H/F (top 3 finishers par genre) n'ont pas de rang catégorie
+    const finishers = rows.filter((r) =>
+      (r.status ?? "").toLowerCase().includes("finish")
+    );
+    const scratchIds = new Set<number>([
+      ...finishers.filter((r) => r.categorie.endsWith("H")).slice(0, 3).map((r) => r.participantId),
+      ...finishers.filter((r) => r.categorie.endsWith("F")).slice(0, 3).map((r) => r.participantId),
+    ]);
+
+    const categoryCounters: Record<string, number> = {};
+    const categoryRankById = new Map<number, number | null>();
+    for (const r of finishers) {
+      if (scratchIds.has(r.participantId)) {
+        categoryRankById.set(r.participantId, null);
+        continue;
+      }
+      const key = r.categorie || "";
+      categoryCounters[key] = (categoryCounters[key] ?? 0) + 1;
+      categoryRankById.set(r.participantId, categoryCounters[key]);
+    }
+
+    return base.map((r) =>
+      categoryRankById.has(r.participantId)
+        ? { ...r, categoryRank: categoryRankById.get(r.participantId) ?? null }
+        : r
+    );
+  }, [rows, debouncedSearch, statusFilter, cumulMode]);
 
   /* Podium should be from full ranking */
   const podium = useMemo(() => rows.slice(0, 3), [rows]);
@@ -658,28 +707,31 @@ const exportGeneralPdf = () => {
           <button
             onClick={handleExportRanking}
             disabled={!canExportTrail && !canExportDh && !canExportEnduro}
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
+            title="Exporter le classement général"
+            className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"
           >
-            <Download className="inline-block h-4 w-4 mr-2" />
-            Exporter Classement
+            <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
+            Général
           </button>
 
           <button
             onClick={exportPodiumPdf}
             disabled={!canExportTrail}
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
+            title="Exporter le podium"
+            className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"
           >
-            <Download className="inline-block h-4 w-4 mr-2" />
-            Exporter Podiums
+            <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
+            Podium
           </button>
 
           <button
             onClick={exportCumulatedPodiumPdf}
             disabled={!canExportTrail}
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
+            title="Exporter le podium cumulé"
+            className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"
           >
-            <Download className="inline-block h-4 w-4 mr-2" />
-            Exporter Podium cumulé
+            <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
+            Podium cumulé
           </button>
 
         </div>
@@ -691,7 +743,7 @@ const exportGeneralPdf = () => {
           <Filter className="h-4 w-4" />
           <span>Filtres</span>
         </div>
-        <div className="filter-fields">
+        <div className="filter-fields !grid-cols-1 sm:!grid-cols-2 lg:!grid-cols-3 xl:!grid-cols-6">
           <select
             className="w-full rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
             value={String(courseId)}
@@ -739,6 +791,38 @@ const exportGeneralPdf = () => {
             ))}
           </select>
 
+          <select
+            className="w-full rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(
+                e.target.value === "all"
+                  ? "all"
+                  : (e.target.value as ParticipantStatus)
+              )
+            }
+            aria-label="Filtrer par statut"
+          >
+            <option value="all">Tous les statuts</option>
+            {PARTICIPANT_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {PARTICIPANT_STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="w-full rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
+            value={cumulMode}
+            onChange={(e) =>
+              setCumulMode(e.target.value as "sans_cumul" | "avec_cumul")
+            }
+            aria-label="Mode de cumul des résultats"
+          >
+            <option value="sans_cumul">Sans cumul</option>
+            <option value="avec_cumul">Avec cumul</option>
+          </select>
+
           {isBikeCourse(courseType) && (
             <select
               className="w-full rounded-lg border px-2 py-2 text-sm focus:ring-2 focus:ring-[#8c9962]/30"
@@ -757,7 +841,7 @@ const exportGeneralPdf = () => {
             </select>
           )}
 
-          <div className="relative sm:col-span-2 lg:col-span-1">
+          <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="text"
@@ -828,7 +912,10 @@ const exportGeneralPdf = () => {
     Résultats Officiels – {rows[0]?.course}
   </h1>
 
-  {buildPodiumGroups(rows).map((group, i) => (
+  {(cumulMode === "avec_cumul"
+    ? buildCumulatedPodiumGroups(rows)
+    : buildPodiumGroups(rows)
+  ).map((group, i) => (
     <div key={i} className="mb-6 break-inside-avoid">
       <h2 className="text-lg font-semibold mb-2">{group.title}</h2>
 
@@ -875,11 +962,11 @@ const exportGeneralPdf = () => {
               <tr className="text-left border-b">
                 <Th>#</Th>
                 <Th>Dossard</Th>
-                <Th>Prénom</Th>
-                <Th>Nom</Th>
+                <Th>Nom et prénom</Th>
                 <Th>Catégorie</Th>
-                <Th>Course</Th>
                 <Th>Temps</Th>
+                <Th>Clt Genre</Th>
+                <Th>Clt Cat</Th>
                 <Th>Statut</Th>
                 <Th></Th>
               </tr>
@@ -894,12 +981,16 @@ const exportGeneralPdf = () => {
                     <tr className="hover:bg-[#8c9962]/5">
                       <Td className="font-medium">{r.rank ?? "—"}</Td>
                       <Td className="font-medium tabular-nums">{r.dossard}</Td>
-                      <Td>{r.prenom}</Td>
-                      <Td>{r.nom}</Td>
-                      <Td>{r.categorie}</Td>
-                      <Td>{r.course}</Td>
+                      <Td>{formatParticipantName(r.prenom, r.nom)}</Td>
+                      <Td>{r.categorie || "—"}</Td>
                       <Td className="tabular-nums">{r.raceTime ?? "—"}</Td>
-                      <Td>{r.status ?? "—"}</Td>
+                      <Td className="tabular-nums">
+                        {formatGenderClt(r.genderRank, r.genre)}
+                      </Td>
+                      <Td className="tabular-nums">
+                        {formatCategoryClt(r.categoryRank, r.categorie)}
+                      </Td>
+                      <Td>{statusLabel(r.status)}</Td>
                       <Td className="px-4 py-2 text-right">
                         <button
                           onClick={() => toggleExpanded(r.participantId)}
@@ -977,9 +1068,12 @@ const exportGeneralPdf = () => {
                       {r.rank ?? "—"}
                     </span>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{r.prenom}</div>
+                      <div className="text-sm font-medium truncate">
+                        {formatParticipantName(r.prenom, r.nom)}
+                      </div>
                       <div className="text-xs text-slate-500 break-words">
-                        {r.nom} · Dossard {r.dossard} · {r.course}
+                        Dossard {r.dossard} · {r.categorie || "—"} ·{" "}
+                        {statusLabel(r.status)}
                       </div>
                     </div>
                   </div>

@@ -129,22 +129,24 @@ function trailCourse(
 }
 
 const courses: Course[] = [
-  trailCourse(1, "Boucle des collines", 1, 12, 310, 1, {
+  // Trail (SENTIER)
+  trailCourse(3, "Challenge Parent-Enfant — Trail 10 km", 1, 10, 210, 161),
+  trailCourse(1, "Challenge Initiation — Trail 12 km", 1, 12, 310, 1, {
     status: "En cours",
     startAt: liveStart,
     checkpoints: 2,
   }),
-  trailCourse(2, "Boucle des cretes", 1, 16, 470, 81),
-  trailCourse(3, "Boucle familiale", 1, 10, 210, 161),
-  trailCourse(4, "Boucle du sommet", 1, 25, 570, 241),
-  trailCourse(5, "Boucle en duo", 1, 25, 570, 321),
-  trailCourse(6, "Circuit familial", 2, 10, 210, 500),
-  trailCourse(7, "Circuit du sommet", 2, 25, 570, 581, {
+  trailCourse(2, "Challenge Explorateur — Trail 16 km", 1, 16, 470, 81),
+  trailCourse(4, "Challenge Suprême — Trail 25 km", 1, 25, 570, 241),
+  trailCourse(5, "Challenge des Amoureux — Trail 25 km", 1, 25, 570, 321),
+  // VTT (VELO)
+  trailCourse(6, "Challenge Parent-Enfant — VTT 10 km", 2, 10, 210, 500),
+  trailCourse(7, "Challenge Suprême — VTT 25 km", 2, 25, 570, 581, {
     status: "Terminee",
     startAt: finishedStart,
     checkpoints: 2,
   }),
-  trailCourse(8, "Circuit en duo", 2, 25, 570, 661),
+  trailCourse(8, "Challenge des Amoureux — VTT 25 km", 2, 25, 570, 661),
 ];
 
 const phases: Phase[] = [];
@@ -163,8 +165,8 @@ function participant(
   return partial;
 }
 
-const BOUCLE_COLLINES = "Boucle des collines";
-const CIRCUIT_SOMMET = "Circuit du sommet";
+const COURSE_INITIATION = "Challenge Initiation — Trail 12 km";
+const COURSE_SUPREME_VTT = "Challenge Suprême — VTT 25 km";
 
 const participants: ParticipantProjection[] = [
   participant({
@@ -175,10 +177,11 @@ const participants: ParticipantProjection[] = [
     genre: "Femme",
     aliasCategorie: "Senior F",
     courseId: 1,
-    courseLibelle: BOUCLE_COLLINES,
-    nomCourse: BOUCLE_COLLINES,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
     statut: "En course",
     dateNaissance: "1996-11-03",
+    tailleTShirt: "M",
   }),
   participant({
     id: 12,
@@ -188,10 +191,11 @@ const participants: ParticipantProjection[] = [
     genre: "Homme",
     aliasCategorie: "Confirme H",
     courseId: 1,
-    courseLibelle: BOUCLE_COLLINES,
-    nomCourse: BOUCLE_COLLINES,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
     statut: "Finisher",
     dateNaissance: "1984-02-20",
+    tailleTShirt: "L",
   }),
   participant({
     id: 13,
@@ -201,10 +205,11 @@ const participants: ParticipantProjection[] = [
     genre: "Homme",
     aliasCategorie: "Senior H",
     courseId: 1,
-    courseLibelle: BOUCLE_COLLINES,
-    nomCourse: BOUCLE_COLLINES,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
     statut: "Present",
     dateNaissance: "1992-04-12",
+    tailleTShirt: "XL",
   }),
   participant({
     id: 14,
@@ -214,10 +219,11 @@ const participants: ParticipantProjection[] = [
     genre: "Femme",
     aliasCategorie: "Eveil F",
     courseId: 1,
-    courseLibelle: BOUCLE_COLLINES,
-    nomCourse: BOUCLE_COLLINES,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
     statut: "Inscrit",
     dateNaissance: "2018-06-15",
+    tailleTShirt: "XS",
   }),
   participant({
     id: 71,
@@ -227,10 +233,11 @@ const participants: ParticipantProjection[] = [
     genre: "Homme",
     aliasCategorie: "Senior H",
     courseId: 7,
-    courseLibelle: CIRCUIT_SOMMET,
-    nomCourse: CIRCUIT_SOMMET,
+    courseLibelle: COURSE_SUPREME_VTT,
+    nomCourse: COURSE_SUPREME_VTT,
     statut: "Finisher",
     dateNaissance: "1990-09-14",
+    tailleTShirt: "L",
   }),
   participant({
     id: 72,
@@ -240,10 +247,11 @@ const participants: ParticipantProjection[] = [
     genre: "Femme",
     aliasCategorie: "Confirme F",
     courseId: 7,
-    courseLibelle: CIRCUIT_SOMMET,
-    nomCourse: CIRCUIT_SOMMET,
+    courseLibelle: COURSE_SUPREME_VTT,
+    nomCourse: COURSE_SUPREME_VTT,
     statut: "Finisher",
     dateNaissance: "1982-04-04",
+    tailleTShirt: "S",
   }),
 ];
 
@@ -607,6 +615,15 @@ export const staticStore = {
     return clone(participants.filter((p) => p.courseId === raceId));
   },
 
+  listAllParticipants(): ParticipantProjection[] {
+    return clone(participants);
+  },
+
+  getParticipantById(id: number): ParticipantProjection | null {
+    const found = participants.find((p) => p.id === id);
+    return found ? clone(found) : null;
+  },
+
   createParticipant(
     dto: ParticipantCreateDTO
   ): RenderResponse<ParticipantResponse> {
@@ -614,6 +631,8 @@ export const staticStore = {
     if (course.type === "DH" || course.type === "ENDURO") {
       if (!dto.typeVelo) fail("Le type de vélo est requis pour une course DH ou Enduro.");
     }
+    const taille = dto.tailleTShirt?.trim().toUpperCase();
+    if (!taille) fail("La taille de t-shirt est requise.");
     const category = categoryFor(dto.genre, dto.dateNaissance);
     const created = participant({
       id: nextId(),
@@ -627,6 +646,7 @@ export const staticStore = {
       nomCourse: course.name,
       statut: "Inscrit",
       dateNaissance: dto.dateNaissance,
+      tailleTShirt: taille,
       typeVelo: course.type === "DH" || course.type === "ENDURO" ? dto.typeVelo : undefined,
     });
     participants.push(created);
@@ -1040,6 +1060,7 @@ export const staticStore = {
           athleteName: `${p.prenom} ${p.nom}`.trim(),
           nom: p.nom,
           prenom: p.prenom,
+          genre: p.genre,
           categoryName: p.aliasCategorie,
           raceTime: raceMs != null && raceMs >= 0 ? formatMs(raceMs) : null,
           raceMs,
@@ -1061,9 +1082,19 @@ export const staticStore = {
       return a.raceMs - b.raceMs;
     });
 
+    const genderCounters: Record<string, number> = {};
+    const categoryCounters: Record<string, number> = {};
+
     let rank = 0;
     return ranked.map((row) => {
       const place = row.raceMs == null ? null : (rank += 1);
+      let genderRank: number | null = null;
+      let categoryRank: number | null = null;
+      if (row.raceMs != null) {
+        genderRank = (genderCounters[row.genre] = (genderCounters[row.genre] ?? 0) + 1);
+        categoryRank = (categoryCounters[row.categoryName] =
+          (categoryCounters[row.categoryName] ?? 0) + 1);
+      }
       return {
         rank: place,
         participantId: row.participantId,
@@ -1071,10 +1102,13 @@ export const staticStore = {
         athleteName: row.athleteName,
         nom: row.nom,
         prenom: row.prenom,
+        genre: row.genre,
         categoryName: row.categoryName,
         raceTime: row.raceTime,
         status: row.status,
         controlPoints: row.controlPoints,
+        categoryRank,
+        genderRank,
       };
     });
   },
@@ -1188,7 +1222,7 @@ export const staticStore = {
   },
 };
 
-/** Session du compte démo CHECKPOINT : pointeur du belvédère, Boucle des collines. */
+/** Session du compte démo CHECKPOINT : pointeur du belvédère, Challenge Initiation. */
 export function demoCheckpointSession(): {
   libelle: string;
   assignedControlPoint: {

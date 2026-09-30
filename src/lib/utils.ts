@@ -206,6 +206,14 @@ export function normalizeBikeType(raw: unknown): BikeType | undefined {
   return undefined;
 }
 
+const TSHIRT_ALIASES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
+
+/** Normalise une taille T-shirt vers un alias connu (XS…XXL), sinon undefined. */
+export function normalizeTshirtSize(raw: unknown): string | undefined {
+  const alias = String(raw ?? "").trim().toUpperCase();
+  return TSHIRT_ALIASES.has(alias) ? alias : undefined;
+}
+
 export function normalizeParticipantStatus(raw: unknown): ParticipantStatus {
   const s = String(raw ?? "Inscrit").trim();
   if (s === "Finisher" || s === "Finished") return "Finisher";
@@ -242,6 +250,9 @@ export function normalizeParticipantProjection(
   );
 
   const typeVelo = normalizeBikeType(raw.typeVelo ?? raw.type_velo);
+  const tailleTShirt = normalizeTshirtSize(
+    raw.tailleTShirt ?? raw.tShirtSize ?? raw.tshirtSize
+  );
 
   return {
     id: Number(raw.id ?? raw.participantId ?? 0),
@@ -262,6 +273,7 @@ export function normalizeParticipantProjection(
     ),
     nomCourse: String(raw.nomCourse ?? raw.courseLibelle ?? raw.courseName ?? ""),
     typeVelo,
+    ...(tailleTShirt ? { tailleTShirt } : {}),
   };
 }
 
@@ -343,18 +355,16 @@ export function toRow(apiRow: any, ctx: { raceId: number; raceLabel: string }): 
 
   return {
     participantId: apiRow.participantId,
-    rank: apiRow.rank, // ✅ rang officiel
+    rank: apiRow.rank,
     dossard: apiRow.bibNumber,
     nom: fallback.nom,
     prenom: fallback.prenom,
+    genre: apiRow.genre === "Femme" ? "Femme" : apiRow.genre === "Homme" ? "Homme" : undefined,
     categorie: apiRow.categoryName,
     raceTime: apiRow.raceTime,
     status: apiRow.status,
-
-    // 🆕 nouveaux champs
-    categoryRank: apiRow.categoryRank,
-    genderRank: apiRow.genderRank,
-
+    categoryRank: apiRow.categoryRank ?? null,
+    genderRank: apiRow.genderRank ?? null,
     courseId: ctx.raceId,
     course: ctx.raceLabel,
     controlPoints: apiRow.controlPoints ?? [],

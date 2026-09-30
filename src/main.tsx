@@ -8,9 +8,10 @@ import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { CoursesList } from "./pages/Courses/CoursesList";
 import { CategoriesList } from "./pages/Categories/CategoriesList";
 import { CourseDetails } from "./pages/Courses/CourseDetails";
-import { ParticipantsList } from "./pages/Participants/ParticipantsList";
 import { ImportParticipants } from "./pages/Participants/ImportParticipants";
 import { AddParticipant } from "./pages/Participants/AddParticipant";
+import { ParticipantPage } from "./pages/Participants/ParticipantPage";
+import { TshirtsPage } from "./pages/Tshirts/TshirtsPage";
 import { CheckpointScan } from "./pages/Checkpoint/CheckpointScan";
 import { CheckpointHistory } from "./pages/Checkpoint/CheckpointHistory";
 import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
@@ -25,17 +26,20 @@ import {
   ROLE_ORGANIZER,
   RoleHomeRedirect,
 } from "./lib/auth";
-import { OrganizerHomePage } from "./pages/Organizer/OrganizerHomePage";
+import {
+  OrganizerHomePage,
+  ParticipantsIndex,
+} from "./pages/Organizer/OrganizerHomePage";
+import { ParticipantDetailPage } from "./pages/Organizer/ParticipantDetailPage";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
   {
-    // Tout le “site” derrière un garde
     path: "/",
     element: (
       <RequireAuth>
         <>
-          <App /> {/* Assure-toi que App rend <Outlet/> */}
+          <App />
         </>
       </RequireAuth>
     ),
@@ -47,9 +51,12 @@ const router = createBrowserRouter([
       { path: "categories", element: <CategoriesList /> },
       { path: "courses/:id", element: <CourseDetails /> },
 
-      { path: "participants", element: <ParticipantsList /> },
+      { path: "participants", element: <ParticipantsIndex /> },
       { path: "participants/import", element: <ImportParticipants /> },
       { path: "participants/add", element: <AddParticipant /> },
+      { path: "participants/identity", element: <ParticipantPage /> },
+      { path: "participants/:id", element: <ParticipantDetailPage /> },
+      { path: "tshirts", element: <TshirtsPage /> },
 
       { path: "checkpoint/scan", element: <CheckpointScan /> },
       { path: "checkpoint/history", element: <CheckpointHistory /> },

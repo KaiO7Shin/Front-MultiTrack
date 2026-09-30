@@ -4,6 +4,7 @@ import type { BikeType, Course, ParticipantUpdateDTO, ParticipantStatus } from "
 import { fetchCoursesDetailed } from "@/services/courses";
 import { fetchTypesVelo } from "@/services/typesVelo";
 import { formatParticipantName, isBikeCourse } from "@/lib/utils";
+import { PARTICIPANT_STATUSES } from "./participantStatus";
 
 export type ParticipantEditTarget = {
   numDossard: string;
@@ -285,13 +286,11 @@ export function ParticipantEditModal({
                 }
                 disabled={saving}
               >
-                <option value="Inscrit">Inscrit</option>
-                <option value="Present">Present</option>
-                <option value="En course">En course</option>
-                <option value="Finisher">Finisher</option>
-                <option value="DNS">DNS</option>
-                <option value="DNF">DNF</option>
-                <option value="DSQ">DSQ</option>
+                {PARTICIPANT_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

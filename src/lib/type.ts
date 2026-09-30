@@ -13,10 +13,13 @@ export type ApiRow = {
   /** Si fournis par l'API, prioritaires sur athleteName */
   nom?: string;
   prenom?: string;
+  genre?: "Homme" | "Femme";
   categoryName: string;
   raceTime: string | null;
   status: string | null;
   controlPoints?: ControlPoint[];
+  categoryRank?: number | null;
+  genderRank?: number | null;
 };
 
 export type Row = {
@@ -25,13 +28,13 @@ export type Row = {
   dossard: string;
   nom: string;
   prenom: string;
+  genre?: "Homme" | "Femme";
   categorie: string;
   courseId: number;
   course: string;
   raceTime: string | null;
   status: string | null;
   controlPoints: ControlPoint[];
-  // 🆕 nouveaux champ
   categoryRank: number | null;
   genderRank: number | null;
 };
@@ -114,6 +117,8 @@ export type ParticipantCreateDTO = {
   dateNaissance: string;     // yyyy-MM-dd
   genre: "Homme" | "Femme";
   courseChoisieId: number;
+  /** Alias taille T-shirt (XS…XXL) */
+  tailleTShirt?: string;
   /** Requis pour les courses DH uniquement */
   typeVelo?: BikeType;
 };
@@ -199,6 +204,8 @@ export type ParticipantProjection = {
   dateNaissance: string; // yyyy-MM-dd
   nomCourse?: string;
   typeVelo?: BikeType;
+  /** Alias taille T-shirt (XS…XXL), optionnel si non renseigné */
+  tailleTShirt?: string;
 };
 
 export type ParticipantUpdateDTO = {

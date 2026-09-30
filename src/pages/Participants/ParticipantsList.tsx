@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Pencil, Search, Users } from "lucide-react";
+import { Pencil, RefreshCw, Search, Users } from "lucide-react";
 import {
   changeParticipantStatus,
   fetchParticipantsByCourse,
@@ -13,6 +13,8 @@ import type { BikeType, CourseType, ParticipantProjection, ParticipantStatus } f
 import { BIKE_TYPE_LABELS, BIKE_TYPES } from "@/lib/type";
 import { formatParticipantName, isBikeCourse } from "@/lib/utils";
 import { ParticipantEditModal } from "./ParticipantEditModal";
+import { ParticipantStatusModal } from "./ParticipantStatusModal";
+import { PARTICIPANT_STATUSES, PARTICIPANT_STATUS_LABELS, statusBadgeClass, statusLabel } from "./participantStatus";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
 import { FormField, selectClassName } from "@/components/ui/form-field";
 import jsPDF from "jspdf";
@@ -60,11 +62,16 @@ export const ParticipantsList = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
   const [selectedGender, setSelectedGender] = useState<"all" | "Homme" | "Femme">("all");
   const [selectedBikeType, setSelectedBikeType] = useState<"all" | BikeType>("all");
+  const [selectedStatus, setSelectedStatus] = useState<"all" | ParticipantStatus>("all");
 
   const [editTarget, setEditTarget] = useState<Participant | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  const [statusTarget, setStatusTarget] = useState<Participant | null>(null);
+  const [statusSaving, setStatusSaving] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [statusSuccess, setStatusSuccess] = useState<string | null>(null);
   const [filtersError, setFiltersError] = useState<string | null>(null);
 
   const reloadParticipants = useCallback(async (courseId: number) => {
@@ -78,16 +85,20 @@ export const ParticipantsList = () => {
     setEditError(null);
   };
 
+  const closeStatus = () => {
+    if (statusSaving) return;
+    setStatusTarget(null);
+    setStatusError(null);
+  };
+
   const submitEdit = async (dto: Parameters<typeof updateParticipant>[0]) => {
     setEditError(null);
     setEditSaving(true);
     try {
       await updateParticipant(dto);
-
       if (selectedCourseId !== "all") {
         await reloadParticipants(Number(selectedCourseId));
       }
-
       setEditTarget(null);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -100,6 +111,31 @@ export const ParticipantsList = () => {
     }
   };
 
+  const submitStatus = async (newStatus: ParticipantStatus) => {
+    if (!statusTarget) return;
+    setStatusError(null);
+    setStatusSuccess(null);
+    setStatusSaving(true);
+    try {
+      await changeParticipantStatus(statusTarget.numDossard, newStatus);
+      setParticipants((prev) =>
+        prev.map((item) =>
+          item.numDossard === statusTarget.numDossard
+            ? { ...item, statut: newStatus }
+            : item
+        )
+      );
+      setStatusSuccess(
+        `Statut de ${formatParticipantName(statusTarget.prenom, statusTarget.nom)} mis à jour : ${newStatus}.`
+      );
+      setStatusTarget(null);
+    } catch {
+      setStatusError("Erreur lors du changement de statut. Réessayez.");
+    } finally {
+      setStatusSaving(false);
+    }
+  };
+
   const selectedCourse = useMemo(
     () =>
       selectedCourseId === "all"
@@ -108,6 +144,7 @@ export const ParticipantsList = () => {
     [courses, selectedCourseId]
   );
   const showBikeTypeColumn = isBikeCourse(selectedCourse?.type);
+  const filtersEnabled = selectedCourseId !== "all";
 
   const exportPdf = () => {
     if (selectedCourseId === "all") return;
@@ -116,7 +153,6 @@ export const ParticipantsList = () => {
       courses.find((c) => c.id === selectedCourseId)?.label || "";
 
     const doc = new jsPDF("p", "mm", "a4");
-
     doc.setFontSize(16);
     doc.text(`Liste des participants de ${courseName}`, 14, 20);
 
@@ -124,8 +160,8 @@ export const ParticipantsList = () => {
       startY: 30,
       head: [
         showBikeTypeColumn
-          ? ["Dossard", "Prénom", "Nom", "Genre", "Catégorie", "Type vélo"]
-          : ["Dossard", "Prénom", "Nom", "Genre", "Catégorie"],
+          ? ["Dossard", "Prénom", "Nom", "Genre", "Catégorie", "Type vélo", "Statut"]
+          : ["Dossard", "Prénom", "Nom", "Genre", "Catégorie", "Statut"],
       ],
       body: filtered.map((p) =>
         showBikeTypeColumn
@@ -136,12 +172,11 @@ export const ParticipantsList = () => {
               p.genre,
               p.aliasCategorie,
               p.typeVelo ? BIKE_TYPE_LABELS[p.typeVelo] : "—",
+              p.statut,
             ]
-          : [p.numDossard, p.prenom, p.nom, p.genre, p.aliasCategorie]
+          : [p.numDossard, p.prenom, p.nom, p.genre, p.aliasCategorie, p.statut]
       ),
-      styles: {
-        fontSize: 10,
-      },
+      styles: { fontSize: 10 },
       didParseCell: (data) => {
         const raw = data.row.raw;
         const genre = Array.isArray(raw) ? raw[3] : undefined;
@@ -152,65 +187,6 @@ export const ParticipantsList = () => {
     });
 
     doc.save(`participants-${courseName}.pdf`);
-  };
-
-  const getNextStatus = (current: ParticipantStatus): ParticipantStatus => {
-    switch (current) {
-      case "Inscrit":
-        return "Present";
-      case "Present":
-        return "Inscrit";
-      case "En course":
-        return "DNF";
-      case "DNF":
-        return "En course";
-      case "DNS":
-        return "En course";
-      case "DSQ":
-        return "Present";
-      case "Finisher":
-        return "En course";
-      default:
-        return current;
-    }
-  };
-
-  const togglePresence = async (p: Participant) => {
-    const nextStatus = getNextStatus(p.statut);
-    setStatusError(null);
-
-    try {
-      await changeParticipantStatus(p.numDossard, nextStatus);
-
-      setParticipants((prev) =>
-        prev.map((item) =>
-          item.numDossard === p.numDossard
-            ? { ...item, statut: nextStatus }
-            : item
-        )
-      );
-    } catch {
-      setStatusError("Erreur lors du changement de statut. Réessayez.");
-    }
-  };
-
-  const statusStyle = (statut: ParticipantStatus) => {
-    switch (statut) {
-      case "Present":
-        return "bg-green-100 text-green-700 hover:bg-green-200";
-      case "En course":
-        return "bg-blue-100 text-blue-700 hover:bg-blue-200";
-      case "DNF":
-        return "bg-orange-100 text-orange-700 hover:bg-orange-200";
-      case "DNS":
-        return "bg-red-100 text-red-700 hover:bg-red-200";
-      case "DSQ":
-        return "bg-purple-100 text-purple-700 hover:bg-purple-200";
-      case "Finisher":
-        return "bg-emerald-100 text-emerald-700 hover:bg-emerald-200";
-      default:
-        return "bg-slate-100 text-slate-700 hover:bg-slate-200";
-    }
   };
 
   useEffect(() => {
@@ -241,6 +217,7 @@ export const ParticipantsList = () => {
     if (selectedCourseId === "all") {
       setParticipants([]);
       setSelectedBikeType("all");
+      setSelectedStatus("all");
       return;
     }
 
@@ -269,6 +246,10 @@ export const ParticipantsList = () => {
       base = base.filter((p) => p.genre === selectedGender);
     }
 
+    if (selectedStatus !== "all") {
+      base = base.filter((p) => p.statut === selectedStatus);
+    }
+
     if (selectedCategoryId !== "all") {
       const cat = categories.find((c) => c.id === selectedCategoryId);
       const alias = cat?.alias?.toLowerCase() ?? "";
@@ -288,6 +269,7 @@ export const ParticipantsList = () => {
     participants,
     query,
     selectedGender,
+    selectedStatus,
     selectedCategoryId,
     selectedBikeType,
     showBikeTypeColumn,
@@ -299,19 +281,21 @@ export const ParticipantsList = () => {
       <div className="page-header">
         <div className="min-w-0">
           <h1 className="page-title">Participants</h1>
-          <p className="page-subtitle">
-            Liste des inscrits par course
-          </p>
+          <p className="page-subtitle">Liste des inscrits par course</p>
         </div>
         <div className="page-actions">
           <button
             onClick={exportPdf}
             disabled={filtered.length === 0 || selectedCourseId === "all"}
-            className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
+            className="btn-secondary px-3 py-2 text-sm disabled:opacity-40"
           >
-            Exporter les participants
+            <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
+            Exporter
           </button>
-          <Link to="/participants/import" className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10 text-center">
+          <Link
+            to="/participants/import"
+            className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10 text-center"
+          >
             Importer CSV
           </Link>
           <Link to="/participants/add" className="btn-primary px-4 py-2 text-sm">
@@ -323,9 +307,8 @@ export const ParticipantsList = () => {
       {filtersError && (
         <Alert variant="error" role="alert">{filtersError}</Alert>
       )}
-
-      {statusError && (
-        <Alert variant="error" role="alert">{statusError}</Alert>
+      {statusSuccess && (
+        <Alert variant="success" role="status">{statusSuccess}</Alert>
       )}
 
       <div className="filter-panel">
@@ -339,7 +322,10 @@ export const ParticipantsList = () => {
             type="text"
             placeholder="Nom, prénom ou dossard..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setStatusSuccess(null);
+            }}
             className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-brand/30"
           />
         </div>
@@ -355,11 +341,15 @@ export const ParticipantsList = () => {
                   e.target.value === "all" ? "all" : Number(e.target.value)
                 );
                 setSelectedBikeType("all");
+                setSelectedStatus("all");
+                setStatusSuccess(null);
               }}
             >
               <option value="all">Toutes les courses</option>
               {courses.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
               ))}
             </select>
           </FormField>
@@ -369,12 +359,18 @@ export const ParticipantsList = () => {
               id="filter-category"
               className={selectClassName}
               value={String(selectedCategoryId)}
-              onChange={(e) => setSelectedCategoryId(e.target.value === "all" ? "all" : Number(e.target.value))}
-              disabled={selectedCourseId === "all"}
+              onChange={(e) =>
+                setSelectedCategoryId(
+                  e.target.value === "all" ? "all" : Number(e.target.value)
+                )
+              }
+              disabled={!filtersEnabled}
             >
               <option value="all">Toutes catégories</option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.alias}</option>
+                <option key={c.id} value={c.id}>
+                  {c.alias}
+                </option>
               ))}
             </select>
           </FormField>
@@ -384,12 +380,37 @@ export const ParticipantsList = () => {
               id="filter-gender"
               className={selectClassName}
               value={selectedGender}
-              onChange={(e) => setSelectedGender(e.target.value as "all" | "Homme" | "Femme")}
-              disabled={selectedCourseId === "all"}
+              onChange={(e) =>
+                setSelectedGender(e.target.value as "all" | "Homme" | "Femme")
+              }
+              disabled={!filtersEnabled}
             >
               <option value="all">Tous genres</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
+            </select>
+          </FormField>
+
+          <FormField label="Statut" htmlFor="filter-status">
+            <select
+              id="filter-status"
+              className={selectClassName}
+              value={selectedStatus}
+              onChange={(e) =>
+                setSelectedStatus(
+                  e.target.value === "all"
+                    ? "all"
+                    : (e.target.value as ParticipantStatus)
+                )
+              }
+              disabled={!filtersEnabled}
+            >
+              <option value="all">Tous les statuts</option>
+              {PARTICIPANT_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {PARTICIPANT_STATUS_LABELS[status]}
+                </option>
+              ))}
             </select>
           </FormField>
 
@@ -413,6 +434,12 @@ export const ParticipantsList = () => {
             </FormField>
           )}
         </div>
+
+        {filtersEnabled && !loading && (
+          <p className="text-xs text-slate-500">
+            {filtered.length} participant{filtered.length > 1 ? "s" : ""}
+          </p>
+        )}
       </div>
 
       <div className="bg-white border rounded-2xl overflow-hidden">
@@ -446,13 +473,16 @@ export const ParticipantsList = () => {
                   {showBikeTypeColumn && (
                     <th className="px-4 py-2 text-left">Type vélo</th>
                   )}
-                  <th className="px-4 py-2">Presence</th>
+                  <th className="px-4 py-2 text-left">Statut</th>
                   <th className="px-4 py-2 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filtered.map((p) => (
-                  <tr key={`${p.courseId}-${p.numDossard}`} className="hover:bg-[#8c9962]/5">
+                  <tr
+                    key={`${p.courseId}-${p.numDossard}`}
+                    className="hover:bg-[#8c9962]/5"
+                  >
                     <td className="px-4 py-2 font-medium">{p.numDossard}</td>
                     <td className="px-4 py-2">{p.prenom}</td>
                     <td className="px-4 py-2">{p.nom}</td>
@@ -470,28 +500,40 @@ export const ParticipantsList = () => {
                       </td>
                     )}
                     <td className="px-4 py-2">
-                      <button
-                        onClick={() => togglePresence(p)}
-                        title="Cliquer pour changer le statut"
-                        aria-label={`Statut ${p.statut}, cliquer pour modifier`}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition ${statusStyle(p.statut)}`}
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${statusBadgeClass(p.statut)}`}
                       >
-                        {p.statut}
-                      </button>
+                        {statusLabel(p.statut)}
+                      </span>
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditError(null);
-                          setEditTarget(p);
-                        }}
-                        className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-[#8c9962]/10"
-                        title="Modifier le participant"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Modifier
-                      </button>
+                      <div className="inline-flex flex-wrap justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStatusError(null);
+                            setStatusSuccess(null);
+                            setStatusTarget(p);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-[#8c9962]/10"
+                          title="Changer le statut"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          Statut
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditError(null);
+                            setEditTarget(p);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-[#8c9962]/10"
+                          title="Modifier le participant"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Modifier
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -507,6 +549,14 @@ export const ParticipantsList = () => {
         error={editError}
         onClose={closeEdit}
         onSubmit={submitEdit}
+      />
+
+      <ParticipantStatusModal
+        participant={statusTarget}
+        saving={statusSaving}
+        error={statusError}
+        onClose={closeStatus}
+        onConfirm={submitStatus}
       />
     </section>
   );
