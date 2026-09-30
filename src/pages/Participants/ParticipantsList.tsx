@@ -14,7 +14,7 @@ import { BIKE_TYPE_LABELS, BIKE_TYPES } from "@/lib/type";
 import { formatParticipantName, isBikeCourse } from "@/lib/utils";
 import { ParticipantEditModal } from "./ParticipantEditModal";
 import { ParticipantStatusModal } from "./ParticipantStatusModal";
-import { PARTICIPANT_STATUSES, statusBadgeClass } from "./participantStatus";
+import { PARTICIPANT_STATUSES, PARTICIPANT_STATUS_LABELS, statusBadgeClass, statusLabel } from "./participantStatus";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
 import { FormField, selectClassName } from "@/components/ui/form-field";
 import jsPDF from "jspdf";
@@ -287,9 +287,10 @@ export const ParticipantsList = () => {
           <button
             onClick={exportPdf}
             disabled={filtered.length === 0 || selectedCourseId === "all"}
-            className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10 disabled:opacity-40"
+            className="btn-secondary px-3 py-2 text-sm disabled:opacity-40"
           >
-            Exporter les participants
+            <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
+            Exporter
           </button>
           <Link
             to="/participants/import"
@@ -407,7 +408,7 @@ export const ParticipantsList = () => {
               <option value="all">Tous les statuts</option>
               {PARTICIPANT_STATUSES.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {PARTICIPANT_STATUS_LABELS[status]}
                 </option>
               ))}
             </select>
@@ -502,7 +503,7 @@ export const ParticipantsList = () => {
                       <span
                         className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${statusBadgeClass(p.statut)}`}
                       >
-                        {p.statut}
+                        {statusLabel(p.statut)}
                       </span>
                     </td>
                     <td className="px-4 py-2 text-right">

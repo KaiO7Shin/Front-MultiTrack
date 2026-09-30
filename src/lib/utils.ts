@@ -355,18 +355,16 @@ export function toRow(apiRow: any, ctx: { raceId: number; raceLabel: string }): 
 
   return {
     participantId: apiRow.participantId,
-    rank: apiRow.rank, // ✅ rang officiel
+    rank: apiRow.rank,
     dossard: apiRow.bibNumber,
     nom: fallback.nom,
     prenom: fallback.prenom,
+    genre: apiRow.genre === "Femme" ? "Femme" : apiRow.genre === "Homme" ? "Homme" : undefined,
     categorie: apiRow.categoryName,
     raceTime: apiRow.raceTime,
     status: apiRow.status,
-
-    // 🆕 nouveaux champs
-    categoryRank: apiRow.categoryRank,
-    genderRank: apiRow.genderRank,
-
+    categoryRank: apiRow.categoryRank ?? null,
+    genderRank: apiRow.genderRank ?? null,
     courseId: ctx.raceId,
     course: ctx.raceLabel,
     controlPoints: apiRow.controlPoints ?? [],

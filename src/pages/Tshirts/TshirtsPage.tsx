@@ -11,6 +11,7 @@ import {
   type TshirtMatrixCourse,
   type TshirtMatrixParticipant,
 } from "./tshirtMatrix";
+import { exportTshirtMatrixPdf } from "./tshirtPdf";
 
 export function TshirtsPage() {
   const [courses, setCourses] = useState<TshirtMatrixCourse[]>([]);
@@ -83,6 +84,17 @@ export function TshirtsPage() {
           <p className="page-subtitle">
             Quantités nécessaires par taille et par course
           </p>
+        </div>
+        <div className="page-actions">
+          <button
+            type="button"
+            onClick={() => exportTshirtMatrixPdf(visible)}
+            disabled={loading || visible.courses.length === 0}
+            className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"
+          >
+            <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
+            Exporter
+          </button>
         </div>
       </div>
 
@@ -160,57 +172,61 @@ export function TshirtsPage() {
             description="Ajoutez des courses pour afficher le tableau des T-shirts."
           />
         ) : (
-          <div className="table-scroll table-scroll-wide">
-            <table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm table-fixed">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-2 text-left sticky left-0 z-10 bg-slate-50">
-                    Taille
+                  <th className="px-2 py-2 text-left w-[28%] sticky left-0 z-10 bg-slate-50">
+                    Course
                   </th>
-                  {visible.courses.map((course) => (
+                  {visible.sizes.map((size) => (
                     <th
-                      key={course.id}
-                      className="px-4 py-2 text-right whitespace-nowrap"
-                      title={course.name}
+                      key={size}
+                      className="px-1 py-2 text-center w-[9%] tabular-nums"
                     >
-                      {course.name}
+                      {size}
                     </th>
                   ))}
-                  <th className="px-4 py-2 text-right font-semibold">Total</th>
+                  <th className="px-1 py-2 text-center font-semibold w-[10%]">
+                    Total
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {visible.sizes.map((size) => (
-                  <tr key={size} className="hover:bg-[#8c9962]/5">
-                    <td className="px-4 py-2 font-medium sticky left-0 z-10 bg-white">
-                      {size}
+                {visible.courses.map((course) => (
+                  <tr key={course.id} className="hover:bg-[#8c9962]/5">
+                    <td
+                      className="px-2 py-2 font-medium sticky left-0 z-10 bg-white truncate"
+                      title={course.name}
+                    >
+                      {course.name}
                     </td>
-                    {visible.courses.map((course) => (
+                    {visible.sizes.map((size) => (
                       <td
-                        key={course.id}
-                        className="px-4 py-2 text-right tabular-nums"
+                        key={size}
+                        className="px-1 py-2 text-center tabular-nums text-sm"
                       >
                         {visible.counts[size]?.[course.id] ?? 0}
                       </td>
                     ))}
-                    <td className="px-4 py-2 text-right font-semibold tabular-nums">
-                      {visible.rowTotals[size] ?? 0}
+                    <td className="px-1 py-2 text-center font-semibold tabular-nums">
+                      {visible.columnTotals[course.id] ?? 0}
                     </td>
                   </tr>
                 ))}
                 <tr className="bg-slate-50 font-semibold">
-                  <td className="px-4 py-2 sticky left-0 z-10 bg-slate-50">
+                  <td className="px-2 py-2 sticky left-0 z-10 bg-slate-50">
                     Total
                   </td>
-                  {visible.courses.map((course) => (
+                  {visible.sizes.map((size) => (
                     <td
-                      key={course.id}
-                      className="px-4 py-2 text-right tabular-nums"
+                      key={size}
+                      className="px-1 py-2 text-center tabular-nums"
                     >
-                      {visible.columnTotals[course.id] ?? 0}
+                      {visible.rowTotals[size] ?? 0}
                     </td>
                   ))}
-                  <td className="px-4 py-2 text-right tabular-nums">
+                  <td className="px-1 py-2 text-center tabular-nums">
                     {visible.grandTotal}
                   </td>
                 </tr>

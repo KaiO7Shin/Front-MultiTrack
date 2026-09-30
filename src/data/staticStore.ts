@@ -181,6 +181,7 @@ const participants: ParticipantProjection[] = [
     nomCourse: COURSE_INITIATION,
     statut: "En course",
     dateNaissance: "1996-11-03",
+    tailleTShirt: "M",
   }),
   participant({
     id: 12,
@@ -194,6 +195,7 @@ const participants: ParticipantProjection[] = [
     nomCourse: COURSE_INITIATION,
     statut: "Finisher",
     dateNaissance: "1984-02-20",
+    tailleTShirt: "L",
   }),
   participant({
     id: 13,
@@ -207,6 +209,7 @@ const participants: ParticipantProjection[] = [
     nomCourse: COURSE_INITIATION,
     statut: "Present",
     dateNaissance: "1992-04-12",
+    tailleTShirt: "XL",
   }),
   participant({
     id: 14,
@@ -220,6 +223,7 @@ const participants: ParticipantProjection[] = [
     nomCourse: COURSE_INITIATION,
     statut: "Inscrit",
     dateNaissance: "2018-06-15",
+    tailleTShirt: "XS",
   }),
   participant({
     id: 71,
@@ -233,6 +237,7 @@ const participants: ParticipantProjection[] = [
     nomCourse: COURSE_SUPREME_VTT,
     statut: "Finisher",
     dateNaissance: "1990-09-14",
+    tailleTShirt: "L",
   }),
   participant({
     id: 72,
@@ -246,6 +251,7 @@ const participants: ParticipantProjection[] = [
     nomCourse: COURSE_SUPREME_VTT,
     statut: "Finisher",
     dateNaissance: "1982-04-04",
+    tailleTShirt: "S",
   }),
 ];
 
@@ -609,6 +615,15 @@ export const staticStore = {
     return clone(participants.filter((p) => p.courseId === raceId));
   },
 
+  listAllParticipants(): ParticipantProjection[] {
+    return clone(participants);
+  },
+
+  getParticipantById(id: number): ParticipantProjection | null {
+    const found = participants.find((p) => p.id === id);
+    return found ? clone(found) : null;
+  },
+
   createParticipant(
     dto: ParticipantCreateDTO
   ): RenderResponse<ParticipantResponse> {
@@ -616,6 +631,8 @@ export const staticStore = {
     if (course.type === "DH" || course.type === "ENDURO") {
       if (!dto.typeVelo) fail("Le type de vélo est requis pour une course DH ou Enduro.");
     }
+    const taille = dto.tailleTShirt?.trim().toUpperCase();
+    if (!taille) fail("La taille de t-shirt est requise.");
     const category = categoryFor(dto.genre, dto.dateNaissance);
     const created = participant({
       id: nextId(),
@@ -629,6 +646,7 @@ export const staticStore = {
       nomCourse: course.name,
       statut: "Inscrit",
       dateNaissance: dto.dateNaissance,
+      tailleTShirt: taille,
       typeVelo: course.type === "DH" || course.type === "ENDURO" ? dto.typeVelo : undefined,
     });
     participants.push(created);
@@ -1042,6 +1060,7 @@ export const staticStore = {
           athleteName: `${p.prenom} ${p.nom}`.trim(),
           nom: p.nom,
           prenom: p.prenom,
+          genre: p.genre,
           categoryName: p.aliasCategorie,
           raceTime: raceMs != null && raceMs >= 0 ? formatMs(raceMs) : null,
           raceMs,
@@ -1063,9 +1082,19 @@ export const staticStore = {
       return a.raceMs - b.raceMs;
     });
 
+    const genderCounters: Record<string, number> = {};
+    const categoryCounters: Record<string, number> = {};
+
     let rank = 0;
     return ranked.map((row) => {
       const place = row.raceMs == null ? null : (rank += 1);
+      let genderRank: number | null = null;
+      let categoryRank: number | null = null;
+      if (row.raceMs != null) {
+        genderRank = (genderCounters[row.genre] = (genderCounters[row.genre] ?? 0) + 1);
+        categoryRank = (categoryCounters[row.categoryName] =
+          (categoryCounters[row.categoryName] ?? 0) + 1);
+      }
       return {
         rank: place,
         participantId: row.participantId,
@@ -1073,10 +1102,13 @@ export const staticStore = {
         athleteName: row.athleteName,
         nom: row.nom,
         prenom: row.prenom,
+        genre: row.genre,
         categoryName: row.categoryName,
         raceTime: row.raceTime,
         status: row.status,
         controlPoints: row.controlPoints,
+        categoryRank,
+        genderRank,
       };
     });
   },

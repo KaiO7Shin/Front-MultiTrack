@@ -10,6 +10,22 @@ export const PARTICIPANT_STATUSES: readonly ParticipantStatus[] = [
   "DSQ",
 ] as const;
 
+/** Libellés UI (Présent avec accent) — valeurs API inchangées. */
+export const PARTICIPANT_STATUS_LABELS: Record<ParticipantStatus, string> = {
+  Inscrit: "Inscrit",
+  Present: "Présent",
+  "En course": "En course",
+  Finisher: "Finisher",
+  DNS: "DNS",
+  DNF: "DNF",
+  DSQ: "DSQ",
+};
+
+export function statusLabel(statut: ParticipantStatus | string | null | undefined) {
+  if (!statut) return "—";
+  return PARTICIPANT_STATUS_LABELS[statut as ParticipantStatus] ?? statut;
+}
+
 export function statusBadgeClass(statut: ParticipantStatus) {
   switch (statut) {
     case "Present":

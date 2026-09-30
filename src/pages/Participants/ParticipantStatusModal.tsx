@@ -4,7 +4,7 @@ import { Alert } from "@/components/ui/feedback";
 import { FormField, selectClassName } from "@/components/ui/form-field";
 import type { ParticipantStatus } from "@/lib/type";
 import { formatParticipantName } from "@/lib/utils";
-import { PARTICIPANT_STATUSES, statusBadgeClass } from "./participantStatus";
+import { PARTICIPANT_STATUSES, PARTICIPANT_STATUS_LABELS, statusBadgeClass, statusLabel } from "./participantStatus";
 
 export type ParticipantStatusTarget = {
   numDossard: string;
@@ -77,7 +77,7 @@ export function ParticipantStatusModal({
             <span
               className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass(participant.statut)}`}
             >
-              {participant.statut}
+              {statusLabel(participant.statut)}
             </span>
           </p>
         </div>
@@ -102,15 +102,15 @@ export function ParticipantStatusModal({
               </option>
               {available.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {PARTICIPANT_STATUS_LABELS[status]}
                 </option>
               ))}
             </select>
           </FormField>
         ) : (
           <Alert variant="warning" role="status">
-            Confirmer le passage de <strong>{participant.statut}</strong> vers{" "}
-            <strong>{selected}</strong> pour le dossard {participant.numDossard} ?
+            Confirmer le passage de <strong>{statusLabel(participant.statut)}</strong> vers{" "}
+            <strong>{statusLabel(selected)}</strong> pour le dossard {participant.numDossard} ?
           </Alert>
         )}
 

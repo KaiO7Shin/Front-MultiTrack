@@ -19,6 +19,14 @@ export async function fetchParticipantsByCourse(raceId: number) {
   return staticStore.listParticipants(raceId);
 }
 
+export async function fetchAllParticipants() {
+  return staticStore.listAllParticipants();
+}
+
+export async function fetchParticipantById(id: number) {
+  return staticStore.getParticipantById(id);
+}
+
 export async function createParticipant(dto: ParticipantCreateDTO) {
   // const { data } = await api.post<RenderResponse<ParticipantResponse>>(API.participant, dto);
   // return data;
