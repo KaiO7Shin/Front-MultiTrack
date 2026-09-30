@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent } from "react";
+import { ConfirmModal } from "../../components/ConfirmModal";
 import { Check, Field, WizardActions } from "../../components/form";
 import { DownloadIcon } from "../../components/icons";
 import { PhoneField } from "../../components/PhoneField";
@@ -16,6 +17,10 @@ import { useCourses } from "../../hooks/useCourses";
 import type { MissingFileNames } from "../../hooks/useRegistrationDraft";
 import { REGISTRATION_FILE_KEYS, type RegistrationFileKey } from "../../lib/registrationDraftStorage";
 import { findRace, isDuoRace } from "../../services/catalogService";
+
+function isParentEnfantCourse(libelle: string) {
+  return /enfant/i.test(libelle);
+}
 
 export function RunnerStep({
   draft,
@@ -41,6 +46,7 @@ export function RunnerStep({
   // Un fichier refusé bloque l’étape tant qu’il n’a pas été remplacé.
   // Le champ autorisation parentale disparaît pour un majeur : son erreur ne doit plus bloquer.
   const [fileErrors, setFileErrors] = useState<Partial<Record<RegistrationFileKey, string>>>({});
+  const [enfantInfoOpen, setEnfantInfoOpen] = useState(false);
   const blockingFileError = REGISTRATION_FILE_KEYS
     .filter((key) => key !== "parentalFile" || minor)
     .map((key) => fileErrors[key])
@@ -49,6 +55,10 @@ export function RunnerStep({
 
   function update<K extends keyof RunnerDraft>(key: K, value: RunnerDraft[K]) {
     onChange({ ...draft, [key]: value });
+  }
+
+  function closeEnfantInfo() {
+    setEnfantInfoOpen(false);
   }
 
   function applyFile(
@@ -147,11 +157,15 @@ export function RunnerStep({
                   onChange={(event) => {
                     const courseId = Number(event.target.value);
                     const course = courses.find((item) => item.id === courseId);
+                    const libelle = course?.libelle ?? "";
                     onChange({
                       ...draft,
                       courseId,
-                      race: course?.libelle ?? "",
+                      race: libelle,
                     });
+                    if (libelle && isParentEnfantCourse(libelle)) {
+                      setEnfantInfoOpen(true);
+                    }
                   }}
                   required
                   disabled={busy || loading}
@@ -277,6 +291,23 @@ export function RunnerStep({
           onNext={onNext}
         />
       </form>
+      <ConfirmModal
+        open={enfantInfoOpen}
+        title="Course Parent-Enfant"
+        message="Pour cette course, saisissez uniquement les informations de l’enfant."
+        confirmLabel="Compris"
+        showCancel={false}
+        icon={
+          <img
+            src="/bouton-dinformation.svg"
+            alt=""
+            width={28}
+            height={28}
+          />
+        }
+        onCancel={closeEnfantInfo}
+        onConfirm={closeEnfantInfo}
+      />
     </section>
   );
 }
