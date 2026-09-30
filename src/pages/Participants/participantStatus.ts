@@ -1,8 +1,11 @@
 import type { ParticipantStatus } from "@/lib/type";
 
 export const PARTICIPANT_STATUSES: readonly ParticipantStatus[] = [
+  "Attente validation",
+  "Validée",
+  "Refusée",
   "Inscrit",
-  "Present",
+  "Présent",
   "En course",
   "Finisher",
   "DNS",
@@ -10,16 +13,22 @@ export const PARTICIPANT_STATUSES: readonly ParticipantStatus[] = [
   "DSQ",
 ] as const;
 
-/** Libellés UI (Présent avec accent) — valeurs API inchangées. */
+/** Libellés UI — valeurs API inchangées. */
 export const PARTICIPANT_STATUS_LABELS: Record<ParticipantStatus, string> = {
+  "Attente validation": "Attente validation",
+  Validée: "Validée",
+  Refusée: "Refusée",
   Inscrit: "Inscrit",
   Present: "Présent",
+  Présent: "Présent",
   "En course": "En course",
   Finisher: "Finisher",
   DNS: "DNS",
   DNF: "DNF",
   DSQ: "DSQ",
 };
+
+export const INSCRIPTION_PENDING_STATUS: ParticipantStatus = "Attente validation";
 
 export function statusLabel(statut: ParticipantStatus | string | null | undefined) {
   if (!statut) return "—";
@@ -28,7 +37,14 @@ export function statusLabel(statut: ParticipantStatus | string | null | undefine
 
 export function statusBadgeClass(statut: ParticipantStatus) {
   switch (statut) {
+    case "Attente validation":
+      return "bg-amber-100 text-amber-800 border-amber-200";
+    case "Validée":
+      return "bg-green-100 text-green-700 border-green-200";
+    case "Refusée":
+      return "bg-red-100 text-red-700 border-red-200";
     case "Present":
+    case "Présent":
       return "bg-green-100 text-green-700 border-green-200";
     case "En course":
       return "bg-blue-100 text-blue-700 border-blue-200";

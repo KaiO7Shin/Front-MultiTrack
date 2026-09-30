@@ -11,12 +11,16 @@ import { CourseDetails } from "./pages/Courses/CourseDetails";
 import { ImportParticipants } from "./pages/Participants/ImportParticipants";
 import { AddParticipant } from "./pages/Participants/AddParticipant";
 import { ParticipantPage } from "./pages/Participants/ParticipantPage";
+import { ParticipantsPage } from "./pages/Participants/ParticipantsPage";
+import { ParticipantDetailPage } from "./pages/Participants/ParticipantDetailPage";
 import { TshirtsPage } from "./pages/Tshirts/TshirtsPage";
 import { CheckpointScan } from "./pages/Checkpoint/CheckpointScan";
 import { CheckpointHistory } from "./pages/Checkpoint/CheckpointHistory";
 import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
 import { LoginPage } from "./pages/Auth/LoginPage";
 import { PointeursList } from "./pages/Pointeurs/PointeursList";
+import { StatutsPage } from "./pages/Statuts/StatutsPage";
+import { EligibilitesPage } from "./pages/Eligibilites/EligibilitesPage";
 
 import {
   AuthProvider,
@@ -26,11 +30,7 @@ import {
   ROLE_ORGANIZER,
   RoleHomeRedirect,
 } from "./lib/auth";
-import {
-  OrganizerHomePage,
-  ParticipantsIndex,
-} from "./pages/Organizer/OrganizerHomePage";
-import { ParticipantDetailPage } from "./pages/Organizer/ParticipantDetailPage";
+import { OrganizerHomePage } from "./pages/Organizer/OrganizerHomePage";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -49,9 +49,25 @@ const router = createBrowserRouter([
 
       { path: "courses", element: <CoursesList /> },
       { path: "categories", element: <CategoriesList /> },
+      {
+        path: "statuts",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <StatutsPage />
+          </RequireRole>
+        ),
+      },
+      {
+        path: "eligibilites",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <EligibilitesPage />
+          </RequireRole>
+        ),
+      },
       { path: "courses/:id", element: <CourseDetails /> },
 
-      { path: "participants", element: <ParticipantsIndex /> },
+      { path: "participants", element: <ParticipantsPage /> },
       { path: "participants/import", element: <ImportParticipants /> },
       { path: "participants/add", element: <AddParticipant /> },
       { path: "participants/identity", element: <ParticipantPage /> },

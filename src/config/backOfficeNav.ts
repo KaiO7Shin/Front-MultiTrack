@@ -1,33 +1,80 @@
 import { ROLE_ADMIN, ROLE_CHECKPOINT, ROLE_ORGANIZER } from "@/lib/auth";
 
+export type BackOfficeNavLink = {
+  kind: "link";
+  to: string;
+  label: string;
+  end?: boolean;
+};
+
+export type BackOfficeNavGroup = {
+  kind: "group";
+  id: string;
+  label: string;
+  children: BackOfficeNavLink[];
+};
+
+export type BackOfficeNavEntry = BackOfficeNavLink | BackOfficeNavGroup;
+
+/** @deprecated Prefer BackOfficeNavLink — kept for gradual migration */
 export type BackOfficeNavItem = {
   to: string;
   label: string;
   end?: boolean;
 };
 
-const ADMIN_NAV: BackOfficeNavItem[] = [
-  { to: "/dashboard", label: "Dashboard", end: true },
-  { to: "/courses", label: "Courses", end: true },
-  { to: "/categories", label: "Catégories", end: true },
-  { to: "/participants", label: "Participants" },
-  { to: "/participants/identity", label: "Informations participant", end: true },
-  { to: "/tshirts", label: "T-shirts", end: true },
-  { to: "/checkpoint/scan", label: "Checkpoint", end: true },
-  { to: "/pointeurs", label: "Pointeurs", end: true },
-  { to: "/leaderboard", label: "Résultats", end: true },
+const ADMIN_NAV: BackOfficeNavEntry[] = [
+  { kind: "link", to: "/dashboard", label: "Tableau de bord", end: true },
+  { kind: "link", to: "/participants", label: "Participants" },
+  {
+    kind: "group",
+    id: "referentiels",
+    label: "Référentiels",
+    children: [
+      { kind: "link", to: "/categories", label: "Catégories", end: true },
+      { kind: "link", to: "/statuts", label: "Statuts", end: true },
+    ],
+  },
+  {
+    kind: "group",
+    id: "courses",
+    label: "Courses",
+    children: [
+      { kind: "link", to: "/courses", label: "Courses" },
+      { kind: "link", to: "/eligibilites", label: "Éligibilités", end: true },
+    ],
+  },
+  { kind: "link", to: "/leaderboard", label: "Résultats", end: true },
 ];
 
-const ORGANIZER_NAV: BackOfficeNavItem[] = [
-  { to: "/participants", label: "Gestion participant" },
-  { to: "/tshirts", label: "T-shirts", end: true },
-  { to: "/leaderboard", label: "Résultats", end: true },
+const ORGANIZER_NAV: BackOfficeNavEntry[] = [
+  { kind: "link", to: "/participants", label: "Gestion participant" },
+  { kind: "link", to: "/tshirts", label: "T-shirts", end: true },
+  { kind: "link", to: "/leaderboard", label: "Résultats", end: true },
 ];
 
-export function navItemsForRole(role: number | undefined): BackOfficeNavItem[] {
+export function navItemsForRole(role: number | undefined): BackOfficeNavEntry[] {
   if (role === ROLE_ADMIN) return ADMIN_NAV;
   if (role === ROLE_ORGANIZER) return ORGANIZER_NAV;
   return [];
+}
+
+/** Groupe dont un enfant correspond au chemin courant (pour ouvrir l’accordion). */
+export function groupIdForPath(
+  path: string,
+  entries: BackOfficeNavEntry[]
+): string | null {
+  for (const entry of entries) {
+    if (entry.kind !== "group") continue;
+
+    const match = entry.children.some((child) => {
+      if (path === child.to) return true;
+      if (path.startsWith(`${child.to}/`)) return true;
+      return false;
+    });
+    if (match) return entry.id;
+  }
+  return null;
 }
 
 export function isPathAllowedForRole(path: string, role: number | undefined): boolean {
@@ -42,7 +89,6 @@ export function isPathAllowedForRole(path: string, role: number | undefined): bo
     ]);
     if (allowedExact.has(path)) return true;
     if (path.startsWith("/participants/")) {
-      // Orga : suivi / détail / ajout embarqué — pas import CSV ni identity admin
       if (path === "/participants/import" || path === "/participants/identity") {
         return false;
       }

@@ -49,7 +49,9 @@ function countParticipants(participants: ParticipantProjection[]) {
   return {
     total: participants.length,
     inscrits: participants.filter((p) => p.statut === "Inscrit").length,
-    presents: participants.filter((p) => p.statut === "Present").length,
+    presents: participants.filter(
+      (p) => p.statut === "Present" || p.statut === "Présent"
+    ).length,
     enCourse: participants.filter((p) => p.statut === "En course").length,
     dnf: participants.filter((p) => p.statut === "DNF").length,
     dns: participants.filter((p) => p.statut === "DNS").length,
@@ -97,7 +99,9 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
         type: course.type,
         status: course.status,
         participantCount: plist.length,
-        presentCount: plist.filter((p) => p.statut === "Present").length,
+        presentCount: plist.filter(
+          (p) => p.statut === "Present" || p.statut === "Présent"
+        ).length,
         enCourseCount: plist.filter((p) => p.statut === "En course").length,
         arriveeCount: 0,
         departCount: 0,

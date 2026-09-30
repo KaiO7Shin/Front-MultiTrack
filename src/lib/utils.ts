@@ -218,9 +218,13 @@ export function normalizeParticipantStatus(raw: unknown): ParticipantStatus {
   const s = String(raw ?? "Inscrit").trim();
   if (s === "Finisher" || s === "Finished") return "Finisher";
   if (s.toUpperCase() === "DSQ") return "DSQ";
+  if (s === "Present" || s === "Présent") return "Présent";
   const allowed: ParticipantStatus[] = [
+    "Attente validation",
+    "Validée",
+    "Refusée",
     "Inscrit",
-    "Present",
+    "Présent",
     "En course",
     "Finisher",
     "DNS",
@@ -235,7 +239,7 @@ export function normalizeParticipantStatus(raw: unknown): ParticipantStatus {
 export function normalizeParticipantProjection(
   raw: Record<string, unknown>,
   courseIdFallback?: number
-): ParticipantProjection & { typeVelo?: BikeType } {
+): ParticipantProjection {
   const identity = normalizeParticipantIdentity({
     nom: raw.nom as string | undefined,
     prenom: raw.prenom as string | undefined,
@@ -249,7 +253,6 @@ export function normalizeParticipantProjection(
     raw.courseId ?? raw.courseChoisieId ?? raw.raceId ?? courseIdFallback ?? 0
   );
 
-  const typeVelo = normalizeBikeType(raw.typeVelo ?? raw.type_velo);
   const tailleTShirt = normalizeTshirtSize(
     raw.tailleTShirt ?? raw.tShirtSize ?? raw.tshirtSize
   );
@@ -259,7 +262,7 @@ export function normalizeParticipantProjection(
     nom: fallbackName.nom,
     prenom: fallbackName.prenom,
     numDossard: String(raw.numDossard ?? raw.bibNumber ?? ""),
-    genre: raw.genre === "Femme" ? "Femme" : "Homme",
+    genre: String(raw.genre ?? "").trim(),
     aliasCategorie: String(
       raw.aliasCategorie ?? raw.categorie ?? raw.categoryName ?? ""
     ).trim(),
@@ -272,8 +275,12 @@ export function normalizeParticipantProjection(
       raw.dateNaissance ?? raw.date_naissance ?? raw.birthDate ?? ""
     ),
     nomCourse: String(raw.nomCourse ?? raw.courseLibelle ?? raw.courseName ?? ""),
-    typeVelo,
     ...(tailleTShirt ? { tailleTShirt } : {}),
+    ...(raw.email ? { email: String(raw.email) } : {}),
+    ...(raw.contact ? { contact: String(raw.contact) } : {}),
+    ...(raw.commentaireInscription
+      ? { commentaireInscription: String(raw.commentaireInscription) }
+      : {}),
   };
 }
 
@@ -283,8 +290,12 @@ export function normalizeCourseFull(raw: any): Course {
 
   return {
     id,
-    name: String(raw?.name ?? raw?.label ?? raw?.title ?? `Course #${id}`),
-    type: normalizeCourseType(raw?.type ?? raw?.raceType ?? raw?.courseType),
+    name: String(
+      raw?.name ?? raw?.label ?? raw?.libelle ?? raw?.title ?? `Course #${id}`
+    ),
+    type: normalizeCourseType(
+      raw?.type ?? raw?.raceType ?? raw?.courseType ?? raw?.typeCourse
+    ),
     distanceKm: numOrUndef(raw?.distanceKm ?? raw?.distance_km ?? raw?.distance),
     elevation: numOrUndef(raw?.elevation ?? raw?.elevation_gain ?? raw?.ascent),
     startAt: raw?.startAt ?? raw?.start_at ?? raw?.start_time ?? raw?.start_date_time,

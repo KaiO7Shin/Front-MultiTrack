@@ -115,12 +115,10 @@ export type ParticipantCreateDTO = {
   nom: string;
   prenom: string;
   dateNaissance: string;     // yyyy-MM-dd
-  genre: "Homme" | "Femme";
+  genre: string;
   courseChoisieId: number;
   /** Alias taille T-shirt (XS…XXL) */
   tailleTShirt?: string;
-  /** Requis pour les courses DH uniquement */
-  typeVelo?: BikeType;
 };
 
 export type ParticipantResponse = {
@@ -130,7 +128,6 @@ export type ParticipantResponse = {
   genre: string;
   categorie: string;
   statut: string;
-  typeVelo?: string;
 };
 
 export type TypeVelo = {
@@ -183,8 +180,12 @@ export type RenderResponse<T> = {
 };
 
 export type ParticipantStatus =
+  | "Attente validation"
+  | "Validée"
+  | "Refusée"
   | "Inscrit"
   | "Present"
+  | "Présent"
   | "En course"
   | "Finisher"
   | "DNS"
@@ -196,17 +197,23 @@ export type ParticipantProjection = {
   nom: string;
   prenom: string;
   numDossard: string;
-  genre: "Homme" | "Femme";
+  genre: string;
   aliasCategorie: string;
   courseId: number;
   courseLibelle: string;
   statut: ParticipantStatus;
   dateNaissance: string; // yyyy-MM-dd
   nomCourse?: string;
-  typeVelo?: BikeType;
   /** Alias taille T-shirt (XS…XXL), optionnel si non renseigné */
   tailleTShirt?: string;
+  /** Commentaire de validation / refus d’inscription */
+  commentaireInscription?: string;
+  /** Compte ayant créé l’inscription */
+  email?: string;
+  contact?: string;
 };
+
+export type InscriptionReviewDecision = "Validée" | "Refusée";
 
 export type ParticipantUpdateDTO = {
   /** Dossard actuel (identifiant pour l'API) */
@@ -215,11 +222,10 @@ export type ParticipantUpdateDTO = {
   nom: string;
   prenom: string;
   dateNaissance: string;
-  genre: CategoryGenre;
+  genre: string;
   courseChoisieId: number;
   statut: ParticipantStatus;
-  /** Requis pour les courses DH uniquement */
-  typeVelo?: BikeType;
+  tailleTShirt?: string;
 };
 
 export interface ParticipantUpdateInfoResponse {

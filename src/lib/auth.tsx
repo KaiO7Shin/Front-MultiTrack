@@ -2,7 +2,15 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { Navigate, useLocation } from "react-router-dom";
 import { PageLoading } from "@/components/ui/feedback";
 import { demoCheckpointSession } from "@/data/staticStore";
-import type { AssignedManche } from "@/lib/type";
+import api from "@/lib/api";
+import { API } from "@/lib/apiEndpoints";
+import {
+  clearSessionStorage,
+  decodeJwtPayload,
+  loadValidSession,
+  persistSession,
+} from "@/lib/session";
+import type { AssignedManche, RenderResponse } from "@/lib/type";
 
 /** Utilisateur de session tel que renvoyé par l'API login */
 export type SessionUser = {
@@ -24,20 +32,35 @@ export const ROLE_ADMIN = 0;
 export const ROLE_CHECKPOINT = 1;
 export const ROLE_ORGANIZER = 2;
 
-export const STATIC_TOKEN_PREFIX = "static-";
+type LoginPayload = {
+  token: string;
+  user: { id: number; role: number };
+};
 
-/**
- * Comptes staff de démo (front uniquement).
- * À remplacer par POST /api/login/user quand le back sera branché.
- */
-export const STATIC_STAFF = [
-  { passcode: "ADMIN", id: 1, role: ROLE_ADMIN, name: "Administrateur" },
-  { passcode: "ORGA", id: 2, role: ROLE_ORGANIZER, name: "Organisateur" },
-  { passcode: "CHECKPOINT", id: 3, role: ROLE_CHECKPOINT, name: "Pointeur" },
-] as const;
+function roleLabel(role: number) {
+  if (role === ROLE_CHECKPOINT) return "Pointeur";
+  if (role === ROLE_ORGANIZER) return "Organisateur";
+  if (role === ROLE_ADMIN) return "Administrateur";
+  return "Utilisateur";
+}
 
-export function isStaticToken(token: string | null | undefined) {
-  return Boolean(token?.startsWith(STATIC_TOKEN_PREFIX));
+/** Mappe le claim JWT (ADMIN / ORGANIZER / …) ou un code numérique. */
+export function mapJwtRoleToCode(role: string | number | undefined): number | null {
+  if (role == null) return null;
+  if (typeof role === "number" && Number.isFinite(role)) return role;
+  const normalized = String(role).trim().toUpperCase().replace(/^ROLE_/, "");
+  if (normalized === "ADMIN" || normalized === "0") return ROLE_ADMIN;
+  if (
+    normalized === "CHECKPOINT" ||
+    normalized === "POINTEUR" ||
+    normalized === "1"
+  ) {
+    return ROLE_CHECKPOINT;
+  }
+  if (normalized === "ORGANIZER" || normalized === "ORGANISATEUR" || normalized === "2") {
+    return ROLE_ORGANIZER;
+  }
+  return null;
 }
 
 export function homePathForRole(role: number | undefined) {
@@ -56,54 +79,101 @@ type AuthContextType = {
 
 const AuthCtx = createContext<AuthContextType | null>(null);
 
+function buildSessionUser(
+  id: number,
+  role: number,
+  extras?: Partial<SessionUser>
+): SessionUser {
+  const label = roleLabel(role);
+  const checkpoint =
+    role === ROLE_CHECKPOINT ? demoCheckpointSession() : null;
+  return {
+    id,
+    role,
+    name: extras?.name ?? label,
+    libelle: extras?.libelle ?? checkpoint?.libelle ?? label,
+    assignedControlPoint:
+      extras?.assignedControlPoint ?? checkpoint?.assignedControlPoint,
+    assignedManches: extras?.assignedManches ?? checkpoint?.assignedManches ?? [],
+    point_de_controle_course_id: extras?.point_de_controle_course_id,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const t = localStorage.getItem("token");
-      const u = localStorage.getItem("user");
-      if (t && u) {
-        setToken(t);
-        setUser(JSON.parse(u) as SessionUser);
-      }
-    } catch {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    } finally {
-      setLoading(false);
+    const restored = loadValidSession<SessionUser>(mapJwtRoleToCode, (raw, jwt) =>
+      buildSessionUser(Number(raw.id), Number(raw.role), {
+        ...raw,
+        name: raw.name ?? jwt.name ?? undefined,
+      })
+    );
+    if (restored) {
+      setToken(restored.token);
+      setUser(restored.user);
+    } else {
+      setToken(null);
+      setUser(null);
     }
+    setLoading(false);
   }, []);
+
+  // Expire la session côté client quand le JWT arrive à échéance.
+  useEffect(() => {
+    if (!token) return;
+    const payload = decodeJwtPayload(token);
+    if (!payload?.exp) return;
+
+    const ms = payload.exp * 1000 - Date.now();
+    if (ms <= 0) {
+      setUser(null);
+      setToken(null);
+      clearSessionStorage();
+      if (window.location.pathname !== "/login") {
+        window.location.assign("/login");
+      }
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setUser(null);
+      setToken(null);
+      clearSessionStorage();
+      if (window.location.pathname !== "/login") {
+        window.location.assign("/login");
+      }
+    }, ms);
+    return () => window.clearTimeout(timer);
+  }, [token]);
 
   async function signIn(passcode: string) {
     setLoading(true);
     try {
-      const match = STATIC_STAFF.find(
-        (staff) => staff.passcode === passcode.trim()
-      );
-      if (!match) {
-        throw new Error("Passcode invalide");
+      const { data } = await api.post<RenderResponse<LoginPayload>>(API.login, {
+        passcode: passcode.trim(),
+      });
+      if (!data?.data?.token || data.data.user == null) {
+        throw new Error(data?.message || "Authentification échouée");
       }
 
-      const checkpoint =
-        match.role === ROLE_CHECKPOINT ? demoCheckpointSession() : null;
-      const user: SessionUser = {
-        id: match.id,
-        role: match.role,
-        name: match.name,
-        libelle: checkpoint?.libelle ?? match.name,
-        assignedControlPoint: checkpoint?.assignedControlPoint,
-        assignedManches: checkpoint?.assignedManches ?? [],
-      };
-      const token = `${STATIC_TOKEN_PREFIX}${match.role}-${match.id}`;
+      const sessionToken = data.data.token;
+      const apiRole = Number(data.data.user.role);
+      const jwt = decodeJwtPayload(sessionToken);
+      const jwtRole = mapJwtRoleToCode(jwt?.role);
+      // Le claim JWT fait foi s’il est présent (évite un mauvais code numérique en base).
+      const role = jwtRole ?? apiRole;
+      if (![ROLE_ADMIN, ROLE_CHECKPOINT, ROLE_ORGANIZER].includes(role)) {
+        throw new Error("Rôle utilisateur non reconnu");
+      }
 
-      setToken(token);
-      setUser(user);
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      return user;
+      const sessionUser = buildSessionUser(Number(data.data.user.id), role);
+
+      setToken(sessionToken);
+      setUser(sessionUser);
+      persistSession(sessionToken, JSON.stringify(sessionUser));
+      return sessionUser;
     } finally {
       setLoading(false);
     }
@@ -112,8 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   function signOut() {
     setUser(null);
     setToken(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearSessionStorage();
   }
 
   const value = useMemo(
@@ -152,7 +221,9 @@ export function RequireRole({
   const allowed = Array.isArray(role)
     ? role.includes(userRole ?? -1)
     : userRole === role;
-  if (!allowed) return <div className="p-6 text-sm text-red-600">Accès refusé.</div>;
+  if (!allowed) {
+    return <Navigate to={homePathForRole(userRole)} replace />;
+  }
   return children;
 }
 

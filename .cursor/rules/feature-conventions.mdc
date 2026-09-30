@@ -1,8 +1,7 @@
 ---
 description: Conventions permanentes pour toute nouvelle fonctionnalité MultiTrack (charte, formulaires, erreurs RenderResponse)
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Fonctionnalités — front-end
 
 Le projet front-end est un monorepo avec 2 applications :

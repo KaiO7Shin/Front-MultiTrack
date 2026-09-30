@@ -18,8 +18,13 @@ export const API = {
   typesVelo: "/types-velo",
   typesCourse: "/types-course",
 
+  genres: "/genres",
+  taillesTShirt: "/tailles-t-shirt",
+  statuts: "/statuts",
+
   participants: "/participants",
   participant: "/participant",
+  participantById: (id: number) => `/participants/${id}`,
   participantByBib: (bibNumber: string) => `/participant/${bibNumber}`,
   participantChangeStatus: "/participant/change/status",
   participantDisqualify: "/participant/disqualify",
