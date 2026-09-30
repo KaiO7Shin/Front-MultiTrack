@@ -79,12 +79,16 @@ export function ParticipantDetailPage() {
   if (error || !participant) {
     return (
       <section className="page-section">
+        <Link
+          to="/participants"
+          className="inline-flex items-center mb-3 hover:opacity-80"
+          aria-label="Retour"
+        >
+          <img src="/bouton-retour.svg" alt="" className="h-8 w-8" aria-hidden />
+        </Link>
         <Alert variant="error" role="alert">
           {error ?? "Participant introuvable."}
         </Alert>
-        <Link to="/participants" className="text-sm text-brand hover:underline">
-          Retour
-        </Link>
       </section>
     );
   }
@@ -104,14 +108,18 @@ export function ParticipantDetailPage() {
           </p>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
+          <Link
+            to="/participants"
+            className="inline-flex items-center hover:opacity-80"
+            aria-label="Retour"
+          >
+            <img src="/bouton-retour.svg" alt="" className="h-8 w-8" aria-hidden />
+          </Link>
           <span
             className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${statusBadgeClass(participant.statut)}`}
           >
             {statusLabel(participant.statut)}
           </span>
-          <Link to="/participants" className="text-sm text-brand hover:underline">
-            Retour
-          </Link>
         </div>
       </div>
 
