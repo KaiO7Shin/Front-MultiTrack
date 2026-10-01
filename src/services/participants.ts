@@ -4,6 +4,7 @@ import { normalizeParticipantProjection } from "@/lib/utils";
 import type {
   InscriptionReviewDecision,
   ParticipantCreateDTO,
+  ParticipantListSource,
   ParticipantProjection,
   ParticipantUpdateDTO,
   ParticipantResponse,
@@ -11,21 +12,45 @@ import type {
 } from "@/lib/type";
 import { staticStore } from "@/data/staticStore";
 
-export async function fetchParticipantsByCourse(raceId: number) {
+export type ParticipantSearchParams = {
+  source?: ParticipantListSource;
+  courseId?: number;
+  categorieId?: number;
+  genre?: string;
+  statut?: string;
+  /** @deprecated Prefer courseId */
+  raceId?: number;
+};
+
+function cleanParams(params?: ParticipantSearchParams) {
+  if (!params) return { source: "PARTICIPANT" as const };
+  const out: Record<string, string | number> = {
+    source: params.source ?? "PARTICIPANT",
+  };
+  const courseId = params.courseId ?? params.raceId;
+  if (courseId != null) out.courseId = courseId;
+  if (params.categorieId != null) out.categorieId = params.categorieId;
+  if (params.genre) out.genre = params.genre;
+  if (params.statut) out.statut = params.statut;
+  return out;
+}
+
+export async function searchParticipants(
+  params?: ParticipantSearchParams
+): Promise<ParticipantProjection[]> {
   const { data } = await api.get<RenderResponse<Record<string, unknown>[]>>(
     API.participants,
-    { params: { raceId } }
+    { params: cleanParams(params) }
   );
-  return (data.data ?? []).map((row) =>
-    normalizeParticipantProjection(row, raceId)
-  );
+  return (data.data ?? []).map((row) => normalizeParticipantProjection(row));
+}
+
+export async function fetchParticipantsByCourse(raceId: number) {
+  return searchParticipants({ source: "PARTICIPANT", courseId: raceId });
 }
 
 export async function fetchAllParticipants() {
-  const { data } = await api.get<RenderResponse<Record<string, unknown>[]>>(
-    API.participants
-  );
-  return (data.data ?? []).map((row) => normalizeParticipantProjection(row));
+  return searchParticipants({ source: "PARTICIPANT" });
 }
 
 export async function fetchParticipantById(id: number) {

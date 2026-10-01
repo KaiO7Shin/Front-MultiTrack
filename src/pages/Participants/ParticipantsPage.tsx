@@ -1,29 +1,31 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import {
-  deleteParticipant,
-  fetchAllParticipants,
-} from "@/services/participants";
+import { deleteParticipant } from "@/services/participants";
 import { fetchCategories, fetchCoursesDetailed } from "@/services/courses";
 import { fetchGenres, type GenreOption } from "@/services/genres";
 import { fetchStatuts, type StatutOption } from "@/services/statuts";
-import type {
-  CourseType,
-  ParticipantProjection,
-} from "@/lib/type";
-import { formatParticipantName } from "@/lib/utils";
+import type { ParticipantProjection } from "@/lib/type";
 import { ROLE_ADMIN, useAuth } from "@/lib/auth";
 import { ParticipantCreateForm } from "./ParticipantCreateForm";
+import { ParticipantDeleteModal } from "./ParticipantDeleteModal";
+import { ParticipantListFilters } from "./ParticipantListFilters";
 import { ParticipantsTable } from "./ParticipantsTable";
+import {
+  DEFAULT_STATUT_BY_SOURCE,
+  defaultListSourceForRole,
+  statutScopeParam,
+  type ParticipantListSource,
+} from "./participantListSource";
 import { statusLabel } from "./participantStatus";
+import {
+  filterParticipantsByQuery,
+  useParticipantListSearch,
+} from "./useParticipantListSearch";
 import { Alert } from "@/components/ui/feedback";
-import { FormField, selectClassName } from "@/components/ui/form-field";
-import { Modal } from "@/components/ui/modal";
 
-type UICourse = { id: number; label: string; type: CourseType };
+type UICourse = { id: number; label: string };
 type UICategory = { id: number; alias: string };
 
 function scrollToParticipantForm() {
@@ -46,112 +48,90 @@ export function ParticipantsPage() {
   const isAdmin = user?.role === ROLE_ADMIN;
   const feedbackRef = useRef<HTMLDivElement>(null);
 
-  const [participants, setParticipants] = useState<ParticipantProjection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState<string | null>(null);
-
+  const [source, setSource] = useState<ParticipantListSource>(() =>
+    defaultListSourceForRole(user?.role)
+  );
   const [query, setQuery] = useState("");
+  const [selectedCourseId, setSelectedCourseId] = useState<number | "all">("all");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
+  const [selectedGender, setSelectedGender] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState(() =>
+    DEFAULT_STATUT_BY_SOURCE[defaultListSourceForRole(user?.role)]
+  );
+
   const [courses, setCourses] = useState<UICourse[]>([]);
   const [categories, setCategories] = useState<UICategory[]>([]);
   const [genres, setGenres] = useState<GenreOption[]>([]);
   const [statuts, setStatuts] = useState<StatutOption[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState<number | "all">("all");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
-  const [selectedGender, setSelectedGender] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+
+  const { rows, loading, error: listError, setError: setListError, reload } =
+    useParticipantListSearch({
+      source,
+      courseId: selectedCourseId,
+      categoryId: selectedCategoryId,
+      gender: selectedGender,
+      status: selectedStatus,
+    });
+
+  const filteredRows = useMemo(
+    () => filterParticipantsByQuery(rows, query),
+    [rows, query]
+  );
 
   const [editingParticipant, setEditingParticipant] =
     useState<ParticipantProjection | null>(null);
-
   const [deleteTarget, setDeleteTarget] = useState<ParticipantProjection | null>(null);
   const [deleteSaving, setDeleteSaving] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  const loadParticipants = useCallback(async () => {
-    setLoading(true);
-    setListError(null);
-    try {
-      setParticipants(await fetchAllParticipants());
-    } catch {
-      setParticipants([]);
-      setListError("Impossible de charger les participants.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadParticipants();
-  }, [loadParticipants]);
-
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const [courseList, catList, genreList, statutList] = await Promise.all([
+        const [courseList, catList, genreList] = await Promise.all([
           fetchCoursesDetailed(),
           fetchCategories(),
           fetchGenres(),
-          fetchStatuts(),
         ]);
         if (!mounted) return;
-        setCourses(courseList.map((c) => ({ id: c.id, label: c.name, type: c.type })));
+        setCourses(courseList.map((c) => ({ id: c.id, label: c.name })));
         setCategories(catList);
         setGenres(genreList);
-        setStatuts(statutList);
       } catch {
-        if (mounted) {
-          setListError("Impossible de charger les listes de filtres.");
-        }
+        if (mounted) setListError("Impossible de charger les listes de filtres.");
       }
     })();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [setListError]);
 
-  const filtered = useMemo(() => {
-    let base = participants;
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      base = base.filter(
-        (p) =>
-          p.nom.toLowerCase().includes(q) ||
-          p.prenom.toLowerCase().includes(q) ||
-          formatParticipantName(p.prenom, p.nom).toLowerCase().includes(q) ||
-          p.numDossard.includes(q) ||
-          String(p.id).includes(q)
-      );
-    }
-    if (selectedCourseId !== "all") {
-      base = base.filter((p) => p.courseId === selectedCourseId);
-    }
-    if (selectedGender !== "all") {
-      base = base.filter((p) => p.genre === selectedGender);
-    }
-    if (selectedStatus !== "all") {
-      base = base.filter((p) => p.statut === selectedStatus);
-    }
-    if (selectedCategoryId !== "all") {
-      const alias =
-        categories.find((c) => c.id === selectedCategoryId)?.alias?.toLowerCase() ?? "";
-      if (alias) {
-        base = base.filter((p) =>
-          (p.aliasCategorie || "").toLowerCase().includes(alias)
-        );
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const statutList = await fetchStatuts(statutScopeParam(source));
+        if (!mounted) return;
+        setStatuts(statutList);
+        const defaultStatut = DEFAULT_STATUT_BY_SOURCE[source];
+        const stillValid = statutList.some((s) => s.libelle === selectedStatus);
+        if (!stillValid) {
+          setSelectedStatus(
+            statutList.find((s) => s.libelle === defaultStatut)?.libelle ??
+              statutList[0]?.libelle ??
+              defaultStatut
+          );
+        }
+      } catch {
+        if (mounted) setListError("Impossible de charger les statuts.");
       }
-    }
-    return base;
-  }, [
-    participants,
-    query,
-    selectedCourseId,
-    selectedGender,
-    selectedStatus,
-    selectedCategoryId,
-    categories,
-  ]);
+    })();
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- options liées à la source uniquement
+  }, [source, setListError]);
 
   const showFeedback = (message: string) => {
     setActionSuccess(message);
@@ -162,7 +142,12 @@ export function ParticipantsPage() {
 
   const handleFormSuccess = async (message: string, participantId?: number) => {
     setEditingParticipant(null);
-    await loadParticipants();
+    if (source !== "PARTICIPANT") {
+      setSource("PARTICIPANT");
+      setSelectedStatus(DEFAULT_STATUT_BY_SOURCE.PARTICIPANT);
+    } else {
+      await reload();
+    }
     showFeedback(message);
     if (participantId != null) {
       setTimeout(() => scrollToParticipantRow(participantId), 80);
@@ -175,7 +160,7 @@ export function ParticipantsPage() {
     setDeleteError(null);
     try {
       const res = await deleteParticipant(deleteTarget.id);
-      await loadParticipants();
+      await reload();
       setDeleteTarget(null);
       showFeedback(res.message || "Participant supprimé.");
     } catch (err: unknown) {
@@ -191,15 +176,18 @@ export function ParticipantsPage() {
   };
 
   const exportPdf = () => {
-    if (filtered.length === 0) return;
+    if (filteredRows.length === 0) return;
     const doc = new jsPDF("p", "mm", "a4");
+    const title =
+      source === "INSCRIPTION" ? "Liste des inscriptions" : "Liste des participants";
     doc.setFontSize(16);
-    doc.text("Liste des participants", 14, 20);
+    doc.text(title, 14, 20);
     autoTable(doc, {
       startY: 28,
-      head: [["Id", "Nom", "Prénom", "Genre", "Course", "Statut"]],
-      body: filtered.map((p) => [
+      head: [["Id", "Dossard", "Nom", "Prénom", "Genre", "Course", "Statut"]],
+      body: filteredRows.map((p) => [
         String(p.id),
+        source === "INSCRIPTION" ? "—" : p.numDossard || "—",
         p.nom,
         p.prenom,
         p.genre,
@@ -208,7 +196,7 @@ export function ParticipantsPage() {
       ]),
       styles: { fontSize: 9 },
     });
-    doc.save("participants.pdf");
+    doc.save(source === "INSCRIPTION" ? "inscriptions.pdf" : "participants.pdf");
   };
 
   return (
@@ -226,7 +214,7 @@ export function ParticipantsPage() {
           <button
             type="button"
             onClick={exportPdf}
-            disabled={filtered.length === 0}
+            disabled={filteredRows.length === 0}
             className="btn-secondary px-3 py-2 text-sm disabled:opacity-40"
           >
             <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
@@ -273,110 +261,42 @@ export function ParticipantsPage() {
 
       <hr className="border-border" />
 
-      <div className="filter-panel">
-        <div className="relative w-full">
-          <label htmlFor="participant-search" className="sr-only">
-            Rechercher un participant
-          </label>
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            id="participant-search"
-            type="text"
-            placeholder="Nom, prénom, dossard ou id…"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setActionSuccess(null);
-            }}
-            className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-brand/30"
-          />
-        </div>
-
-        <div className="filter-fields">
-          <FormField label="Course" htmlFor="filter-course">
-            <select
-              id="filter-course"
-              className={selectClassName}
-              value={String(selectedCourseId)}
-              onChange={(e) => {
-                setSelectedCourseId(
-                  e.target.value === "all" ? "all" : Number(e.target.value)
-                );
-                setActionSuccess(null);
-              }}
-            >
-              <option value="all">Toutes les courses</option>
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField label="Catégorie" htmlFor="filter-category">
-            <select
-              id="filter-category"
-              className={selectClassName}
-              value={String(selectedCategoryId)}
-              onChange={(e) =>
-                setSelectedCategoryId(
-                  e.target.value === "all" ? "all" : Number(e.target.value)
-                )
-              }
-            >
-              <option value="all">Toutes catégories</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.alias}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField label="Genre" htmlFor="filter-gender">
-            <select
-              id="filter-gender"
-              className={selectClassName}
-              value={selectedGender}
-              onChange={(e) => setSelectedGender(e.target.value)}
-            >
-              <option value="all">Tous genres</option>
-              {genres.map((g) => (
-                <option key={g.id} value={g.libelle}>
-                  {g.libelle}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField label="Statut" htmlFor="filter-status">
-            <select
-              id="filter-status"
-              className={selectClassName}
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-            >
-              <option value="all">Tous les statuts</option>
-              {statuts.map((s) => (
-                <option key={s.id} value={s.libelle}>
-                  {s.libelle}
-                </option>
-              ))}
-            </select>
-          </FormField>
-        </div>
-
-        {!loading && (
-          <p className="text-xs text-slate-500">
-            {filtered.length} participant{filtered.length > 1 ? "s" : ""}
-          </p>
-        )}
-      </div>
+      <ParticipantListFilters
+        query={query}
+        source={source}
+        selectedCourseId={selectedCourseId}
+        selectedCategoryId={selectedCategoryId}
+        selectedGender={selectedGender}
+        selectedStatus={selectedStatus}
+        courses={courses}
+        categories={categories}
+        genres={genres}
+        statuts={statuts}
+        showCount={!loading}
+        resultCount={filteredRows.length}
+        onQueryChange={(value) => {
+          setQuery(value);
+          setActionSuccess(null);
+        }}
+        onSourceChange={(value) => {
+          setSource(value);
+          setSelectedCategoryId("all");
+          setSelectedStatus(DEFAULT_STATUT_BY_SOURCE[value]);
+          setActionSuccess(null);
+        }}
+        onCourseChange={(value) => {
+          setSelectedCourseId(value);
+          setActionSuccess(null);
+        }}
+        onCategoryChange={setSelectedCategoryId}
+        onGenderChange={setSelectedGender}
+        onStatusChange={setSelectedStatus}
+      />
 
       <ParticipantsTable
         loading={loading}
-        rows={filtered}
+        rows={filteredRows}
+        sourceMode={source}
         onEdit={(row) => {
           setActionSuccess(null);
           setEditingParticipant(row);
@@ -389,59 +309,16 @@ export function ParticipantsPage() {
         }}
       />
 
-      <Modal
-        open={deleteTarget !== null}
-        title="Supprimer le participant"
+      <ParticipantDeleteModal
+        target={deleteTarget}
+        saving={deleteSaving}
+        error={deleteError}
         onClose={() => {
-          if (deleteSaving) return;
           setDeleteTarget(null);
           setDeleteError(null);
         }}
-        disabled={deleteSaving}
-        size="sm"
-      >
-        <div className="space-y-4 p-4 sm:p-5">
-          {deleteError && (
-            <Alert variant="error" role="alert">
-              {deleteError}
-            </Alert>
-          )}
-          <p className="text-sm text-foreground">
-            Souhaitez-vous vraiment supprimer{" "}
-            <span className="font-medium">
-              {deleteTarget
-                ? formatParticipantName(deleteTarget.prenom, deleteTarget.nom)
-                : ""}
-            </span>{" "}
-            ?
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Cette action est définitive.
-          </p>
-          <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                if (deleteSaving) return;
-                setDeleteTarget(null);
-                setDeleteError(null);
-              }}
-              disabled={deleteSaving}
-              className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"
-            >
-              Annuler
-            </button>
-            <button
-              type="button"
-              onClick={() => void confirmDelete()}
-              disabled={deleteSaving}
-              className="rounded-xl border border-[#a72a1f]/35 bg-[#fff0ee] px-4 py-2 text-sm font-medium text-[#a72a1f] hover:bg-[#fde8e4] disabled:opacity-40"
-            >
-              {deleteSaving ? "Suppression…" : "Supprimer"}
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={() => void confirmDelete()}
+      />
     </section>
   );
 }

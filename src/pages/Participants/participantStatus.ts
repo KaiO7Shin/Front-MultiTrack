@@ -1,6 +1,7 @@
 import type { ParticipantStatus } from "@/lib/type";
 
 export const PARTICIPANT_STATUSES: readonly ParticipantStatus[] = [
+  "Envoyée",
   "Attente validation",
   "Validée",
   "Refusée",
@@ -15,6 +16,7 @@ export const PARTICIPANT_STATUSES: readonly ParticipantStatus[] = [
 
 /** Libellés UI — valeurs API inchangées. */
 export const PARTICIPANT_STATUS_LABELS: Record<ParticipantStatus, string> = {
+  Envoyée: "Envoyée",
   "Attente validation": "Attente validation",
   Validée: "Validée",
   Refusée: "Refusée",

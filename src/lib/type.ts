@@ -180,6 +180,7 @@ export type RenderResponse<T> = {
 };
 
 export type ParticipantStatus =
+  | "Envoyée"
   | "Attente validation"
   | "Validée"
   | "Refusée"
@@ -191,6 +192,8 @@ export type ParticipantStatus =
   | "DNS"
   | "DNF"
   | "DSQ";
+
+export type ParticipantListSource = "INSCRIPTION" | "PARTICIPANT";
 
 export type ParticipantProjection = {
   id: number;
@@ -211,6 +214,8 @@ export type ParticipantProjection = {
   /** Compte ayant créé l’inscription */
   email?: string;
   contact?: string;
+  /** Provenance de la ligne (liste multi-critère). */
+  source?: ParticipantListSource;
 };
 
 export type InscriptionReviewDecision = "Validée" | "Refusée";

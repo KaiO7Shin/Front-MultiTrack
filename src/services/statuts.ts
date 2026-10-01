@@ -5,8 +5,10 @@ import type { RenderResponse } from "@/lib/type";
 
 export type StatutOption = { id: number; libelle: string };
 
-export async function fetchStatuts(): Promise<StatutOption[]> {
-  const res = await api.get<RenderResponse<Record<string, unknown>[]>>(API.statuts);
+export async function fetchStatuts(scope?: "inscription" | "participant"): Promise<StatutOption[]> {
+  const res = await api.get<RenderResponse<Record<string, unknown>[]>>(API.statuts, {
+    params: scope ? { scope } : undefined,
+  });
   return coerceArray(res?.data?.data ?? res?.data)
     .map((row) => ({
       id: Number(row.id ?? 0),

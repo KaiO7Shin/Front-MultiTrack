@@ -220,6 +220,7 @@ export function normalizeParticipantStatus(raw: unknown): ParticipantStatus {
   if (s.toUpperCase() === "DSQ") return "DSQ";
   if (s === "Present" || s === "Présent") return "Présent";
   const allowed: ParticipantStatus[] = [
+    "Envoyée",
     "Attente validation",
     "Validée",
     "Refusée",
@@ -257,11 +258,17 @@ export function normalizeParticipantProjection(
     raw.tailleTShirt ?? raw.tShirtSize ?? raw.tshirtSize
   );
 
+  const sourceRaw = String(raw.source ?? "").trim().toUpperCase();
+  const source =
+    sourceRaw === "INSCRIPTION" || sourceRaw === "PARTICIPANT"
+      ? (sourceRaw as ParticipantProjection["source"])
+      : undefined;
+
   return {
     id: Number(raw.id ?? raw.participantId ?? 0),
     nom: fallbackName.nom,
     prenom: fallbackName.prenom,
-    numDossard: String(raw.numDossard ?? raw.bibNumber ?? ""),
+    numDossard: String(raw.numDossard ?? raw.bibNumber ?? "").trim(),
     genre: String(raw.genre ?? "").trim(),
     aliasCategorie: String(
       raw.aliasCategorie ?? raw.categorie ?? raw.categoryName ?? ""
@@ -281,6 +288,7 @@ export function normalizeParticipantProjection(
     ...(raw.commentaireInscription
       ? { commentaireInscription: String(raw.commentaireInscription) }
       : {}),
+    ...(source ? { source } : {}),
   };
 }
 
