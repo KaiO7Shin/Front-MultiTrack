@@ -381,11 +381,13 @@ function ageAt(birthDate: string): number {
   return age;
 }
 
-function categoryFor(genre: CategoryGenre, birthDate: string): Category {
+function categoryFor(genre: string, birthDate: string): Category {
+  const normalized: CategoryGenre =
+    genre.trim() === "Femme" ? "Femme" : "Homme";
   const age = ageAt(birthDate);
   const match = categories.find(
     (c) =>
-      c.genre === genre &&
+      c.genre === normalized &&
       age >= c.ageMin &&
       (c.ageMax == null || age <= c.ageMax)
   );
