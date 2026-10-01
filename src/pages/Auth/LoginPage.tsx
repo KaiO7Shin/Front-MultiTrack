@@ -145,7 +145,7 @@ export const LoginPage = () => {
         </button>
 
         <div className="text-xs text-center text-muted-foreground space-y-1">
-          <p>Comptes de démo (front) : <code>ADMIN</code>, <code>ORGA</code>, <code>CHECKPOINT</code></p>
+          <p>Connectez-vous avec le passcode fourni par l’organisation.</p>
         </div>
       </form>
     </div>

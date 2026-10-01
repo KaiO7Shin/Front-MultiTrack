@@ -7,8 +7,15 @@ import { defineConfig } from "vite"
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    host: true,       // autorise toutes les IP
-    port: 5173,       // optionnel
+    host: true,
+    port: 5173,
+    proxy: {
+      // Évite le CORS en local : le navigateur parle à :5173, Vite relaie vers l’API.
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
   },
   resolve: {
     alias: {

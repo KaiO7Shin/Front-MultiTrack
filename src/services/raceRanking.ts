@@ -144,7 +144,7 @@ function buildEnduroPhaseRanking(
       nom: participant.nom,
       categorie: participant.aliasCategorie,
       genre: participant.genre,
-      typeVelo: participant.typeVelo,
+      typeVelo: undefined,
       totalTimeMs,
       totalTimeFormatted: formatMs(totalTimeMs),
       elapsedTimeMs,

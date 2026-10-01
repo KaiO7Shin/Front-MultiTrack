@@ -18,8 +18,13 @@ export const API = {
   typesVelo: "/types-velo",
   typesCourse: "/types-course",
 
+  genres: "/genres",
+  taillesTShirt: "/tailles-t-shirt",
+  statuts: "/statuts",
+
   participants: "/participants",
   participant: "/participant",
+  participantById: (id: number) => `/participants/${id}`,
   participantByBib: (bibNumber: string) => `/participant/${bibNumber}`,
   participantChangeStatus: "/participant/change/status",
   participantDisqualify: "/participant/disqualify",
@@ -27,6 +32,16 @@ export const API = {
     `/participant/disqualify/${participantId}`,
   importParticipants: "/import/participants",
 
+  inscriptions: "/inscriptions",
+  inscriptionById: (id: number) => `/inscriptions/${id}`,
+  inscriptionReview: (id: number) => `/inscriptions/${id}/review`,
+  inscriptionStatutLogs: (id: number) => `/inscriptions/${id}/statut-logs`,
+  inscriptionDocument: (
+    id: number,
+    type: "identite" | "certificat" | "autorisation"
+  ) => `/inscriptions/${id}/documents/${type}`,
+
+  participantStatutLogs: (id: number) => `/participants/${id}/statut-logs`,
   phases: "/phases",
   phase: "/phase",
   phaseById: (id: number) => `/phase/${id}`,

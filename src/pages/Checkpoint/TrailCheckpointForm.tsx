@@ -4,6 +4,7 @@ import { Alert, Spinner } from "@/components/ui/feedback";
 import { FormField } from "@/components/ui/form-field";
 import type { ControlPointConfig } from "@/lib/type";
 import { ROLE_CHECKPOINT } from "@/lib/auth";
+import { readStoredUserJson } from "@/lib/session";
 
 type SessionUser = {
   id: number;
@@ -19,7 +20,7 @@ type SessionUser = {
 
 function readStoredUser(): SessionUser | null {
   try {
-    const raw = localStorage.getItem("user");
+    const raw = readStoredUserJson();
     return raw ? (JSON.parse(raw) as SessionUser) : null;
   } catch {
     return null;

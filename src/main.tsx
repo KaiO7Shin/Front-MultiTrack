@@ -2,6 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/barlow-condensed/500.css";
+import "@fontsource/barlow-condensed/600.css";
+import "@fontsource/barlow-condensed/700.css";
 import "./index.css";
 
 import { DashboardPage } from "./pages/Dashboard/DashboardPage";
@@ -11,12 +18,17 @@ import { CourseDetails } from "./pages/Courses/CourseDetails";
 import { ImportParticipants } from "./pages/Participants/ImportParticipants";
 import { AddParticipant } from "./pages/Participants/AddParticipant";
 import { ParticipantPage } from "./pages/Participants/ParticipantPage";
+import { ParticipantsPage } from "./pages/Participants/ParticipantsPage";
+import { ParticipantDetailPage } from "./pages/Participants/ParticipantDetailPage";
+import { InscriptionDetailPage } from "./pages/Participants/InscriptionDetailPage";
 import { TshirtsPage } from "./pages/Tshirts/TshirtsPage";
 import { CheckpointScan } from "./pages/Checkpoint/CheckpointScan";
 import { CheckpointHistory } from "./pages/Checkpoint/CheckpointHistory";
 import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
 import { LoginPage } from "./pages/Auth/LoginPage";
 import { PointeursList } from "./pages/Pointeurs/PointeursList";
+import { StatutsPage } from "./pages/Statuts/StatutsPage";
+import { EligibilitesPage } from "./pages/Eligibilites/EligibilitesPage";
 
 import {
   AuthProvider,
@@ -26,11 +38,7 @@ import {
   ROLE_ORGANIZER,
   RoleHomeRedirect,
 } from "./lib/auth";
-import {
-  OrganizerHomePage,
-  ParticipantsIndex,
-} from "./pages/Organizer/OrganizerHomePage";
-import { ParticipantDetailPage } from "./pages/Organizer/ParticipantDetailPage";
+import { OrganizerHomePage } from "./pages/Organizer/OrganizerHomePage";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -49,13 +57,30 @@ const router = createBrowserRouter([
 
       { path: "courses", element: <CoursesList /> },
       { path: "categories", element: <CategoriesList /> },
+      {
+        path: "statuts",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <StatutsPage />
+          </RequireRole>
+        ),
+      },
+      {
+        path: "eligibilites",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <EligibilitesPage />
+          </RequireRole>
+        ),
+      },
       { path: "courses/:id", element: <CourseDetails /> },
 
-      { path: "participants", element: <ParticipantsIndex /> },
+      { path: "participants", element: <ParticipantsPage /> },
       { path: "participants/import", element: <ImportParticipants /> },
       { path: "participants/add", element: <AddParticipant /> },
       { path: "participants/identity", element: <ParticipantPage /> },
       { path: "participants/:id", element: <ParticipantDetailPage /> },
+      { path: "inscriptions/:id", element: <InscriptionDetailPage /> },
       { path: "tshirts", element: <TshirtsPage /> },
 
       { path: "checkpoint/scan", element: <CheckpointScan /> },
