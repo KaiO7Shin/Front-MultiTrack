@@ -24,10 +24,12 @@ export interface CategoryListItem {
 }
 
 export interface EligibleCategoryItem {
+  categorie_id?: number;
   libelle_categorie: string;
 }
 
 export interface CourseEligibleCategories {
+  course_id?: number;
   libelle_course: string;
   nom_course: string;
   categories_eligibles: EligibleCategoryItem[];

@@ -4,8 +4,8 @@
 import { staticStore } from "@/data/staticStore";
 import type {
   ControlPointConfig,
-  ControlPointCreateDTO,
-  ControlPointUpdateDTO,
+  // ControlPointCreateDTO, // mutations désactivées pour cette version
+  // ControlPointUpdateDTO,
 } from "@/lib/type";
 
 export async function fetchControlPointsByCourse(
@@ -16,24 +16,25 @@ export async function fetchControlPointsByCourse(
   return staticStore.listControlPoints(courseId);
 }
 
-export async function createControlPoint(
-  dto: ControlPointCreateDTO
-): Promise<ControlPointConfig> {
-  // const { data } = await api.post(API.controlPoint, dto);
-  // return normalizeControlPoint(data.data ?? {});
-  return staticStore.createControlPoint(dto);
-}
-
-export async function updateControlPoint(
-  id: number,
-  dto: ControlPointUpdateDTO
-): Promise<ControlPointConfig> {
-  // const { data } = await api.put(API.controlPointById(id), dto);
-  // return normalizeControlPoint(data.data ?? {});
-  return staticStore.updateControlPoint(id, dto);
-}
-
-export async function deleteControlPoint(id: number): Promise<void> {
-  // await api.delete(API.controlPointById(id));
-  staticStore.deleteControlPoint(id);
-}
+// Création / édition / suppression PC désactivées pour cette version TBB
+// export async function createControlPoint(
+//   dto: ControlPointCreateDTO
+// ): Promise<ControlPointConfig> {
+//   // const { data } = await api.post(API.controlPoint, dto);
+//   // return normalizeControlPoint(data.data ?? {});
+//   return staticStore.createControlPoint(dto);
+// }
+//
+// export async function updateControlPoint(
+//   id: number,
+//   dto: ControlPointUpdateDTO
+// ): Promise<ControlPointConfig> {
+//   // const { data } = await api.put(API.controlPointById(id), dto);
+//   // return normalizeControlPoint(data.data ?? {});
+//   return staticStore.updateControlPoint(id, dto);
+// }
+//
+// export async function deleteControlPoint(id: number): Promise<void> {
+//   // await api.delete(API.controlPointById(id));
+//   staticStore.deleteControlPoint(id);
+// }

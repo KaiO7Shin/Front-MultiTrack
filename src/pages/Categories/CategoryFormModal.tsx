@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { Alert } from "@/components/ui/feedback";
 import type { Category, CategoryCreateDTO, CategoryGenre } from "@/lib/type";
 
 type CategoryFormModalProps = {
@@ -12,12 +13,18 @@ type CategoryFormModalProps = {
   onSubmit: (dto: CategoryCreateDTO) => void;
 };
 
-const emptyForm: CategoryCreateDTO = {
+const emptyForm = {
   alias: "",
-  genre: "Homme",
   ageMin: 18,
-  ageMax: null,
+  ageMax: 39 as number | null,
 };
+
+function genreFromAlias(alias: string): CategoryGenre | null {
+  const last = alias.trim().toUpperCase().slice(-1);
+  if (last === "H") return "Homme";
+  if (last === "F") return "Femme";
+  return null;
+}
 
 export function CategoryFormModal({
   open,
@@ -28,7 +35,7 @@ export function CategoryFormModal({
   onClose,
   onSubmit,
 }: CategoryFormModalProps) {
-  const [form, setForm] = useState<CategoryCreateDTO>(emptyForm);
+  const [form, setForm] = useState(emptyForm);
   const [noMaxAge, setNoMaxAge] = useState(false);
 
   useEffect(() => {
@@ -36,7 +43,6 @@ export function CategoryFormModal({
     if (mode === "edit" && initial) {
       setForm({
         alias: initial.alias,
-        genre: initial.genre,
         ageMin: initial.ageMin,
         ageMax: initial.ageMax,
       });
@@ -51,9 +57,11 @@ export function CategoryFormModal({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const alias = form.alias.trim().toUpperCase();
+    const genre = genreFromAlias(alias);
     onSubmit({
-      alias: form.alias.trim().toUpperCase(),
-      genre: form.genre,
+      alias,
+      genre: genre ?? "Homme",
       ageMin: form.ageMin,
       ageMax: noMaxAge ? null : form.ageMax,
     });
@@ -93,6 +101,12 @@ export function CategoryFormModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
+          {error && (
+            <Alert variant="error" role="alert">
+              {error}
+            </Alert>
+          )}
+
           <div className="space-y-1">
             <label htmlFor="cat-alias" className="text-xs font-medium text-slate-600">
               Alias *
@@ -100,7 +114,7 @@ export function CategoryFormModal({
             <input
               id="cat-alias"
               required
-              maxLength={30}
+              maxLength={5}
               className="w-full rounded-lg border px-3 py-2 text-sm uppercase"
               placeholder="Ex. SNH, M1F"
               value={form.alias}
@@ -108,26 +122,9 @@ export function CategoryFormModal({
               disabled={saving}
             />
             <p className="text-[10px] text-slate-400">
-              Doit se terminer par H (Homme) ou F (Femme).
+              5 caractères max. Doit se terminer par H (Homme) ou F (Femme) — le genre
+              est déduit automatiquement.
             </p>
-          </div>
-
-          <div className="space-y-1">
-            <label htmlFor="cat-genre" className="text-xs font-medium text-slate-600">
-              Genre *
-            </label>
-            <select
-              id="cat-genre"
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-              value={form.genre}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, genre: e.target.value as CategoryGenre }))
-              }
-              disabled={saving}
-            >
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
-            </select>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -138,7 +135,7 @@ export function CategoryFormModal({
               <input
                 id="cat-age-min"
                 type="number"
-                min={0}
+                min={1}
                 required
                 className="w-full rounded-lg border px-3 py-2 text-sm"
                 value={form.ageMin}
@@ -155,7 +152,7 @@ export function CategoryFormModal({
               <input
                 id="cat-age-max"
                 type="number"
-                min={form.ageMin}
+                min={1}
                 className="w-full rounded-lg border px-3 py-2 text-sm disabled:bg-slate-50"
                 value={form.ageMax ?? ""}
                 onChange={(e) =>
@@ -183,10 +180,6 @@ export function CategoryFormModal({
             />
             Pas de limite supérieure (ex. 50 ans et +)
           </label>
-
-          {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
-          )}
 
           <div className="flex justify-end gap-2 border-t pt-4">
             <button

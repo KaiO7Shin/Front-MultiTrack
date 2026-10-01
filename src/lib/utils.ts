@@ -46,6 +46,7 @@ export function normalizeCategory(raw: any): Category {
   return {
     id: Number(raw?.id ?? 0),
     alias,
+    libelle: raw?.libelle ? String(raw.libelle) : undefined,
     genre:
       genreFromApi === "Femme" || genreFromApi === "Homme"
         ? genreFromApi
@@ -154,6 +155,7 @@ export function normalizeCourseType(raw: unknown): CourseType {
   const upper = String(raw ?? "TRAIL").trim().toUpperCase();
   if (
     upper === "TRAIL" ||
+    upper === "VTT" ||
     upper === "DH" ||
     upper === "XC" ||
     upper === "ENDURO"
@@ -163,9 +165,9 @@ export function normalizeCourseType(raw: unknown): CourseType {
   return "TRAIL";
 }
 
-/** Courses VTT nécessitant un type de vélo à l'inscription (DH, Enduro). */
+/** Courses VTT nécessitant un type de vélo à l'inscription (VTT, DH, Enduro). */
 export function isBikeCourse(type: CourseType | undefined): boolean {
-  return type === "DH" || type === "ENDURO";
+  return type === "VTT" || type === "DH" || type === "ENDURO";
 }
 
 /** Courses configurées avec phases et manches (DH, XC, Enduro). */
@@ -333,13 +335,24 @@ export function normalizeCourseFull(raw: any): Course {
       raw?.type ?? raw?.raceType ?? raw?.courseType ?? raw?.typeCourse
     ),
     distanceKm: numOrUndef(raw?.distanceKm ?? raw?.distance_km ?? raw?.distance),
-    elevation: numOrUndef(raw?.elevation ?? raw?.elevation_gain ?? raw?.ascent),
+    elevation: numOrUndef(
+      raw?.elevation ??
+        raw?.elevation_gain ??
+        raw?.ascent ??
+        raw?.denivelePositif ??
+        raw?.denivele_positif
+    ),
     startAt: raw?.startAt ?? raw?.start_at ?? raw?.start_time ?? raw?.start_date_time,
     status: normalizeCourseStatus(raw?.status ?? raw?.status_label ?? raw?.code ?? raw?.state),
     checkpoints: intOrZero(raw?.checkpoints ?? raw?.checkpoints_count ?? raw?.cps),
     dureeBarriereHoraire:
       raw?.dureeBarriereHoraire ?? raw?.duree_barriere_horaire ?? raw?.barrier_time,
     nomSequence: raw?.nomSequence ?? raw?.nom_sequence,
+    tarif: numOrUndef(raw?.tarif),
+    description:
+      raw?.description == null || raw?.description === ""
+        ? undefined
+        : String(raw.description),
     bibStart: numOrUndef(raw?.bibStart ?? raw?.bib_start),
     bibEnd: numOrUndef(raw?.bibEnd ?? raw?.bib_end),
     typeCourseId: numOrUndef(raw?.typeCourseId ?? raw?.type_course_id),

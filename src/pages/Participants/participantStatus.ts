@@ -37,14 +37,18 @@ export function statusLabel(statut: ParticipantStatus | string | null | undefine
   return PARTICIPANT_STATUS_LABELS[statut as ParticipantStatus] ?? statut;
 }
 
-export function statusBadgeClass(statut: ParticipantStatus) {
+export function statusBadgeClass(statut: ParticipantStatus | string) {
   switch (statut) {
+    case "Envoyée":
+      return "bg-sky-100 text-sky-800 border-sky-200";
     case "Attente validation":
       return "bg-amber-100 text-amber-800 border-amber-200";
     case "Validée":
       return "bg-green-100 text-green-700 border-green-200";
     case "Refusée":
       return "bg-red-100 text-red-700 border-red-200";
+    case "Inscrit":
+      return "bg-slate-100 text-slate-700 border-slate-200";
     case "Present":
     case "Présent":
       return "bg-green-100 text-green-700 border-green-200";
@@ -57,6 +61,13 @@ export function statusBadgeClass(statut: ParticipantStatus) {
     case "DSQ":
       return "bg-purple-100 text-purple-700 border-purple-200";
     case "Finisher":
+      return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    case "A venir":
+      return "bg-slate-100 text-slate-700 border-slate-200";
+    case "En cours":
+      return "bg-blue-100 text-blue-700 border-blue-200";
+    case "Terminée":
+    case "Terminee":
       return "bg-emerald-100 text-emerald-700 border-emerald-200";
     default:
       return "bg-slate-100 text-slate-700 border-slate-200";
