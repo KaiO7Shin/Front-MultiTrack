@@ -2,7 +2,6 @@ import api from "@/lib/api";
 import { API } from "@/lib/apiEndpoints";
 import { normalizeParticipantProjection } from "@/lib/utils";
 import type {
-  InscriptionReviewDecision,
   ParticipantCreateDTO,
   ParticipantListSource,
   ParticipantProjection,
@@ -10,7 +9,6 @@ import type {
   ParticipantResponse,
   RenderResponse,
 } from "@/lib/type";
-import { staticStore } from "@/data/staticStore";
 
 export type ParticipantSearchParams = {
   source?: ParticipantListSource;
@@ -95,15 +93,6 @@ export async function changeParticipantStatus(
     bibNumber: String(bibNumber),
     newStatus,
   });
-}
-
-/** Revue d'inscription : pas encore d'endpoint dédié — fallback staticStore. */
-export async function reviewInscription(
-  id: number,
-  decision: InscriptionReviewDecision,
-  commentaire?: string
-): Promise<RenderResponse<ParticipantResponse>> {
-  return staticStore.reviewInscription(id, decision, commentaire);
 }
 
 export async function deleteParticipant(

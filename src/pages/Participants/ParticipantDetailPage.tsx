@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   changeParticipantStatus,
   fetchParticipantById,
-  reviewInscription,
 } from "@/services/participants";
+import { fetchParticipantStatutLogs } from "@/services/statutLogs";
 import type {
-  InscriptionReviewDecision,
   ParticipantProjection,
   ParticipantStatus,
 } from "@/lib/type";
@@ -14,30 +13,19 @@ import { formatParticipantName } from "@/lib/utils";
 import { ROLE_ADMIN, useAuth } from "@/lib/auth";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import {
-  INSCRIPTION_PENDING_STATUS,
   statusBadgeClass,
   statusLabel,
 } from "@/pages/Participants/participantStatus";
-import { InscriptionReviewModal } from "./InscriptionReviewModal";
 import { ParticipantStatusModal } from "./ParticipantStatusModal";
-
-function formatBirthDate(value: string) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("fr-FR");
-}
-
-function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-1 sm:gap-3 py-2.5 border-b border-border last:border-0">
-      <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </dt>
-      <dd className="text-sm text-foreground">{children}</dd>
-    </div>
-  );
-}
+import {
+  StatutHistoryButton,
+  StatutHistoryModal,
+} from "./StatutHistoryModal";
+import { DetailRow, formatBirthDate } from "./detailShared";
+import {
+  AccountContactSection,
+  EmergencyAndDocumentsSection,
+} from "./PersonDetailSections";
 
 export function ParticipantDetailPage() {
   const { id } = useParams();
@@ -49,13 +37,15 @@ export function ParticipantDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const [reviewDecision, setReviewDecision] = useState<InscriptionReviewDecision | null>(null);
-  const [reviewSaving, setReviewSaving] = useState(false);
-  const [reviewError, setReviewError] = useState<string | null>(null);
-
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusSaving, setStatusSaving] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const loadHistory = useCallback(() => {
+    const numericId = Number(id);
+    return fetchParticipantStatutLogs(numericId);
+  }, [id]);
 
   useEffect(() => {
     const numericId = Number(id);
@@ -88,39 +78,6 @@ export function ParticipantDetailPage() {
       mounted = false;
     };
   }, [id]);
-
-  const openReview = (decision: InscriptionReviewDecision) => {
-    setReviewError(null);
-    setSuccess(null);
-    setReviewDecision(decision);
-  };
-
-  const closeReview = () => {
-    if (reviewSaving) return;
-    setReviewDecision(null);
-    setReviewError(null);
-  };
-
-  const confirmReview = async (commentaire: string) => {
-    if (!participant || !reviewDecision) return;
-    setReviewSaving(true);
-    setReviewError(null);
-    try {
-      const res = await reviewInscription(participant.id, reviewDecision, commentaire);
-      const updated = await fetchParticipantById(participant.id);
-      if (updated) setParticipant(updated);
-      setSuccess(res.message || "Inscription mise à jour.");
-      setReviewDecision(null);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Impossible de traiter l’inscription.";
-      setReviewError(message);
-    } finally {
-      setReviewSaving(false);
-    }
-  };
 
   const confirmStatus = async (newStatus: ParticipantStatus) => {
     if (!participant) return;
@@ -167,8 +124,6 @@ export function ParticipantDetailPage() {
     );
   }
 
-  const canReview =
-    isAdmin && participant.statut === INSCRIPTION_PENDING_STATUS;
   const fullName = formatParticipantName(participant.prenom, participant.nom);
 
   return (
@@ -236,33 +191,10 @@ export function ParticipantDetailPage() {
               {participant.aliasCategorie || "—"}
             </DetailRow>
             <DetailRow label="Statut">{statusLabel(participant.statut)}</DetailRow>
-            {participant.commentaireInscription && (
-              <DetailRow label="Commentaire">
-                {participant.commentaireInscription}
-              </DetailRow>
-            )}
           </dl>
 
           {isAdmin && (
             <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
-              {canReview && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => openReview("Validée")}
-                    className="rounded-xl bg-brand-cta px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-                  >
-                    Valider
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openReview("Refusée")}
-                    className="rounded-xl border border-[#a72a1f]/35 bg-[#fff0ee] px-4 py-2 text-sm font-medium text-[#a72a1f] hover:bg-[#fde8e4]"
-                  >
-                    Refuser
-                  </button>
-                </>
-              )}
               <button
                 type="button"
                 onClick={() => {
@@ -278,41 +210,25 @@ export function ParticipantDetailPage() {
           )}
         </section>
 
-        <section className="bg-white border rounded-2xl p-4 sm:p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-brand mb-2">
-            Compte de création
-          </h2>
-          <dl>
-            <DetailRow label="Adresse email">
-              {participant.email || "—"}
-            </DetailRow>
-            <DetailRow label="Contact">{participant.contact || "—"}</DetailRow>
-          </dl>
-        </section>
+        <AccountContactSection data={participant} />
 
-        <section className="bg-white border rounded-2xl p-4 sm:p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-brand mb-2">
-            Documents
-          </h2>
-          <dl>
-            <DetailRow label="Pièce d’identité">Non fourni</DetailRow>
-            <DetailRow label="Certificat médical">Non fourni</DetailRow>
-            <DetailRow label="Autorisation parentale">Non fourni</DetailRow>
-            <DetailRow label="Contact d’urgence — nom">—</DetailRow>
-            <DetailRow label="Contact d’urgence — téléphone">—</DetailRow>
-          </dl>
-        </section>
+        <EmergencyAndDocumentsSection
+          data={{
+            nomContactUrgence: participant.nomContactUrgence,
+            telephoneContactUrgence: participant.telephoneContactUrgence,
+            hasPieceIdentite: Boolean(participant.hasPieceIdentite),
+            hasCertificatMedical: Boolean(participant.hasCertificatMedical),
+            hasAutorisationParentale: Boolean(participant.hasAutorisationParentale),
+            pieceIdentiteUrl: participant.pieceIdentiteUrl,
+            certificatMedicalUrl: participant.certificatMedicalUrl,
+            autorisationParentaleUrl: participant.autorisationParentaleUrl,
+          }}
+        />
       </div>
 
-      <InscriptionReviewModal
-        open={reviewDecision !== null}
-        decision={reviewDecision}
-        participantName={fullName}
-        saving={reviewSaving}
-        error={reviewError}
-        onClose={closeReview}
-        onConfirm={confirmReview}
-      />
+      <div className="flex justify-start">
+        <StatutHistoryButton onClick={() => setHistoryOpen(true)} />
+      </div>
 
       {isAdmin && (
         <ParticipantStatusModal
@@ -336,6 +252,12 @@ export function ParticipantDetailPage() {
           onConfirm={confirmStatus}
         />
       )}
+
+      <StatutHistoryModal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        load={loadHistory}
+      />
     </section>
   );
 }

@@ -7,7 +7,7 @@ import { statusBadgeClass, statusLabel } from "./participantStatus";
 type ParticipantsTableProps = {
   loading: boolean;
   rows: ParticipantProjection[];
-  /** Mode inscription : pas d’édition / suppression / détail participant. */
+  /** Mode inscription : pas d’édition / suppression participant. */
   sourceMode?: "INSCRIPTION" | "PARTICIPANT";
   onEdit: (row: ParticipantProjection) => void;
   onDelete: (row: ParticipantProjection) => void;
@@ -56,9 +56,10 @@ export function ParticipantsTable({
         <table>
           <thead className="bg-slate-50">
             <tr>
-              <th className="px-3 py-2 text-left">
-                {isInscription ? "Id" : "Id / Dossard"}
-              </th>
+              <th className="px-3 py-2 text-left">Id</th>
+              {!isInscription && (
+                <th className="px-3 py-2 text-left">Dossard</th>
+              )}
               <th className="px-3 py-2 text-left">Nom</th>
               <th className="px-3 py-2 text-left">Prénom</th>
               <th className="px-3 py-2 text-left">Genre</th>
@@ -74,45 +75,30 @@ export function ParticipantsTable({
           </thead>
           <tbody className="divide-y">
             {rows.map((p) => {
-              const clickable = !isInscription;
+              const detailPath = isInscription
+                ? `/inscriptions/${p.id}`
+                : `/participants/${p.id}`;
               return (
                 <tr
                   key={`${p.source ?? sourceMode}-${p.id}`}
                   data-participant-id={p.id}
-                  role={clickable ? "link" : undefined}
-                  tabIndex={clickable ? 0 : undefined}
-                  onClick={
-                    clickable
-                      ? () => navigate(`/participants/${p.id}`)
-                      : undefined
-                  }
-                  onKeyDown={
-                    clickable
-                      ? (e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            navigate(`/participants/${p.id}`);
-                          }
-                        }
-                      : undefined
-                  }
-                  className={
-                    clickable
-                      ? "cursor-pointer hover:bg-[#8c9962]/5 focus-visible:bg-[#8c9962]/10 focus-visible:outline-none"
-                      : undefined
-                  }
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(detailPath)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(detailPath);
+                    }
+                  }}
+                  className="cursor-pointer hover:bg-[#8c9962]/5 focus-visible:bg-[#8c9962]/10 focus-visible:outline-none"
                 >
-                  <td className="px-3 py-2 tabular-nums font-medium">
-                    {isInscription || !p.numDossard?.trim() ? (
-                      p.id
-                    ) : (
-                      <span className="inline-flex items-baseline gap-1.5">
-                        <span>{p.id}</span>
-                        <span className="text-slate-400 font-normal">/</span>
-                        <span>{p.numDossard.trim()}</span>
-                      </span>
-                    )}
-                  </td>
+                  <td className="px-3 py-2 tabular-nums font-medium">{p.id}</td>
+                  {!isInscription && (
+                    <td className="px-3 py-2 tabular-nums">
+                      {p.numDossard?.trim() || "—"}
+                    </td>
+                  )}
                   <td className="px-3 py-2">{p.nom}</td>
                   <td className="px-3 py-2">{p.prenom}</td>
                   <td className="px-3 py-2">{p.genre}</td>

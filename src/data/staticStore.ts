@@ -691,35 +691,9 @@ export const staticStore = {
       message: `Participant enregistré avec le dossard ${created.numDossard}.`,
       data: toResponse(created),
     };
-  },
+    },
 
-  reviewInscription(
-    id: number,
-    decision: "Validée" | "Refusée",
-    commentaire?: string
-  ): RenderResponse<ParticipantResponse> {
-    const current = participants.find((p) => p.id === id);
-    if (!current) fail("Participant introuvable.");
-    if (current.statut !== "Attente validation") {
-      fail("Seule une inscription en attente de validation peut être traitée.");
-    }
-    const trimmed = commentaire?.trim() ?? "";
-    if (decision === "Refusée" && !trimmed) {
-      fail("Un commentaire est obligatoire pour refuser une inscription.");
-    }
-    current.statut = decision;
-    current.commentaireInscription = trimmed || undefined;
-    return {
-      code: 200,
-      message:
-        decision === "Validée"
-          ? "Inscription validée avec succès."
-          : "Inscription refusée avec succès.",
-      data: toResponse(current),
-    };
-  },
-
-  updateParticipant(dto: ParticipantUpdateDTO): RenderResponse<ParticipantResponse> {
+    updateParticipant(dto: ParticipantUpdateDTO): RenderResponse<ParticipantResponse> {
     const current = findParticipantByBib(dto.bibNumber);
     const course = requireCourse(dto.courseChoisieId);
     const bibTaken = participants.some(

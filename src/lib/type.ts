@@ -214,11 +214,57 @@ export type ParticipantProjection = {
   /** Compte ayant créé l’inscription */
   email?: string;
   contact?: string;
+  nomContactUrgence?: string;
+  telephoneContactUrgence?: string;
+  hasPieceIdentite?: boolean;
+  hasCertificatMedical?: boolean;
+  hasAutorisationParentale?: boolean;
+  pieceIdentiteUrl?: string;
+  certificatMedicalUrl?: string;
+  autorisationParentaleUrl?: string;
+  /** Inscription d’origine (détail participant). */
+  inscriptionId?: number | null;
   /** Provenance de la ligne (liste multi-critère). */
   source?: ParticipantListSource;
 };
 
 export type InscriptionReviewDecision = "Validée" | "Refusée";
+
+export type InscriptionDetail = {
+  id: number;
+  nom: string;
+  prenom: string;
+  dateNaissance: string;
+  genre: string;
+  tailleTShirt?: string;
+  courseId: number;
+  courseLibelle: string;
+  statut: ParticipantStatus;
+  email?: string;
+  contact?: string;
+  nomContactUrgence?: string;
+  telephoneContactUrgence?: string;
+  hasPieceIdentite: boolean;
+  hasCertificatMedical: boolean;
+  hasAutorisationParentale: boolean;
+  pieceIdentiteUrl?: string;
+  certificatMedicalUrl?: string;
+  autorisationParentaleUrl?: string;
+  moyenPaiement?: string;
+  referencePaiement?: string;
+  montant?: number;
+  commentaire?: string;
+  submittedAt?: string;
+  participantId?: number | null;
+  numDossard?: string | null;
+};
+
+export type InscriptionReviewResponse = {
+  inscriptionId: number;
+  statut: string;
+  participantId?: number | null;
+  numDossard?: string | null;
+};
 
 export type ParticipantUpdateDTO = {
   /** Dossard actuel (identifiant pour l'API) */

@@ -285,6 +285,34 @@ export function normalizeParticipantProjection(
     ...(tailleTShirt ? { tailleTShirt } : {}),
     ...(raw.email ? { email: String(raw.email) } : {}),
     ...(raw.contact ? { contact: String(raw.contact) } : {}),
+    ...(raw.nomContactUrgence
+      ? { nomContactUrgence: String(raw.nomContactUrgence) }
+      : {}),
+    ...(raw.telephoneContactUrgence
+      ? { telephoneContactUrgence: String(raw.telephoneContactUrgence) }
+      : {}),
+    ...(raw.hasPieceIdentite != null
+      ? { hasPieceIdentite: Boolean(raw.hasPieceIdentite) }
+      : {}),
+    ...(raw.hasCertificatMedical != null
+      ? { hasCertificatMedical: Boolean(raw.hasCertificatMedical) }
+      : {}),
+    ...(raw.hasAutorisationParentale != null
+      ? { hasAutorisationParentale: Boolean(raw.hasAutorisationParentale) }
+      : {}),
+    ...(raw.pieceIdentiteUrl
+      ? { pieceIdentiteUrl: String(raw.pieceIdentiteUrl).trim() }
+      : {}),
+    ...(raw.certificatMedicalUrl
+      ? { certificatMedicalUrl: String(raw.certificatMedicalUrl).trim() }
+      : {}),
+    ...(raw.autorisationParentaleUrl
+      ? { autorisationParentaleUrl: String(raw.autorisationParentaleUrl).trim() }
+      : {}),
+    inscriptionId:
+      raw.inscriptionId != null && raw.inscriptionId !== ""
+        ? Number(raw.inscriptionId)
+        : null,
     ...(raw.commentaireInscription
       ? { commentaireInscription: String(raw.commentaireInscription) }
       : {}),

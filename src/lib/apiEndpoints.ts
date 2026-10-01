@@ -32,6 +32,16 @@ export const API = {
     `/participant/disqualify/${participantId}`,
   importParticipants: "/import/participants",
 
+  inscriptions: "/inscriptions",
+  inscriptionById: (id: number) => `/inscriptions/${id}`,
+  inscriptionReview: (id: number) => `/inscriptions/${id}/review`,
+  inscriptionStatutLogs: (id: number) => `/inscriptions/${id}/statut-logs`,
+  inscriptionDocument: (
+    id: number,
+    type: "identite" | "certificat" | "autorisation"
+  ) => `/inscriptions/${id}/documents/${type}`,
+
+  participantStatutLogs: (id: number) => `/participants/${id}/statut-logs`,
   phases: "/phases",
   phase: "/phase",
   phaseById: (id: number) => `/phase/${id}`,
