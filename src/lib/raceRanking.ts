@@ -252,10 +252,10 @@ function assignCategoryRanks<
 }
 
 function filterParticipant<
-  T extends { genre: CategoryGenre; categorie: string; typeVelo?: BikeType },
+  T extends { genre: string; categorie: string; typeVelo?: BikeType },
 >(
   rows: T[],
-  gender?: CategoryGenre,
+  gender?: CategoryGenre | string,
   categoryAlias?: string,
   bikeType?: BikeType
 ): T[] {

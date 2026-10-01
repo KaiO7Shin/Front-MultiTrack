@@ -13,7 +13,7 @@ export type ApiRow = {
   /** Si fournis par l'API, prioritaires sur athleteName */
   nom?: string;
   prenom?: string;
-  genre?: "Homme" | "Femme";
+  genre?: string;
   categoryName: string;
   raceTime: string | null;
   status: string | null;
@@ -28,7 +28,7 @@ export type Row = {
   dossard: string;
   nom: string;
   prenom: string;
-  genre?: "Homme" | "Femme";
+  genre?: string;
   categorie: string;
   courseId: number;
   course: string;
@@ -383,7 +383,7 @@ export type DHRankingRow = {
   prenom: string;
   nom: string;
   categorie: string;
-  genre: CategoryGenre;
+  genre: string;
   typeVelo?: BikeType;
   bestTimeMs: number | null;
   bestTimeFormatted: string | null;
@@ -400,7 +400,7 @@ export type XCRankingRow = {
   prenom: string;
   nom: string;
   categorie: string;
-  genre: CategoryGenre;
+  genre: string;
   timeMs: number | null;
   timeFormatted: string | null;
   rankScratch: number | null;
@@ -446,7 +446,7 @@ export type EnduroRankingRow = {
   prenom: string;
   nom: string;
   categorie: string;
-  genre: CategoryGenre;
+  genre: string;
   typeVelo?: BikeType;
   /** Somme des temps réalisés sur les spéciales chronométrées */
   totalTimeMs: number | null;

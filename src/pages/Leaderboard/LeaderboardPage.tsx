@@ -43,7 +43,7 @@ const COURSES_FALLBACK: { id: number; label: string }[] = [
   { id: 2, label: "Trail 35K" },
 ];
 
-function formatGenderClt(rank: number | null | undefined, genre?: "Homme" | "Femme") {
+function formatGenderClt(rank: number | null | undefined, genre?: string) {
   if (rank == null) return "—";
   const letter = genre === "Femme" ? "F" : genre === "Homme" ? "H" : "";
   return letter ? `${rank} ${letter}` : String(rank);
