@@ -44,6 +44,7 @@ export type CategoryGenre = "Homme" | "Femme";
 export type Category = {
   id: number;
   alias: string;
+  libelle?: string;
   genre: CategoryGenre;
   ageMin: number;
   /** `null` = pas de limite supérieure (ex. 50 ans et +) */
@@ -55,7 +56,8 @@ export type UICategory = { id: number; alias: string };
 
 export type CategoryCreateDTO = {
   alias: string;
-  genre: CategoryGenre;
+  /** Déduit de l'alias (H/F) si omis. */
+  genre?: CategoryGenre;
   ageMin: number;
   ageMax: number | null;
 };
@@ -63,7 +65,7 @@ export type CategoryCreateDTO = {
 export type CategoryUpdateDTO = Partial<CategoryCreateDTO>;
 
 /** Types de course supportés */
-export const COURSE_TYPES = ["TRAIL", "DH", "XC", "ENDURO"] as const;
+export const COURSE_TYPES = ["TRAIL", "VTT", "DH", "XC", "ENDURO"] as const;
 export type CourseType = (typeof COURSE_TYPES)[number];
 
 export type CourseStatus = "A venir" | "En cours" | "Terminee";
@@ -81,6 +83,8 @@ export type Course = {
   dureeBarriereHoraire?: string;
   /** Technique (auto) — séquence PostgreSQL */
   nomSequence?: string;
+  tarif?: number;
+  description?: string;
   bibStart?: number;
   bibEnd?: number;
 };
@@ -89,10 +93,13 @@ export type CourseCreateDTO = {
   libelle: string;
   typeCourseId: number;
   distance: number;
-  totalDenivele: number;
-  dureeBarriereHoraire: string;
-  bibStart?: number;
-  bibEnd?: number;
+  /** @deprecated préférer denivelePositif */
+  totalDenivele?: number;
+  denivelePositif: number;
+  /** Vide / null = pas de barrière */
+  dureeBarriereHoraire?: string | null;
+  tarif: number;
+  description?: string | null;
 };
 
 export type CourseUpdateDTO = Partial<CourseCreateDTO>;

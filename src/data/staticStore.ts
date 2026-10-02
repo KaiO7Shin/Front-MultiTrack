@@ -527,13 +527,15 @@ export const staticStore = {
       type: normalizeCourseType(typeCourse.libelle),
       typeCourseId: typeCourse.id,
       distanceKm: dto.distance,
-      elevation: dto.totalDenivele,
+      elevation: dto.denivelePositif ?? dto.totalDenivele,
       status: "A venir",
       checkpoints: 0,
-      dureeBarriereHoraire: dto.dureeBarriereHoraire,
+      dureeBarriereHoraire: dto.dureeBarriereHoraire ?? undefined,
       nomSequence: `seq_course_${id}`,
-      bibStart: dto.bibStart ?? typeCourse.bibStart,
-      bibEnd: dto.bibEnd ?? typeCourse.bibEnd,
+      tarif: dto.tarif,
+      description: dto.description ?? undefined,
+      bibStart: typeCourse.bibStart,
+      bibEnd: typeCourse.bibEnd,
     };
     courses.push(course);
     return clone(course);
@@ -549,12 +551,15 @@ export const staticStore = {
       course.typeCourseId = typeCourse.id;
     }
     if (dto.distance != null) course.distanceKm = dto.distance;
-    if (dto.totalDenivele != null) course.elevation = dto.totalDenivele;
-    if (dto.dureeBarriereHoraire != null) {
-      course.dureeBarriereHoraire = dto.dureeBarriereHoraire;
+    if (dto.denivelePositif != null) course.elevation = dto.denivelePositif;
+    else if (dto.totalDenivele != null) course.elevation = dto.totalDenivele;
+    if (dto.dureeBarriereHoraire !== undefined) {
+      course.dureeBarriereHoraire = dto.dureeBarriereHoraire ?? undefined;
     }
-    if (dto.bibStart != null) course.bibStart = dto.bibStart;
-    if (dto.bibEnd != null) course.bibEnd = dto.bibEnd;
+    if (dto.tarif != null) course.tarif = dto.tarif;
+    if (dto.description !== undefined) {
+      course.description = dto.description ?? undefined;
+    }
     renameCourseOnParticipants(course);
     return clone(course);
   },

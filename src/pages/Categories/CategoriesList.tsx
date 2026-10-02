@@ -10,10 +10,12 @@ import {
 } from "@/services/categories";
 import { CategoryFormModal } from "./CategoryFormModal";
 
-const GENRE_BADGE: Record<CategoryGenre, string> = {
-  Homme: "bg-blue-100 text-blue-800 border-blue-200",
-  Femme: "bg-pink-100 text-pink-800 border-pink-200",
-};
+function genreFromAlias(alias: string): CategoryGenre | null {
+  const last = alias.trim().toUpperCase().slice(-1);
+  if (last === "H") return "Homme";
+  if (last === "F") return "Femme";
+  return null;
+}
 
 export const CategoriesList = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -45,8 +47,8 @@ export const CategoriesList = () => {
   const sorted = useMemo(
     () =>
       [...categories].sort((a, b) => {
-        if (a.genre !== b.genre) return a.genre.localeCompare(b.genre);
-        return a.ageMin - b.ageMin;
+        if (a.ageMin !== b.ageMin) return a.ageMin - b.ageMin;
+        return a.alias.localeCompare(b.alias);
       }),
     [categories]
   );
@@ -74,13 +76,23 @@ export const CategoriesList = () => {
 
   function validateDto(dto: CategoryCreateDTO, excludeId?: number): string | null {
     if (!dto.alias.trim()) return "L'alias est requis.";
-    if (dto.ageMin < 0) return "L'âge minimum doit être positif.";
-    if (dto.ageMax != null && dto.ageMax < dto.ageMin) {
-      return "L'âge maximum doit être supérieur ou égal à l'âge minimum.";
+    if (dto.alias.trim().length > 5) return "L'alias ne peut pas dépasser 5 caractères.";
+    const genre = dto.genre ?? genreFromAlias(dto.alias);
+    if (!genre) {
+      return "L'alias doit se terminer par H (Homme) ou F (Femme).";
+    }
+    if (dto.ageMin == null || dto.ageMin < 1) {
+      return "L'âge minimum doit être supérieur à 0.";
+    }
+    if (dto.ageMax != null && dto.ageMax < 1) {
+      return "L'âge maximum doit être supérieur à 0.";
+    }
+    if (dto.ageMax != null && dto.ageMin >= dto.ageMax) {
+      return "L'âge minimum doit être strictement inférieur à l'âge maximum.";
     }
     const duplicate = categories.find(
       (c) =>
-        c.alias.toUpperCase() === dto.alias.trim().toUpperCase() &&
+        c.alias.toLowerCase() === dto.alias.trim().toLowerCase() &&
         c.id !== excludeId
     );
     if (duplicate) return `L'alias « ${dto.alias} » existe déjà.`;
@@ -88,7 +100,12 @@ export const CategoriesList = () => {
   }
 
   async function handleFormSubmit(dto: CategoryCreateDTO) {
-    const validation = validateDto(dto, editTarget?.id);
+    const genre = dto.genre ?? genreFromAlias(dto.alias);
+    const payload: CategoryCreateDTO = {
+      ...dto,
+      genre: genre ?? "Homme",
+    };
+    const validation = validateDto(payload, editTarget?.id);
     if (validation) {
       setFormError(validation);
       return;
@@ -98,18 +115,17 @@ export const CategoriesList = () => {
     setFormError(null);
     try {
       if (modalMode === "create") {
-        const created = await createCategory(dto);
+        const created = await createCategory(payload);
         setCategories((prev) => [...prev, created]);
       } else if (editTarget) {
-        const updated = await updateCategory(editTarget.id, dto);
+        const updated = await updateCategory(editTarget.id, payload);
         setCategories((prev) =>
           prev.map((c) => (c.id === editTarget.id ? updated : c))
         );
       }
       closeModal();
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } } };
-      setFormError(err?.response?.data?.message ?? "Erreur lors de l'enregistrement.");
+      setFormError(e instanceof Error ? e.message : "Erreur lors de l'enregistrement.");
     } finally {
       setSaving(false);
     }
@@ -121,8 +137,7 @@ export const CategoriesList = () => {
       await deleteCategory(cat.id);
       setCategories((prev) => prev.filter((c) => c.id !== cat.id));
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } } };
-      alert(err?.response?.data?.message ?? "Erreur lors de la suppression.");
+      setLoadError(e instanceof Error ? e.message : "Erreur lors de la suppression.");
     }
   }
 
@@ -132,7 +147,7 @@ export const CategoriesList = () => {
         <div className="min-w-0">
           <h1 className="page-title">Catégories</h1>
           <p className="page-subtitle">
-            Tranches d&apos;âge par genre — utilisées pour classer les participants
+            Tranches d&apos;âge — utilisées pour classer les participants
           </p>
         </div>
         <div className="page-actions">
@@ -168,7 +183,6 @@ export const CategoriesList = () => {
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">Alias</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">Genre</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">
                     Tranche d&apos;âge
                   </th>
@@ -179,13 +193,6 @@ export const CategoriesList = () => {
                 {sorted.map((cat) => (
                   <tr key={cat.id} className="hover:bg-[#8c9962]/5">
                     <td className="px-4 py-3 font-semibold">{cat.alias}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${GENRE_BADGE[cat.genre]}`}
-                      >
-                        {cat.genre}
-                      </span>
-                    </td>
                     <td className="px-4 py-3 text-slate-700">
                       {formatAgeRange(cat.ageMin, cat.ageMax)}
                     </td>
@@ -218,8 +225,8 @@ export const CategoriesList = () => {
       </div>
 
       <p className="text-xs text-slate-500">
-        L&apos;alias est attribué automatiquement aux participants selon leur âge et genre
-        lors de l&apos;inscription ou de la modification de catégorie.
+        L&apos;alias se termine par H ou F ; le genre est déduit de cette lettre lors
+        de l&apos;inscription ou de la modification de catégorie.
       </p>
 
       <CategoryFormModal

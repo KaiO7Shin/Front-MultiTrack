@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Settings2, Trash2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import type { Course, CourseCreateDTO, CourseType } from "@/lib/type";
 import { formatBarrierDuration, normalizeCourseStatus } from "@/lib/utils";
 import {
@@ -8,6 +7,7 @@ import {
   createCourse,
   deleteCourse,
   fetchCoursesDetailed,
+  finishRace,
   updateCourse,
 } from "@/services/courses";
 import { CourseFormModal } from "./CourseFormModal";
@@ -15,7 +15,8 @@ import { CourseFormModal } from "./CourseFormModal";
 const ACCENT = "#8c9962";
 
 const TYPE_BADGE: Record<CourseType, string> = {
-  TRAIL: "bg-[#8c9962]/15 text-[#5c6640] border-[#8c9962]/40",
+  TRAIL: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  VTT: "bg-orange-100 text-orange-800 border-orange-200",
   DH: "bg-orange-100 text-orange-800 border-orange-200",
   XC: "bg-blue-100 text-blue-800 border-blue-200",
   ENDURO: "bg-violet-100 text-violet-800 border-violet-200",
@@ -92,9 +93,8 @@ export const CoursesList = () => {
       }
       closeModal();
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } } };
       setFormError(
-        err?.response?.data?.message ?? "Erreur lors de l'enregistrement."
+        e instanceof Error ? e.message : "Erreur lors de l'enregistrement."
       );
     } finally {
       setSaving(false);
@@ -103,7 +103,7 @@ export const CoursesList = () => {
 
   async function handleDelete(course: Course) {
     if (normalizeCourseStatus(course.status) !== "A venir") {
-      alert("Seules les courses « À venir » peuvent être supprimées.");
+      setLoadError("Seules les courses « À venir » peuvent être supprimées.");
       return;
     }
     if (!window.confirm(`Supprimer la course « ${course.name} » ?`)) return;
@@ -112,8 +112,9 @@ export const CoursesList = () => {
       await deleteCourse(course.id);
       setCourses((prev) => prev.filter((c) => c.id !== course.id));
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } } };
-      alert(err?.response?.data?.message ?? "Erreur lors de la suppression.");
+      setLoadError(
+        e instanceof Error ? e.message : "Erreur lors de la suppression."
+      );
     }
   }
 
@@ -123,7 +124,7 @@ export const CoursesList = () => {
         <div className="min-w-0">
           <h1 className="page-title">Courses</h1>
           <p className="page-subtitle">
-            Créer, modifier et gérer les courses par type (Trail, DH, XC, Enduro)
+            Créer, modifier et gérer les courses (Trail, VTT)
           </p>
         </div>
         <div className="page-actions">
@@ -234,8 +235,8 @@ function CourseCard({
         startAt: res.startAt || course.startAt,
       });
       await onRefresh();
-    } catch {
-      alert("Erreur lors du lancement de la course.");
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Erreur lors du lancement de la course.");
     } finally {
       setLoading(false);
     }
@@ -247,77 +248,68 @@ function CourseCard({
       return;
     setLoading(true);
     try {
-      const res = await changeRaceStatus(course.id, "Terminee");
+      const res = await finishRace(course.id);
       onLocalUpdate({
         status: res.status,
         startAt: res.startAt || course.startAt,
       });
       await onRefresh();
-    } catch {
-      alert("Erreur lors de la clôture de la course.");
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Erreur lors de la clôture de la course.");
     } finally {
       setLoading(false);
     }
   }
 
-  const isEnduro = course.type === "ENDURO";
-
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col gap-3">
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-base font-semibold truncate">{course.name}</span>
+        <div className="flex items-start justify-between gap-3">
+          <span className="text-base font-semibold truncate min-w-0">
+            {course.name}
+          </span>
           <span
-            className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${TYPE_BADGE[course.type]}`}
+            className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+              TYPE_BADGE[course.type] ?? TYPE_BADGE.TRAIL
+            }`}
           >
             {course.type}
           </span>
         </div>
         <div className="text-xs text-slate-500 mt-1 leading-relaxed">
-          {isEnduro ? (
+          {status}
+          {course.distanceKm != null ? ` • ${course.distanceKm} km` : ""}
+          {course.elevation != null ? ` • D+ ${course.elevation} m` : ""}
+          {course.tarif != null ? ` • ${course.tarif.toLocaleString("fr-FR")} Ar` : ""}
+          {course.dureeBarriereHoraire && (
             <>
-              <span className="font-medium text-slate-600">{status}</span>
-              {course.dureeBarriereHoraire && (
-                <>
-                  {" • "}
-                  Barrière {formatBarrierDuration(course.dureeBarriereHoraire)}
-                </>
-              )}
-              {course.startAt && (
-                <>
-                  {" • "}
-                  Départ{" "}
-                  {new Date(course.startAt).toLocaleTimeString("fr-FR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              {status}
-              {course.distanceKm != null ? ` • ${course.distanceKm} km` : ""}
-              {course.elevation != null ? ` • D+ ${course.elevation} m` : ""}
+              {" • "}
+              Barrière {formatBarrierDuration(course.dureeBarriereHoraire)}
             </>
           )}
-          {course.bibStart != null && course.bibEnd != null && (
-            <div className="text-xs text-slate-500 mt-0.5">
-              Dossards {String(course.bibStart).padStart(3, "0")}–
-              {String(course.bibEnd).padStart(3, "0")}
-            </div>
+          {course.startAt && (
+            <>
+              {" • "}
+              Départ{" "}
+              {new Date(course.startAt).toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </>
           )}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mt-auto pt-1 border-t border-slate-100">
+        {/* Points de contrôle désactivés pour cette version TBB
         <Link
           to={`/courses/${course.id}`}
           className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-[#8c9962]/10"
         >
           <Settings2 className="h-3 w-3" />
-          Phases & manches
+          Points de contrôle
         </Link>
+        */}
         {canStart && (
           <button
             className="rounded-lg border px-3 py-1.5 text-xs hover:bg-[#8c9962]/10"

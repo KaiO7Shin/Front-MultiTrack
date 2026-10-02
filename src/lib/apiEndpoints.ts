@@ -5,6 +5,7 @@ export const API = {
   races: "/races",
   race: "/race",
   raceById: (id: number) => `/race/${id}`,
+  raceFinish: (id: number) => `/race/${id}/finish`,
   raceChangeStatus: "/race/change/status",
   raceRanking: (raceId: number) => `/races/${raceId}/ranking`,
   raceRankingDh: (raceId: number) => `/races/${raceId}/ranking/dh`,
@@ -14,6 +15,11 @@ export const API = {
   categories: "/categories",
   category: "/category",
   categoryById: (id: number) => `/category/${id}`,
+
+  courseEligibleCategories: "/course/categories_eligibles",
+  eligibility: "/eligibility",
+  eligibilityByIds: (courseId: number, categorieId: number) =>
+    `/eligibility/${courseId}/${categorieId}`,
 
   typesVelo: "/types-velo",
   typesCourse: "/types-course",
@@ -42,26 +48,24 @@ export const API = {
   ) => `/inscriptions/${id}/documents/${type}`,
 
   participantStatutLogs: (id: number) => `/participants/${id}/statut-logs`,
-  phases: "/phases",
-  phase: "/phase",
-  phaseById: (id: number) => `/phase/${id}`,
-
-  manches: "/manches",
-  manche: "/manche",
-  mancheById: (id: number) => `/manche/${id}`,
-
-  resultatsManche: "/resultats-manche",
-  resultatMancheDepart: "/resultat-manche/depart",
-  resultatMancheArrivee: "/resultat-manche/arrivee",
-  resultatMancheAnnuler: "/resultat-manche/annuler",
-
-  checkpointEligible: "/checkpoint/eligible-participants",
+  // Phases / manches : désactivés pour cette version TBB
+  // phases: "/phases",
+  // phase: "/phase",
+  // phaseById: (id: number) => `/phase/${id}`,
+  // manches: "/manches",
+  // manche: "/manche",
+  // mancheById: (id: number) => `/manche/${id}`,
+  // resultatsManche: "/resultats-manche",
+  // resultatMancheDepart: "/resultat-manche/depart",
+  // resultatMancheArrivee: "/resultat-manche/arrivee",
+  // resultatMancheAnnuler: "/resultat-manche/annuler",
+  // checkpointEligible: "/checkpoint/eligible-participants",
 
   controlPoints: "/control-points",
   controlPoint: "/control-point",
   controlPointById: (id: number) => `/control-point/${id}`,
 
-  mancheAssignments: "/manche-assignments",
+  // mancheAssignments: "/manche-assignments",
 
   checkingPc: "/checking/pc",
   checkingFinishline: "/checking/finishline",
@@ -69,5 +73,5 @@ export const API = {
   pointeurs: "/pointeurs",
   pointeur: "/pointeur",
   pointeurById: (id: number) => `/pointeur/${id}`,
-  pointeurManches: (id: number) => `/pointeur/${id}/manches`,
+  // pointeurManches: (id: number) => `/pointeur/${id}/manches`,
 } as const;

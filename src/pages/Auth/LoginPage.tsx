@@ -128,10 +128,10 @@ export const LoginPage = () => {
               )}
             </button>
           </div>
-          <p className="text-xs text-muted-foreground">
+          {/* <p className="text-xs text-muted-foreground">
             Un même écran pour l’administrateur, l’organisateur et le pointeur.
             Le passcode détermine l’espace ouvert.
-          </p>
+          </p> */}
         </div>
 
         <button
@@ -145,7 +145,7 @@ export const LoginPage = () => {
         </button>
 
         <div className="text-xs text-center text-muted-foreground space-y-1">
-          <p>Connectez-vous avec le passcode fourni par l’organisation.</p>
+          <p>Connectez-vous avec le passcode fourni par l’administrateur.</p>
         </div>
       </form>
     </div>
