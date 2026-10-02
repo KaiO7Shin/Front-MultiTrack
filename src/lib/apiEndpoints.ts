@@ -73,5 +73,8 @@ export const API = {
   pointeurs: "/pointeurs",
   pointeur: "/pointeur",
   pointeurById: (id: number) => `/pointeur/${id}`,
+
+  errorLogs: "/error-logs",
+  errorLogById: (id: number) => `/error-logs/${id}`,
   // pointeurManches: (id: number) => `/pointeur/${id}/manches`,
 } as const;

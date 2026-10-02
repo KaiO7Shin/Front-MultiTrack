@@ -45,6 +45,7 @@ const ADMIN_NAV: BackOfficeNavEntry[] = [
     ],
   },
   { kind: "link", to: "/leaderboard", label: "Résultats", end: true },
+  { kind: "link", to: "/journaux", label: "Journaux d’erreurs" },
 ];
 
 const ORGANIZER_NAV: BackOfficeNavEntry[] = [
@@ -95,6 +96,7 @@ export function isPathAllowedForRole(path: string, role: number | undefined): bo
       return true;
     }
     if (path.startsWith("/leaderboard")) return true;
+    if (path.startsWith("/inscriptions/")) return true;
     return false;
   }
   return false;

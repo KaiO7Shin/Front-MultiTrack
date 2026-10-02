@@ -29,6 +29,8 @@ import { LoginPage } from "./pages/Auth/LoginPage";
 import { PointeursList } from "./pages/Pointeurs/PointeursList";
 import { StatutsPage } from "./pages/Statuts/StatutsPage";
 import { EligibilitesPage } from "./pages/Eligibilites/EligibilitesPage";
+import { ErrorLogDetailPage } from "./pages/ErrorLogs/ErrorLogDetailPage";
+import { ErrorLogsPage } from "./pages/ErrorLogs/ErrorLogsPage";
 
 import {
   AuthProvider,
@@ -96,6 +98,23 @@ const router = createBrowserRouter([
       },
 
       { path: "leaderboard", element: <LeaderboardPage /> },
+
+      {
+        path: "journaux",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <ErrorLogsPage />
+          </RequireRole>
+        ),
+      },
+      {
+        path: "journaux/:id",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <ErrorLogDetailPage />
+          </RequireRole>
+        ),
+      },
 
       {
         path: "organisateur",
