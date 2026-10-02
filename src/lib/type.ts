@@ -271,6 +271,10 @@ export type InscriptionReviewResponse = {
   statut: string;
   participantId?: number | null;
   numDossard?: string | null;
+  /** true si l’e-mail a bien été envoyé après le commit métier */
+  mailEnvoye?: boolean;
+  /** raison affichable si l’envoi mail a échoué */
+  mailErreur?: string | null;
 };
 
 export type ParticipantUpdateDTO = {
