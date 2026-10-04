@@ -60,7 +60,13 @@ function countParticipants(participants: ParticipantProjection[]) {
 }
 
 function summarizeCourses(courses: Course[]) {
-  const byType: Record<CourseType, number> = { TRAIL: 0, DH: 0, XC: 0, ENDURO: 0 };
+  const byType: Record<CourseType, number> = {
+    TRAIL: 0,
+    VTT: 0,
+    DH: 0,
+    XC: 0,
+    ENDURO: 0,
+  };
   for (const c of courses) {
     byType[c.type] += 1;
   }

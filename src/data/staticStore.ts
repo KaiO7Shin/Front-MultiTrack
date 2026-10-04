@@ -492,6 +492,13 @@ function parseBirth(raw: string): string {
   fail(`Date de naissance invalide : ${raw}`);
 }
 
+function genreFromCategoryAlias(alias: string): CategoryGenre | null {
+  const last = alias.trim().toUpperCase().slice(-1);
+  if (last === "H") return "Homme";
+  if (last === "F") return "Femme";
+  return null;
+}
+
 function parseGenre(raw: string): CategoryGenre {
   const value = raw.trim().toLowerCase();
   if (value === "homme" || value === "h" || value === "m" || value === "masculin") {
@@ -613,10 +620,14 @@ export const staticStore = {
     ) {
       fail(`Une catégorie avec l'alias « ${alias} » existe déjà.`);
     }
+    const genre = dto.genre ?? genreFromCategoryAlias(alias);
+    if (!genre) {
+      fail("Le genre est requis (alias se terminant par H ou F).");
+    }
     const created: Category = {
       id: nextId(),
       alias,
-      genre: dto.genre,
+      genre,
       ageMin: dto.ageMin,
       ageMax: dto.ageMax,
     };

@@ -19,6 +19,7 @@ import {
 
 const TYPE_LABELS: Record<CourseType, string> = {
   TRAIL: "Trail",
+  VTT: "VTT",
   DH: "Descente",
   XC: "Cross-country",
   ENDURO: "Enduro",
@@ -26,6 +27,7 @@ const TYPE_LABELS: Record<CourseType, string> = {
 
 const TYPE_ICONS: Record<CourseType, typeof Flag> = {
   TRAIL: Mountain,
+  VTT: Bike,
   DH: Bike,
   XC: Activity,
   ENDURO: Timer,
@@ -149,7 +151,7 @@ export const DashboardPage = () => {
         <div className="lg:col-span-2 page-card p-5">
           <h3 className="font-medium mb-3">Répartition des courses</h3>
           <div className="space-y-2">
-            {(["TRAIL", "DH", "XC"] as CourseType[]).map((type) => {
+            {(["TRAIL", "VTT"] as CourseType[]).map((type) => {
               const Icon = TYPE_ICONS[type];
               const count = stats.courses.byType[type];
               return (
