@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Shirt } from "lucide-react";
 import { fetchCoursesDetailed } from "@/services/courses";
-import { fetchParticipantsByCourse } from "@/services/participants";
+import { searchParticipants } from "@/services/participants";
 import { TSHIRT_SIZES } from "@/lib/participantIdentity";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
 import { FormField, selectClassName } from "@/components/ui/form-field";
@@ -39,7 +39,9 @@ export function TshirtsPage() {
         setCourses(mappedCourses);
 
         const rows = await Promise.all(
-          mappedCourses.map((course) => fetchParticipantsByCourse(course.id))
+          mappedCourses.map((course) =>
+            searchParticipants({ source: "PARTICIPANT", courseId: course.id })
+          )
         );
         if (!mounted) return;
 
