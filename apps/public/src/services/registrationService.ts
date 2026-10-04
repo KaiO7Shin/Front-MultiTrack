@@ -61,18 +61,20 @@ export function mapInscription(item: InscriptionResponse): Registration {
     paymentReference: item.paymentReference || "—",
     paymentMethod: method,
     totalAmount: Number(item.totalAmount ?? 0),
+    numDossard: item.numDossard?.trim() || null,
     runner: {
       id: item.id,
       firstName: item.firstName ?? "",
       lastName: item.lastName,
       birthDate: item.birthDate,
       gender: item.gender,
-      category: "",
+      category: item.category?.trim() ?? "",
       race: item.courseLabel,
       identityDocument: documentHref(item.id, "identite", item.identityDocumentUrl),
       medicalCertificate: documentHref(item.id, "certificat", item.medicalCertificateUrl),
       parentalAuthorization: documentHref(item.id, "autorisation", item.parentalAuthorizationUrl) || undefined,
       tshirtSize: item.tShirtSize,
+      tshirtSizeBinome: item.tShirtSizeBinome ?? undefined,
       emergencyContactName: item.emergencyContactName,
       emergencyContactPhone: item.emergencyContactPhone,
     },
@@ -115,6 +117,7 @@ export async function submitRegistration(
 
   const genderId = GENDERS.find((gender) => gender.label === draft.gender)?.id;
   const tShirtSizeId = TSHIRT_SIZES.find((size) => size.alias === draft.tshirtSize)?.id;
+  const tShirtSizeBinomeId = TSHIRT_SIZES.find((size) => size.alias === draft.tshirtSizeBinome)?.id;
   if (!genderId || !tShirtSizeId) {
     return { ok: false, error: "Genre ou taille de t-shirt introuvable." };
   }
@@ -126,6 +129,9 @@ export async function submitRegistration(
   body.append("birthDate", draft.birthDate);
   body.append("genderId", String(genderId));
   body.append("tShirtSizeId", String(tShirtSizeId));
+  if (tShirtSizeBinomeId) {
+    body.append("tShirtSizeBinomeId", String(tShirtSizeBinomeId));
+  }
   body.append("emergencyContactName", draft.emergencyContactName.trim());
   body.append("emergencyContactPhone", draft.emergencyContactPhone);
   // Le montant n’est jamais envoyé : le serveur le calcule depuis le tarif de la course.

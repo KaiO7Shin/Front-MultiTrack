@@ -11,7 +11,11 @@ export function exportTshirtMatrixPdf(visible: TshirtMatrix) {
   doc.text("Besoins T-shirts — tableau croisé", 14, 16);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("Nombre de t-shirts par taille et par course", 14, 23);
+  doc.text(
+    "Nombre de t-shirts par taille et par course (inclut la taille parent/binôme)",
+    14,
+    23
+  );
 
   autoTable(doc, {
     startY: 28,

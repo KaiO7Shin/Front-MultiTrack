@@ -21,6 +21,7 @@ type StoredFields = {
   courseId: number | "";
   race: string;
   tshirtSize: string;
+  tshirtSizeBinome?: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
 };
@@ -58,6 +59,7 @@ function fieldsFromDraft(draft: RunnerDraft): StoredFields {
     courseId: draft.courseId,
     race: draft.race,
     tshirtSize: draft.tshirtSize,
+    tshirtSizeBinome: draft.tshirtSizeBinome,
     emergencyContactName: draft.emergencyContactName,
     emergencyContactPhone: draft.emergencyContactPhone,
   };
@@ -67,6 +69,7 @@ function draftFromFields(fields: StoredFields, files: Pick<RunnerDraft, FileKey>
   return {
     ...EMPTY_DRAFT,
     ...fields,
+    tshirtSizeBinome: fields.tshirtSizeBinome ?? "",
     identityFile: files.identityFile,
     medicalFile: files.medicalFile,
     parentalFile: files.parentalFile,

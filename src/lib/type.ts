@@ -126,6 +126,8 @@ export type ParticipantCreateDTO = {
   courseChoisieId: number;
   /** Alias taille T-shirt (XS…XXL) */
   tailleTShirt?: string;
+  /** Alias taille T-shirt du parent / binôme (courses duo). */
+  tailleTShirtBinome?: string;
 };
 
 export type ParticipantResponse = {
@@ -216,6 +218,7 @@ export type ParticipantProjection = {
   nomCourse?: string;
   /** Alias taille T-shirt (XS…XXL), optionnel si non renseigné */
   tailleTShirt?: string;
+  tailleTShirtBinome?: string;
   /** Commentaire de validation / refus d’inscription */
   commentaireInscription?: string;
   /** Compte ayant créé l’inscription */
@@ -244,6 +247,7 @@ export type InscriptionDetail = {
   dateNaissance: string;
   genre: string;
   tailleTShirt?: string;
+  tailleTShirtBinome?: string;
   courseId: number;
   courseLibelle: string;
   statut: ParticipantStatus;
@@ -288,6 +292,7 @@ export type ParticipantUpdateDTO = {
   courseChoisieId: number;
   statut: ParticipantStatus;
   tailleTShirt?: string;
+  tailleTShirtBinome?: string;
 };
 
 export interface ParticipantUpdateInfoResponse {

@@ -27,6 +27,9 @@ export function normalizeInscriptionDetail(
   const tailleTShirt = normalizeTshirtSize(
     raw.tailleTShirt ?? raw.tShirtSize ?? raw.tshirtSize
   );
+  const tailleTShirtBinome = normalizeTshirtSize(
+    raw.tailleTShirtBinome ?? raw.tShirtSizeBinome ?? raw.tshirtSizeBinome
+  );
   const montantRaw = raw.montant;
   const montant =
     typeof montantRaw === "number"
@@ -47,6 +50,7 @@ export function normalizeInscriptionDetail(
     dateNaissance: String(raw.dateNaissance ?? raw.birthDate ?? ""),
     genre: String(raw.genre ?? "").trim(),
     ...(tailleTShirt ? { tailleTShirt } : {}),
+    ...(tailleTShirtBinome ? { tailleTShirtBinome } : {}),
     courseId: Number(raw.courseId ?? 0),
     courseLibelle: String(raw.courseLibelle ?? raw.nomCourse ?? ""),
     statut: normalizeParticipantStatus(raw.statut ?? raw.status),

@@ -9,6 +9,7 @@ import type {
   InscriptionDetail,
   InscriptionReviewDecision,
 } from "@/lib/type";
+import { needsPartnerTShirt, partnerTShirtLabel } from "@/lib/duoCourses";
 import { formatParticipantName } from "@/lib/utils";
 import { ROLE_ADMIN, useAuth } from "@/lib/auth";
 import { Alert, Spinner } from "@/components/ui/feedback";
@@ -207,6 +208,11 @@ export function InscriptionDetailPage() {
             <DetailRow label="Taille t-shirt">
               {inscription.tailleTShirt || "—"}
             </DetailRow>
+            {needsPartnerTShirt(inscription.courseLibelle) && (
+              <DetailRow label={partnerTShirtLabel(inscription.courseLibelle)}>
+                {inscription.tailleTShirtBinome || "—"}
+              </DetailRow>
+            )}
           </dl>
         </section>
 

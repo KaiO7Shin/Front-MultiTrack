@@ -5,6 +5,8 @@ export function ConfirmModal({
   open,
   title,
   message,
+  details,
+  note,
   confirmLabel,
   cancelLabel = "Annuler",
   showCancel = true,
@@ -15,6 +17,8 @@ export function ConfirmModal({
   open: boolean;
   title: string;
   message: string;
+  details?: string;
+  note?: string;
   confirmLabel: string;
   cancelLabel?: string;
   /** When false, only the confirm button is shown (informative / acknowledge). */
@@ -45,6 +49,10 @@ export function ConfirmModal({
 
   if (!open) return null;
 
+  const describedBy = ["confirm-modal-message", details && "confirm-modal-details", note && "confirm-modal-note"]
+    .filter(Boolean)
+    .join(" ");
+
   return createPortal(
     <div className="modal-backdrop" role="presentation" onMouseDown={onCancel}>
       <section
@@ -52,12 +60,14 @@ export function ConfirmModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-modal-title"
-        aria-describedby="confirm-modal-message"
+        aria-describedby={describedBy}
         onMouseDown={(event) => event.stopPropagation()}
       >
         {icon ? <div className="confirm-modal-icon">{icon}</div> : null}
         <h2 id="confirm-modal-title">{title}</h2>
         <p id="confirm-modal-message">{message}</p>
+        {details ? <p id="confirm-modal-details">{details}</p> : null}
+        {note ? <p id="confirm-modal-note" className="confirm-modal-note">{note}</p> : null}
         <div className="confirm-modal-actions">
           {showCancel ? (
             <button type="button" className="button button-outline" onClick={onCancel}>

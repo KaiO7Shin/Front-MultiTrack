@@ -7,7 +7,8 @@ export type TshirtMatrixCourse = {
 
 export type TshirtMatrixParticipant = {
   courseId: number;
-  tailleTShirt?: string;
+  tailleTShirt?: string | null;
+  tailleTShirtBinome?: string | null;
 };
 
 export type TshirtMatrix = {
@@ -35,11 +36,17 @@ export function buildTshirtMatrix(
     }
   }
 
+  function addCount(courseId: number, raw?: string | null) {
+    if (raw == null || !String(raw).trim()) return;
+    const size = String(raw).trim().toUpperCase();
+    if (!sizeSet.has(size)) return;
+    if (!(courseId in (counts[size] ?? {}))) return;
+    counts[size][courseId] += 1;
+  }
+
   for (const participant of participants) {
-    const size = participant.tailleTShirt?.trim().toUpperCase();
-    if (!size || !sizeSet.has(size)) continue;
-    if (!(participant.courseId in (counts[size] ?? {}))) continue;
-    counts[size][participant.courseId] += 1;
+    addCount(participant.courseId, participant.tailleTShirt);
+    addCount(participant.courseId, participant.tailleTShirtBinome);
   }
 
   const rowTotals: Record<string, number> = {};

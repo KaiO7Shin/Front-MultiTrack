@@ -38,17 +38,22 @@ export function TshirtsPage() {
         }));
         setCourses(mappedCourses);
 
-        const rows = await Promise.all(
-          mappedCourses.map((course) =>
-            searchParticipants({ source: "PARTICIPANT", courseId: course.id })
-          )
-        );
+        const [participantRows, inscriptionRows] = await Promise.all([
+          searchParticipants({ source: "PARTICIPANT" }),
+          searchParticipants({ source: "INSCRIPTION" }),
+        ]);
         if (!mounted) return;
 
+        const pendingInscriptions = inscriptionRows.filter(
+          (row) =>
+            row.statut === "Attente validation" || row.statut === "Envoyée"
+        );
+
         setParticipants(
-          rows.flat().map((p) => ({
+          [...participantRows, ...pendingInscriptions].map((p) => ({
             courseId: p.courseId,
             tailleTShirt: p.tailleTShirt,
+            tailleTShirtBinome: p.tailleTShirtBinome,
           }))
         );
       } catch {
@@ -84,7 +89,8 @@ export function TshirtsPage() {
         <div className="min-w-0">
           <h1 className="page-title">T-shirts</h1>
           <p className="page-subtitle">
-            Quantités nécessaires par taille et par course
+            Quantités nécessaires par taille et par course (taille
+            participant + taille parent/binôme si renseignée)
           </p>
         </div>
         <div className="page-actions">
