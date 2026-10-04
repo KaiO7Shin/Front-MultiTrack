@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Shirt } from "lucide-react";
 import { fetchCoursesDetailed } from "@/services/courses";
-import { searchParticipants } from "@/services/participants";
+import { fetchAllParticipants } from "@/services/participants";
 import { TSHIRT_SIZES } from "@/lib/participantIdentity";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
 import { FormField, selectClassName } from "@/components/ui/form-field";
@@ -38,19 +38,11 @@ export function TshirtsPage() {
         }));
         setCourses(mappedCourses);
 
-        const [participantRows, inscriptionRows] = await Promise.all([
-          searchParticipants({ source: "PARTICIPANT" }),
-          searchParticipants({ source: "INSCRIPTION" }),
-        ]);
+        const participantRows = await fetchAllParticipants();
         if (!mounted) return;
 
-        const pendingInscriptions = inscriptionRows.filter(
-          (row) =>
-            row.statut === "Attente validation" || row.statut === "Envoyée"
-        );
-
         setParticipants(
-          [...participantRows, ...pendingInscriptions].map((p) => ({
+          participantRows.map((p) => ({
             courseId: p.courseId,
             tailleTShirt: p.tailleTShirt,
             tailleTShirtBinome: p.tailleTShirtBinome,
