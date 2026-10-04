@@ -1641,6 +1641,12 @@ html[data-theme="dark"] .race-card {
   line-height: 1.6;
 }
 
+.confirm-modal p.confirm-modal-note {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--mt-slate-light);
+}
+
 .confirm-modal-actions {
   margin-top: 28px;
   display: flex;

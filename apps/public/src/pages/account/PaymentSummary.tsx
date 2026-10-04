@@ -4,6 +4,7 @@ import { InfoIcon } from "../../components/icons";
 import { PAYMENT, PAYMENT_MOTIF } from "../../config/site";
 import { formatAmount } from "../../lib/utils";
 import { validatePayment } from "../../services/registrationService";
+import { needsPartnerTShirt, partnerTShirtLabel } from "../../lib/duoCourses";
 import {
   PAYMENT_METHODS,
   PAYMENT_REFERENCE_MAX_LENGTH,
@@ -22,6 +23,12 @@ export function Summary({ runner, totalAmount }: { runner: Runner; totalAmount: 
         <div><dt>Genre</dt><dd>{runner.gender}</dd></div>
         <div><dt>Course choisie</dt><dd>{runner.race}</dd></div>
         <div><dt>Taille de t-shirt finisher</dt><dd>{runner.tshirtSize}</dd></div>
+        {needsPartnerTShirt(runner.race) && runner.tshirtSizeBinome && (
+          <div>
+            <dt>{partnerTShirtLabel(runner.race)}</dt>
+            <dd>{runner.tshirtSizeBinome}</dd>
+          </div>
+        )}
         <div><dt>Nom du contact d’urgence</dt><dd>{runner.emergencyContactName}</dd></div>
         <div><dt>Téléphone du contact d’urgence</dt><dd>{runner.emergencyContactPhone}</dd></div>
       </dl>

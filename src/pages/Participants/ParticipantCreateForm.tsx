@@ -5,6 +5,11 @@ import { fetchTaillesTShirt, type TailleTShirtOption } from "@/services/taillesT
 import { createParticipant, updateParticipant } from "@/services/participants";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import { FormField, inputClassName, selectClassName } from "@/components/ui/form-field";
+import {
+  needsPartnerTShirt,
+  partnerTShirtChoiceMessage,
+} from "@/lib/duoCourses";
+import { TshirtSizeFields } from "./TshirtSizeFields";
 import { useEffect, useState } from "react";
 
 const emptyForm: ParticipantCreateDTO = {
@@ -14,6 +19,7 @@ const emptyForm: ParticipantCreateDTO = {
   genre: "",
   courseChoisieId: 0,
   tailleTShirt: "",
+  tailleTShirtBinome: "",
 };
 
 type ParticipantFormProps = {
@@ -82,6 +88,7 @@ export function ParticipantCreateForm({
       genre: editing.genre,
       courseChoisieId: editing.courseId,
       tailleTShirt: editing.tailleTShirt ?? "",
+      tailleTShirtBinome: editing.tailleTShirtBinome ?? "",
     });
   }, [editing]);
 
@@ -109,6 +116,12 @@ export function ParticipantCreateForm({
       setErr("Choisissez une taille de t-shirt.");
       return;
     }
+    const selectedCourse = courses.find((c) => c.id === form.courseChoisieId);
+    const courseLibelle = selectedCourse?.name ?? "";
+    if (needsPartnerTShirt(courseLibelle) && !form.tailleTShirtBinome) {
+      setErr(partnerTShirtChoiceMessage(courseLibelle));
+      return;
+    }
 
     setLoading(true);
     try {
@@ -123,6 +136,7 @@ export function ParticipantCreateForm({
           courseChoisieId: form.courseChoisieId,
           statut: editing.statut,
           tailleTShirt: form.tailleTShirt,
+          tailleTShirtBinome: form.tailleTShirtBinome,
         });
         setForm({ ...emptyForm, genre: genres[0]?.libelle || "" });
         onSuccess?.(res.message || "Participant mis à jour.", editing.id);
@@ -135,6 +149,7 @@ export function ParticipantCreateForm({
           genre: form.genre,
           courseChoisieId: form.courseChoisieId,
           tailleTShirt: form.tailleTShirt,
+          tailleTShirtBinome: form.tailleTShirtBinome,
         });
         setForm({ ...emptyForm, genre: genres[0]?.libelle || "" });
         onSuccess?.(res.message || "Participant créé avec succès.");
@@ -223,7 +238,17 @@ export function ParticipantCreateForm({
           id="participant-course"
           className={selectClassName}
           value={form.courseChoisieId || ""}
-          onChange={(e) => handleChange("courseChoisieId", Number(e.target.value))}
+          onChange={(e) => {
+            const courseId = Number(e.target.value);
+            const libelle = courses.find((c) => c.id === courseId)?.name ?? "";
+            setForm((f) => ({
+              ...f,
+              courseChoisieId: courseId,
+              tailleTShirtBinome: needsPartnerTShirt(libelle)
+                ? f.tailleTShirtBinome
+                : "",
+            }));
+          }}
           required
         >
           <option value="" disabled>
@@ -237,24 +262,18 @@ export function ParticipantCreateForm({
         </select>
       </FormField>
 
-      <FormField label="Taille t-shirt" htmlFor="participant-tshirt" required>
-        <select
-          id="participant-tshirt"
-          className={selectClassName}
-          value={form.tailleTShirt ?? ""}
-          onChange={(e) => handleChange("tailleTShirt", e.target.value)}
-          required
-        >
-          <option value="" disabled>
-            Sélectionne une taille…
-          </option>
-          {tailles.map((size) => (
-            <option key={size.id} value={size.alias}>
-              {size.alias}
-            </option>
-          ))}
-        </select>
-      </FormField>
+      <TshirtSizeFields
+        tailleTShirt={form.tailleTShirt ?? ""}
+        tailleTShirtBinome={form.tailleTShirtBinome ?? ""}
+        courseLibelle={
+          courses.find((c) => c.id === form.courseChoisieId)?.name ?? ""
+        }
+        tailles={tailles}
+        onTailleTShirtChange={(value) => handleChange("tailleTShirt", value)}
+        onTailleTShirtBinomeChange={(value) =>
+          handleChange("tailleTShirtBinome", value)
+        }
+      />
 
       <div className="sm:col-span-2 flex flex-col sm:flex-row gap-2">
         {isEditing && (

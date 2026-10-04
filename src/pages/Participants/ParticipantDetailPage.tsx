@@ -9,6 +9,7 @@ import type {
   ParticipantProjection,
   ParticipantStatus,
 } from "@/lib/type";
+import { needsPartnerTShirt, partnerTShirtLabel } from "@/lib/duoCourses";
 import { formatParticipantName } from "@/lib/utils";
 import { ROLE_ADMIN, useAuth } from "@/lib/auth";
 import { Alert, Spinner } from "@/components/ui/feedback";
@@ -175,6 +176,15 @@ export function ParticipantDetailPage() {
             <DetailRow label="Taille t-shirt">
               {participant.tailleTShirt || "—"}
             </DetailRow>
+            {needsPartnerTShirt(participant.courseLibelle || participant.nomCourse || "") && (
+              <DetailRow
+                label={partnerTShirtLabel(
+                  participant.courseLibelle || participant.nomCourse || ""
+                )}
+              >
+                {participant.tailleTShirtBinome || "—"}
+              </DetailRow>
+            )}
           </dl>
         </section>
 

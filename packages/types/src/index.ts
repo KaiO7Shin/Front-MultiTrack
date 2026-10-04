@@ -111,6 +111,8 @@ export interface Registration {
   genderId?: number;
   tShirtSize?: string;
   tShirtSizeId?: number;
+  tShirtSizeBinome?: string;
+  tShirtSizeBinomeId?: number;
   identityDocumentUrl?: string;
   medicalCertificateUrl?: string;
   parentalAuthorizationUrl?: string;
@@ -135,6 +137,7 @@ export interface CreateRegistrationRequest {
   birthDate: string;
   genderId: number;
   tShirtSizeId: number;
+  tShirtSizeBinomeId?: number;
   identityDocumentUrl?: string;
   medicalCertificateUrl?: string;
   parentalAuthorizationUrl?: string;
@@ -154,6 +157,8 @@ export interface InscriptionResponse {
   gender: string;
   tShirtSizeId: number;
   tShirtSize: string;
+  tShirtSizeBinomeId?: number | null;
+  tShirtSizeBinome?: string | null;
   identityDocumentUrl?: string | null;
   medicalCertificateUrl?: string | null;
   parentalAuthorizationUrl?: string | null;
@@ -164,6 +169,10 @@ export interface InscriptionResponse {
   paymentMethod: string;
   paymentReference: string;
   totalAmount: number;
+  /** Dossard du participant lié, renseigné après validation. */
+  numDossard?: string | null;
+  /** Libellé de catégorie du participant lié, renseigné après validation. */
+  category?: string | null;
 }
 
 export interface OrganizerDashboard {

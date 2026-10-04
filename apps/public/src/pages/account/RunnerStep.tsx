@@ -5,7 +5,8 @@ import { DownloadIcon } from "../../components/icons";
 import { PhoneField } from "../../components/PhoneField";
 import { RulesDocumentLinks } from "../../components/RulesDocumentLinks";
 import { PARENTAL_AUTHORIZATION_TEMPLATE } from "../../config/site";
-import { ACCEPTED_FILES, GENDERS, TSHIRT_SIZES, type RunnerDraft } from "../../types";
+import { ACCEPTED_FILES, GENDERS, type RunnerDraft } from "../../types";
+import { TshirtSizeFields } from "./TshirtSizeFields";
 import {
   isMinor,
   validateIdentityFile,
@@ -16,11 +17,8 @@ import { formatAmount } from "../../lib/utils";
 import { useCourses } from "../../hooks/useCourses";
 import type { MissingFileNames } from "../../hooks/useRegistrationDraft";
 import { REGISTRATION_FILE_KEYS, type RegistrationFileKey } from "../../lib/registrationDraftStorage";
+import { isParentEnfantCourse, needsPartnerTShirt } from "../../lib/duoCourses";
 import { findRace, isDuoRace } from "../../services/catalogService";
-
-function isParentEnfantCourse(libelle: string) {
-  return /enfant/i.test(libelle);
-}
 
 export function RunnerStep({
   draft,
@@ -162,6 +160,9 @@ export function RunnerStep({
                       ...draft,
                       courseId,
                       race: libelle,
+                      tshirtSizeBinome: needsPartnerTShirt(libelle)
+                        ? draft.tshirtSizeBinome
+                        : "",
                     });
                     if (libelle && isParentEnfantCourse(libelle)) {
                       setEnfantInfoOpen(true);
@@ -243,22 +244,14 @@ export function RunnerStep({
                 </Field>
               )}
             </div>
-            <div className="two-columns">
-              <Field label="Taille de t-shirt finisher *">
-                <select
-                  name="tshirtSize"
-                  value={draft.tshirtSize}
-                  onChange={(event) => update("tshirtSize", event.target.value)}
-                  required
-                  disabled={busy}
-                >
-                  <option value="" disabled>Choisir une taille</option>
-                  {TSHIRT_SIZES.map((size) => (
-                    <option key={size.id} value={size.alias}>{size.alias}</option>
-                  ))}
-                </select>
-              </Field>
-            </div>
+            <TshirtSizeFields
+              tshirtSize={draft.tshirtSize}
+              tshirtSizeBinome={draft.tshirtSizeBinome}
+              race={draft.race}
+              busy={busy}
+              onTshirtSizeChange={(value) => update("tshirtSize", value)}
+              onTshirtSizeBinomeChange={(value) => update("tshirtSizeBinome", value)}
+            />
           </div>
         </div>
         <div className="wizard-subsection">

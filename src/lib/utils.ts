@@ -259,6 +259,9 @@ export function normalizeParticipantProjection(
   const tailleTShirt = normalizeTshirtSize(
     raw.tailleTShirt ?? raw.tShirtSize ?? raw.tshirtSize
   );
+  const tailleTShirtBinome = normalizeTshirtSize(
+    raw.tailleTShirtBinome ?? raw.tShirtSizeBinome ?? raw.tshirtSizeBinome
+  );
 
   const sourceRaw = String(raw.source ?? "").trim().toUpperCase();
   const source =
@@ -285,6 +288,7 @@ export function normalizeParticipantProjection(
     ),
     nomCourse: String(raw.nomCourse ?? raw.courseLibelle ?? raw.courseName ?? ""),
     ...(tailleTShirt ? { tailleTShirt } : {}),
+    ...(tailleTShirtBinome ? { tailleTShirtBinome } : {}),
     ...(raw.email ? { email: String(raw.email) } : {}),
     ...(raw.contact ? { contact: String(raw.contact) } : {}),
     ...(raw.nomContactUrgence

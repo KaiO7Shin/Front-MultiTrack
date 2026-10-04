@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
+import { INSCRIPTION_STATUS } from "@multitrack/types";
 import { DocumentIcon } from "../../components/icons";
 import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { StatusPill } from "../../components/StatusPill";
 import { useRegistrationDraft } from "../../hooks/useRegistrationDraft";
 import { useSession } from "../../hooks/useSession";
+import { needsPartnerTShirt, partnerTShirtLabel } from "../../lib/duoCourses";
 import { isMinor, participantFullName } from "../../lib/participant";
 import { formatAmount } from "../../lib/utils";
 import { findRegistration } from "../../services/registrationService";
@@ -148,12 +150,24 @@ export function RegistrationDetailPage() {
         <dl className="profile-details">
           <div><dt>Nom</dt><dd>{registration.runner.lastName || "—"}</dd></div>
           <div><dt>Prénom</dt><dd>{registration.runner.firstName || "—"}</dd></div>
+          {registration.status === INSCRIPTION_STATUS.VALIDATED && (
+            <>
+              <div><dt>Numéro de dossard</dt><dd>{registration.numDossard?.trim() || "—"}</dd></div>
+              <div><dt>Catégorie</dt><dd>{registration.runner.category?.trim() || "—"}</dd></div>
+            </>
+          )}
           <div>
             <dt>Date de naissance</dt>
             <dd>{formatBirthDate(registration.runner.birthDate)}</dd>
           </div>
           <div><dt>Genre</dt><dd>{registration.runner.gender || "—"}</dd></div>
           <div><dt>Taille t-shirt</dt><dd>{registration.runner.tshirtSize || "—"}</dd></div>
+          {needsPartnerTShirt(registration.runner.race) && (
+            <div>
+              <dt>{partnerTShirtLabel(registration.runner.race)}</dt>
+              <dd>{registration.runner.tshirtSizeBinome || "—"}</dd>
+            </div>
+          )}
         </dl>
       </section>
 
