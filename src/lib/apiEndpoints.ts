@@ -41,6 +41,7 @@ export const API = {
   inscriptions: "/inscriptions",
   inscriptionById: (id: number) => `/inscriptions/${id}`,
   inscriptionReview: (id: number) => `/inscriptions/${id}/review`,
+  inscriptionValidationMail: (id: number) => `/inscriptions/${id}/mail-validation`,
   inscriptionStatutLogs: (id: number) => `/inscriptions/${id}/statut-logs`,
   inscriptionDocument: (
     id: number,
