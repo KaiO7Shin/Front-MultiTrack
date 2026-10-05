@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   fetchInscriptionById,
+  resendInscriptionValidationMail,
   reviewInscription,
 } from "@/services/inscriptions";
 import { fetchInscriptionStatutLogs } from "@/services/statutLogs";
@@ -11,7 +12,7 @@ import type {
 } from "@/lib/type";
 import { needsPartnerTShirt, partnerTShirtLabel } from "@/lib/duoCourses";
 import { formatParticipantName } from "@/lib/utils";
-import { ROLE_ADMIN, useAuth } from "@/lib/auth";
+import { ROLE_ADMIN, ROLE_ORGANIZER, useAuth } from "@/lib/auth";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import {
   INSCRIPTION_PENDING_STATUS,
@@ -47,6 +48,8 @@ export function InscriptionDetailPage() {
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [mailSending, setMailSending] = useState(false);
+  const [mailError, setMailError] = useState<string | null>(null);
 
   const loadHistory = useCallback(() => {
     const numericId = Number(id);
@@ -85,6 +88,35 @@ export function InscriptionDetailPage() {
       mounted = false;
     };
   }, [id]);
+
+  const resendValidationMail = async () => {
+    if (!inscription || mailSending) return;
+    setMailSending(true);
+    setMailError(null);
+    setSuccess(null);
+    try {
+      const res = await resendInscriptionValidationMail(inscription.id);
+      const mailFailed = res.data?.mailEnvoye === false;
+      const text =
+        res.message ||
+        (mailFailed
+          ? res.data?.mailErreur || "L’envoi de l’e-mail a échoué."
+          : "Mail de validation renvoyé avec succès");
+      if (mailFailed) {
+        setMailError(text);
+      } else {
+        setSuccess(text);
+      }
+    } catch (err: unknown) {
+      setMailError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de renvoyer le mail de validation."
+      );
+    } finally {
+      setMailSending(false);
+    }
+  };
 
   const openReview = (decision: InscriptionReviewDecision) => {
     setReviewError(null);
@@ -157,6 +189,8 @@ export function InscriptionDetailPage() {
 
   const canReview =
     isAdmin && inscription.statut === INSCRIPTION_PENDING_STATUS;
+  const canResendValidationMail =
+    isAdmin || user?.role === ROLE_ORGANIZER;
   const fullName = formatParticipantName(inscription.prenom, inscription.nom);
 
   return (
@@ -186,6 +220,12 @@ export function InscriptionDetailPage() {
           </span>
         </div>
       </div>
+
+      {mailError && (
+        <Alert variant="error" role="alert">
+          {mailError}
+        </Alert>
+      )}
 
       {success && (
         <Alert variant="success" role="status">
@@ -296,8 +336,19 @@ export function InscriptionDetailPage() {
         <EmergencyAndDocumentsSection data={inscription} />
       </div>
 
-      <div className="flex justify-start">
+      <div className="flex flex-wrap justify-start gap-2">
         <StatutHistoryButton onClick={() => setHistoryOpen(true)} />
+        {canResendValidationMail && (
+          <button
+            type="button"
+            onClick={resendValidationMail}
+            disabled={mailSending}
+            className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm text-slate-700 hover:bg-[#8c9962]/10 disabled:opacity-60"
+            aria-label="Renvoyer mail de validation"
+          >
+            Renvoyer mail de validation
+          </button>
+        )}
       </div>
 
       <InscriptionReviewModal
