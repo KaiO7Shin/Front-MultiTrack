@@ -252,10 +252,10 @@ function assignCategoryRanks<
 }
 
 function filterParticipant<
-  T extends { genre: CategoryGenre; categorie: string; typeVelo?: BikeType },
+  T extends { genre: string; categorie: string; typeVelo?: BikeType },
 >(
   rows: T[],
-  gender?: CategoryGenre,
+  gender?: CategoryGenre | string,
   categoryAlias?: string,
   bikeType?: BikeType
 ): T[] {
@@ -335,7 +335,7 @@ export function buildDHPhaseRanking(input: {
       nom: p.nom,
       categorie: p.aliasCategorie,
       genre: p.genre,
-      typeVelo: p.typeVelo,
+      typeVelo: undefined,
       bestTimeMs,
       bestTimeFormatted: bestTimeMs != null ? formatMs(bestTimeMs) : null,
       rankScratch: null,

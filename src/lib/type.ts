@@ -13,10 +13,13 @@ export type ApiRow = {
   /** Si fournis par l'API, prioritaires sur athleteName */
   nom?: string;
   prenom?: string;
+  genre?: string;
   categoryName: string;
   raceTime: string | null;
   status: string | null;
   controlPoints?: ControlPoint[];
+  categoryRank?: number | null;
+  genderRank?: number | null;
 };
 
 export type Row = {
@@ -25,13 +28,13 @@ export type Row = {
   dossard: string;
   nom: string;
   prenom: string;
+  genre?: string;
   categorie: string;
   courseId: number;
   course: string;
   raceTime: string | null;
   status: string | null;
   controlPoints: ControlPoint[];
-  // 🆕 nouveaux champ
   categoryRank: number | null;
   genderRank: number | null;
 };
@@ -41,6 +44,7 @@ export type CategoryGenre = "Homme" | "Femme";
 export type Category = {
   id: number;
   alias: string;
+  libelle?: string;
   genre: CategoryGenre;
   ageMin: number;
   /** `null` = pas de limite supérieure (ex. 50 ans et +) */
@@ -52,7 +56,8 @@ export type UICategory = { id: number; alias: string };
 
 export type CategoryCreateDTO = {
   alias: string;
-  genre: CategoryGenre;
+  /** Déduit de l'alias (H/F) si omis. */
+  genre?: CategoryGenre;
   ageMin: number;
   ageMax: number | null;
 };
@@ -60,7 +65,7 @@ export type CategoryCreateDTO = {
 export type CategoryUpdateDTO = Partial<CategoryCreateDTO>;
 
 /** Types de course supportés */
-export const COURSE_TYPES = ["TRAIL", "DH", "XC", "ENDURO"] as const;
+export const COURSE_TYPES = ["TRAIL", "VTT", "DH", "XC", "ENDURO"] as const;
 export type CourseType = (typeof COURSE_TYPES)[number];
 
 export type CourseStatus = "A venir" | "En cours" | "Terminee";
@@ -78,6 +83,8 @@ export type Course = {
   dureeBarriereHoraire?: string;
   /** Technique (auto) — séquence PostgreSQL */
   nomSequence?: string;
+  tarif?: number;
+  description?: string;
   bibStart?: number;
   bibEnd?: number;
 };
@@ -86,10 +93,13 @@ export type CourseCreateDTO = {
   libelle: string;
   typeCourseId: number;
   distance: number;
-  totalDenivele: number;
-  dureeBarriereHoraire: string;
-  bibStart?: number;
-  bibEnd?: number;
+  /** @deprecated préférer denivelePositif */
+  totalDenivele?: number;
+  denivelePositif: number;
+  /** Vide / null = pas de barrière */
+  dureeBarriereHoraire?: string | null;
+  tarif: number;
+  description?: string | null;
 };
 
 export type CourseUpdateDTO = Partial<CourseCreateDTO>;
@@ -112,10 +122,12 @@ export type ParticipantCreateDTO = {
   nom: string;
   prenom: string;
   dateNaissance: string;     // yyyy-MM-dd
-  genre: "Homme" | "Femme";
+  genre: string;
   courseChoisieId: number;
-  /** Requis pour les courses DH uniquement */
-  typeVelo?: BikeType;
+  /** Alias taille T-shirt (XS…XXL) */
+  tailleTShirt?: string;
+  /** Alias taille T-shirt du parent / binôme (courses duo). */
+  tailleTShirtBinome?: string;
 };
 
 export type ParticipantResponse = {
@@ -125,7 +137,6 @@ export type ParticipantResponse = {
   genre: string;
   categorie: string;
   statut: string;
-  typeVelo?: string;
 };
 
 export type TypeVelo = {
@@ -178,27 +189,96 @@ export type RenderResponse<T> = {
 };
 
 export type ParticipantStatus =
+  | "Envoyée"
+  | "Attente validation"
+  | "Validée"
+  | "Refusée"
   | "Inscrit"
   | "Present"
+  | "Présent"
   | "En course"
   | "Finisher"
   | "DNS"
   | "DNF"
   | "DSQ";
 
+export type ParticipantListSource = "INSCRIPTION" | "PARTICIPANT";
+
 export type ParticipantProjection = {
   id: number;
   nom: string;
   prenom: string;
   numDossard: string;
-  genre: "Homme" | "Femme";
+  genre: string;
   aliasCategorie: string;
   courseId: number;
   courseLibelle: string;
   statut: ParticipantStatus;
   dateNaissance: string; // yyyy-MM-dd
   nomCourse?: string;
-  typeVelo?: BikeType;
+  /** Alias taille T-shirt (XS…XXL), optionnel si non renseigné */
+  tailleTShirt?: string;
+  tailleTShirtBinome?: string;
+  /** Commentaire de validation / refus d’inscription */
+  commentaireInscription?: string;
+  /** Compte ayant créé l’inscription */
+  email?: string;
+  contact?: string;
+  nomContactUrgence?: string;
+  telephoneContactUrgence?: string;
+  hasPieceIdentite?: boolean;
+  hasCertificatMedical?: boolean;
+  hasAutorisationParentale?: boolean;
+  pieceIdentiteUrl?: string;
+  certificatMedicalUrl?: string;
+  autorisationParentaleUrl?: string;
+  /** Inscription d’origine (détail participant). */
+  inscriptionId?: number | null;
+  /** Provenance de la ligne (liste multi-critère). */
+  source?: ParticipantListSource;
+};
+
+export type InscriptionReviewDecision = "Validée" | "Refusée";
+
+export type InscriptionDetail = {
+  id: number;
+  nom: string;
+  prenom: string;
+  dateNaissance: string;
+  genre: string;
+  tailleTShirt?: string;
+  tailleTShirtBinome?: string;
+  courseId: number;
+  courseLibelle: string;
+  statut: ParticipantStatus;
+  email?: string;
+  contact?: string;
+  nomContactUrgence?: string;
+  telephoneContactUrgence?: string;
+  hasPieceIdentite: boolean;
+  hasCertificatMedical: boolean;
+  hasAutorisationParentale: boolean;
+  pieceIdentiteUrl?: string;
+  certificatMedicalUrl?: string;
+  autorisationParentaleUrl?: string;
+  moyenPaiement?: string;
+  referencePaiement?: string;
+  montant?: number;
+  commentaire?: string;
+  submittedAt?: string;
+  participantId?: number | null;
+  numDossard?: string | null;
+};
+
+export type InscriptionReviewResponse = {
+  inscriptionId: number;
+  statut: string;
+  participantId?: number | null;
+  numDossard?: string | null;
+  /** true si l’e-mail a bien été envoyé après le commit métier */
+  mailEnvoye?: boolean;
+  /** raison affichable si l’envoi mail a échoué */
+  mailErreur?: string | null;
 };
 
 export type ParticipantUpdateDTO = {
@@ -208,11 +288,11 @@ export type ParticipantUpdateDTO = {
   nom: string;
   prenom: string;
   dateNaissance: string;
-  genre: CategoryGenre;
+  genre: string;
   courseChoisieId: number;
   statut: ParticipantStatus;
-  /** Requis pour les courses DH uniquement */
-  typeVelo?: BikeType;
+  tailleTShirt?: string;
+  tailleTShirtBinome?: string;
 };
 
 export interface ParticipantUpdateInfoResponse {
@@ -319,7 +399,7 @@ export type DHRankingRow = {
   prenom: string;
   nom: string;
   categorie: string;
-  genre: CategoryGenre;
+  genre: string;
   typeVelo?: BikeType;
   bestTimeMs: number | null;
   bestTimeFormatted: string | null;
@@ -336,7 +416,7 @@ export type XCRankingRow = {
   prenom: string;
   nom: string;
   categorie: string;
-  genre: CategoryGenre;
+  genre: string;
   timeMs: number | null;
   timeFormatted: string | null;
   rankScratch: number | null;
@@ -382,7 +462,7 @@ export type EnduroRankingRow = {
   prenom: string;
   nom: string;
   categorie: string;
-  genre: CategoryGenre;
+  genre: string;
   typeVelo?: BikeType;
   /** Somme des temps réalisés sur les spéciales chronométrées */
   totalTimeMs: number | null;

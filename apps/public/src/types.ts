@@ -22,6 +22,7 @@ export type Runner = {
   medicalCertificate: string;
   parentalAuthorization?: string;
   tshirtSize: string;
+  tshirtSizeBinome?: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
 };
@@ -33,6 +34,8 @@ export type Registration = {
   paymentReference: string;
   paymentMethod: PaymentMethod | "";
   totalAmount: number;
+  /** Présent une fois l’inscription validée. */
+  numDossard?: string | null;
   runner: Runner;
 };
 
@@ -47,6 +50,7 @@ export type RunnerDraft = {
   medicalFile: File | null;
   parentalFile: File | null;
   tshirtSize: string;
+  tshirtSizeBinome: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
 };
@@ -87,6 +91,7 @@ export const EMPTY_DRAFT: RunnerDraft = {
   medicalFile: null,
   parentalFile: null,
   tshirtSize: "",
+  tshirtSizeBinome: "",
   emergencyContactName: "",
   emergencyContactPhone: "",
 };

@@ -1,10 +1,12 @@
+import { Navigate } from "react-router-dom";
+import { ParticipantsPage } from "@/pages/Participants/ParticipantsPage";
+
+/** Index `/participants` — page unique admin / organisateur. */
+export function ParticipantsIndex() {
+  return <ParticipantsPage />;
+}
+
+/** Ancienne page stub : redirection vers la gestion participant. */
 export function OrganizerHomePage() {
-  return (
-    <div className="page-card p-6 sm:p-8 space-y-2">
-      <h1 className="page-title">Espace organisateur</h1>
-      <p className="text-sm text-muted-foreground">
-        Les pages de cet espace (participants, recherche, t-shirts) seront ajoutées ensuite.
-      </p>
-    </div>
-  );
+  return <Navigate to="/participants" replace />;
 }

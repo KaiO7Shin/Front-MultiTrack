@@ -46,6 +46,7 @@ export function normalizeCategory(raw: any): Category {
   return {
     id: Number(raw?.id ?? 0),
     alias,
+    libelle: raw?.libelle ? String(raw.libelle) : undefined,
     genre:
       genreFromApi === "Femme" || genreFromApi === "Homme"
         ? genreFromApi
@@ -154,6 +155,7 @@ export function normalizeCourseType(raw: unknown): CourseType {
   const upper = String(raw ?? "TRAIL").trim().toUpperCase();
   if (
     upper === "TRAIL" ||
+    upper === "VTT" ||
     upper === "DH" ||
     upper === "XC" ||
     upper === "ENDURO"
@@ -163,9 +165,9 @@ export function normalizeCourseType(raw: unknown): CourseType {
   return "TRAIL";
 }
 
-/** Courses VTT nécessitant un type de vélo à l'inscription (DH, Enduro). */
+/** Courses VTT nécessitant un type de vélo à l'inscription (VTT, DH, Enduro). */
 export function isBikeCourse(type: CourseType | undefined): boolean {
-  return type === "DH" || type === "ENDURO";
+  return type === "VTT" || type === "DH" || type === "ENDURO";
 }
 
 /** Courses configurées avec phases et manches (DH, XC, Enduro). */
@@ -206,13 +208,26 @@ export function normalizeBikeType(raw: unknown): BikeType | undefined {
   return undefined;
 }
 
+const TSHIRT_ALIASES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
+
+/** Normalise une taille T-shirt vers un alias connu (XS…XXL), sinon undefined. */
+export function normalizeTshirtSize(raw: unknown): string | undefined {
+  const alias = String(raw ?? "").trim().toUpperCase();
+  return TSHIRT_ALIASES.has(alias) ? alias : undefined;
+}
+
 export function normalizeParticipantStatus(raw: unknown): ParticipantStatus {
   const s = String(raw ?? "Inscrit").trim();
   if (s === "Finisher" || s === "Finished") return "Finisher";
   if (s.toUpperCase() === "DSQ") return "DSQ";
+  if (s === "Present" || s === "Présent") return "Présent";
   const allowed: ParticipantStatus[] = [
+    "Envoyée",
+    "Attente validation",
+    "Validée",
+    "Refusée",
     "Inscrit",
-    "Present",
+    "Présent",
     "En course",
     "Finisher",
     "DNS",
@@ -227,7 +242,7 @@ export function normalizeParticipantStatus(raw: unknown): ParticipantStatus {
 export function normalizeParticipantProjection(
   raw: Record<string, unknown>,
   courseIdFallback?: number
-): ParticipantProjection & { typeVelo?: BikeType } {
+): ParticipantProjection {
   const identity = normalizeParticipantIdentity({
     nom: raw.nom as string | undefined,
     prenom: raw.prenom as string | undefined,
@@ -241,14 +256,25 @@ export function normalizeParticipantProjection(
     raw.courseId ?? raw.courseChoisieId ?? raw.raceId ?? courseIdFallback ?? 0
   );
 
-  const typeVelo = normalizeBikeType(raw.typeVelo ?? raw.type_velo);
+  const tailleTShirt = normalizeTshirtSize(
+    raw.tailleTShirt ?? raw.tShirtSize ?? raw.tshirtSize
+  );
+  const tailleTShirtBinome = normalizeTshirtSize(
+    raw.tailleTShirtBinome ?? raw.tShirtSizeBinome ?? raw.tshirtSizeBinome
+  );
+
+  const sourceRaw = String(raw.source ?? "").trim().toUpperCase();
+  const source =
+    sourceRaw === "INSCRIPTION" || sourceRaw === "PARTICIPANT"
+      ? (sourceRaw as ParticipantProjection["source"])
+      : undefined;
 
   return {
     id: Number(raw.id ?? raw.participantId ?? 0),
     nom: fallbackName.nom,
     prenom: fallbackName.prenom,
-    numDossard: String(raw.numDossard ?? raw.bibNumber ?? ""),
-    genre: raw.genre === "Femme" ? "Femme" : "Homme",
+    numDossard: String(raw.numDossard ?? raw.bibNumber ?? "").trim(),
+    genre: String(raw.genre ?? "").trim(),
     aliasCategorie: String(
       raw.aliasCategorie ?? raw.categorie ?? raw.categoryName ?? ""
     ).trim(),
@@ -261,7 +287,42 @@ export function normalizeParticipantProjection(
       raw.dateNaissance ?? raw.date_naissance ?? raw.birthDate ?? ""
     ),
     nomCourse: String(raw.nomCourse ?? raw.courseLibelle ?? raw.courseName ?? ""),
-    typeVelo,
+    ...(tailleTShirt ? { tailleTShirt } : {}),
+    ...(tailleTShirtBinome ? { tailleTShirtBinome } : {}),
+    ...(raw.email ? { email: String(raw.email) } : {}),
+    ...(raw.contact ? { contact: String(raw.contact) } : {}),
+    ...(raw.nomContactUrgence
+      ? { nomContactUrgence: String(raw.nomContactUrgence) }
+      : {}),
+    ...(raw.telephoneContactUrgence
+      ? { telephoneContactUrgence: String(raw.telephoneContactUrgence) }
+      : {}),
+    ...(raw.hasPieceIdentite != null
+      ? { hasPieceIdentite: Boolean(raw.hasPieceIdentite) }
+      : {}),
+    ...(raw.hasCertificatMedical != null
+      ? { hasCertificatMedical: Boolean(raw.hasCertificatMedical) }
+      : {}),
+    ...(raw.hasAutorisationParentale != null
+      ? { hasAutorisationParentale: Boolean(raw.hasAutorisationParentale) }
+      : {}),
+    ...(raw.pieceIdentiteUrl
+      ? { pieceIdentiteUrl: String(raw.pieceIdentiteUrl).trim() }
+      : {}),
+    ...(raw.certificatMedicalUrl
+      ? { certificatMedicalUrl: String(raw.certificatMedicalUrl).trim() }
+      : {}),
+    ...(raw.autorisationParentaleUrl
+      ? { autorisationParentaleUrl: String(raw.autorisationParentaleUrl).trim() }
+      : {}),
+    inscriptionId:
+      raw.inscriptionId != null && raw.inscriptionId !== ""
+        ? Number(raw.inscriptionId)
+        : null,
+    ...(raw.commentaireInscription
+      ? { commentaireInscription: String(raw.commentaireInscription) }
+      : {}),
+    ...(source ? { source } : {}),
   };
 }
 
@@ -271,16 +332,31 @@ export function normalizeCourseFull(raw: any): Course {
 
   return {
     id,
-    name: String(raw?.name ?? raw?.label ?? raw?.title ?? `Course #${id}`),
-    type: normalizeCourseType(raw?.type ?? raw?.raceType ?? raw?.courseType),
+    name: String(
+      raw?.name ?? raw?.label ?? raw?.libelle ?? raw?.title ?? `Course #${id}`
+    ),
+    type: normalizeCourseType(
+      raw?.type ?? raw?.raceType ?? raw?.courseType ?? raw?.typeCourse
+    ),
     distanceKm: numOrUndef(raw?.distanceKm ?? raw?.distance_km ?? raw?.distance),
-    elevation: numOrUndef(raw?.elevation ?? raw?.elevation_gain ?? raw?.ascent),
+    elevation: numOrUndef(
+      raw?.elevation ??
+        raw?.elevation_gain ??
+        raw?.ascent ??
+        raw?.denivelePositif ??
+        raw?.denivele_positif
+    ),
     startAt: raw?.startAt ?? raw?.start_at ?? raw?.start_time ?? raw?.start_date_time,
     status: normalizeCourseStatus(raw?.status ?? raw?.status_label ?? raw?.code ?? raw?.state),
     checkpoints: intOrZero(raw?.checkpoints ?? raw?.checkpoints_count ?? raw?.cps),
     dureeBarriereHoraire:
       raw?.dureeBarriereHoraire ?? raw?.duree_barriere_horaire ?? raw?.barrier_time,
     nomSequence: raw?.nomSequence ?? raw?.nom_sequence,
+    tarif: numOrUndef(raw?.tarif),
+    description:
+      raw?.description == null || raw?.description === ""
+        ? undefined
+        : String(raw.description),
     bibStart: numOrUndef(raw?.bibStart ?? raw?.bib_start),
     bibEnd: numOrUndef(raw?.bibEnd ?? raw?.bib_end),
     typeCourseId: numOrUndef(raw?.typeCourseId ?? raw?.type_course_id),
@@ -343,18 +419,16 @@ export function toRow(apiRow: any, ctx: { raceId: number; raceLabel: string }): 
 
   return {
     participantId: apiRow.participantId,
-    rank: apiRow.rank, // ✅ rang officiel
+    rank: apiRow.rank,
     dossard: apiRow.bibNumber,
     nom: fallback.nom,
     prenom: fallback.prenom,
+    genre: apiRow.genre === "Femme" ? "Femme" : apiRow.genre === "Homme" ? "Homme" : undefined,
     categorie: apiRow.categoryName,
     raceTime: apiRow.raceTime,
     status: apiRow.status,
-
-    // 🆕 nouveaux champs
-    categoryRank: apiRow.categoryRank,
-    genderRank: apiRow.genderRank,
-
+    categoryRank: apiRow.categoryRank ?? null,
+    genderRank: apiRow.genderRank ?? null,
     courseId: ctx.raceId,
     course: ctx.raceLabel,
     controlPoints: apiRow.controlPoints ?? [],

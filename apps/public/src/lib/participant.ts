@@ -1,5 +1,6 @@
 import { EVENT_INFO } from "../data/catalog";
 import type { Runner, RunnerDraft } from "../types";
+import { needsPartnerTShirt, partnerTShirtChoiceMessage } from "./duoCourses";
 import { isValidPhone } from "./utils";
 
 const ACCEPTED_EXTENSIONS = ["pdf", "png", "jpg", "jpeg"];
@@ -49,6 +50,7 @@ export function isDraftComplete(draft: RunnerDraft) {
     draft.courseId &&
     draft.identityFile &&
     draft.tshirtSize &&
+    (!needsPartnerTShirt(draft.race) || draft.tshirtSizeBinome) &&
     draft.emergencyContactName.trim() &&
     isValidPhone(draft.emergencyContactPhone),
   );
@@ -84,6 +86,9 @@ export function validateDraft(draft: RunnerDraft): string | null {
     if (parentalError) return parentalError;
   }
   if (!draft.tshirtSize) return "Choisissez une taille de t-shirt.";
+  if (needsPartnerTShirt(draft.race) && !draft.tshirtSizeBinome) {
+    return partnerTShirtChoiceMessage(draft.race);
+  }
   if (!draft.emergencyContactName.trim()) return "Saisissez le nom du contact d’urgence.";
   if (!isValidPhone(draft.emergencyContactPhone)) {
     return "Saisissez un numéro de téléphone valide pour le contact d’urgence.";
@@ -115,6 +120,7 @@ export function draftToRunner(draft: RunnerDraft): Runner {
     medicalCertificate: draft.medicalFile?.name ?? "",
     parentalAuthorization: isMinor(draft.birthDate) ? draft.parentalFile?.name || undefined : undefined,
     tshirtSize: draft.tshirtSize,
+    tshirtSizeBinome: draft.tshirtSizeBinome || undefined,
     emergencyContactName: draft.emergencyContactName.trim(),
     emergencyContactPhone: draft.emergencyContactPhone,
   };

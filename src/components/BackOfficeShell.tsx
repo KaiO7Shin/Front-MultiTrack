@@ -1,11 +1,14 @@
-import { useEffect, type ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import {
+  ChevronDown,
   Flag,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Menu,
   ScanLine,
+  Shirt,
   Tags,
   Trophy,
   UserCog,
@@ -15,14 +18,21 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import multitrackLogo from "@/assets/multitrack.svg";
-import type { BackOfficeNavItem } from "@/config/backOfficeNav";
+import {
+  groupIdForPath,
+  type BackOfficeNavEntry,
+  type BackOfficeNavLink,
+} from "@/config/backOfficeNav";
 
 const NAV_ICONS: Record<string, LucideIcon> = {
   "/dashboard": LayoutDashboard,
   "/courses": Flag,
   "/categories": Tags,
+  "/statuts": ListChecks,
+  "/eligibilites": Tags,
   "/participants": Users,
   "/participants/add": UserPlus,
+  "/tshirts": Shirt,
   "/checkpoint/scan": ScanLine,
   "/pointeurs": UserCog,
   "/leaderboard": Trophy,
@@ -30,7 +40,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
 
 type BackOfficeShellProps = {
   homeTo: string;
-  navItems: BackOfficeNavItem[];
+  navItems: BackOfficeNavEntry[];
   roleLabel: string;
   userName?: string | null;
   open: boolean;
@@ -38,6 +48,39 @@ type BackOfficeShellProps = {
   onLogout: () => void;
   children: ReactNode;
 };
+
+function navLinkClass(isActive: boolean, nested = false) {
+  return `flex items-center gap-3 rounded-lg text-sm font-medium transition ${
+    nested ? "px-3 py-2" : "px-3 py-2.5"
+  } ${
+    isActive
+      ? "bg-brand-muted text-brand"
+      : "text-muted-foreground hover:bg-muted hover:text-brand"
+  }`;
+}
+
+function NavEntryLink({
+  item,
+  nested,
+  onNavigate,
+}: {
+  item: BackOfficeNavLink;
+  nested?: boolean;
+  onNavigate: () => void;
+}) {
+  const Icon = NAV_ICONS[item.to] ?? Flag;
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      onClick={onNavigate}
+      className={({ isActive }) => navLinkClass(isActive, nested)}
+    >
+      <Icon className="h-4 w-4 shrink-0" aria-hidden />
+      {item.label}
+    </NavLink>
+  );
+}
 
 export function BackOfficeShell({
   homeTo,
@@ -49,6 +92,11 @@ export function BackOfficeShell({
   onLogout,
   children,
 }: BackOfficeShellProps) {
+  const location = useLocation();
+  const [openGroupId, setOpenGroupId] = useState<string | null>(() =>
+    groupIdForPath(location.pathname, navItems)
+  );
+
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -57,6 +105,16 @@ export function BackOfficeShell({
       document.body.style.overflow = prev;
     };
   }, [open]);
+
+  useEffect(() => {
+    setOpenGroupId(groupIdForPath(location.pathname, navItems));
+  }, [location.pathname, navItems]);
+
+  const closeMobile = () => onOpenChange(false);
+
+  const toggleGroup = (id: string) => {
+    setOpenGroupId((prev) => (prev === id ? null : id));
+  };
 
   const sidebar = (
     <aside id="sidebar" className="bo-sidebar" aria-label="Navigation principale">
@@ -67,32 +125,58 @@ export function BackOfficeShell({
         <button
           type="button"
           className="rounded-lg p-2 text-muted-foreground hover:bg-muted lg:hidden"
-          onClick={() => onOpenChange(false)}
+          onClick={closeMobile}
           aria-label="Fermer le menu"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-        {navItems.map((item) => {
-          const Icon = NAV_ICONS[item.to] ?? Flag;
+        {navItems.map((entry) => {
+          if (entry.kind === "link") {
+            return (
+              <NavEntryLink
+                key={entry.to}
+                item={entry}
+                onNavigate={closeMobile}
+              />
+            );
+          }
+
+          const isOpen = openGroupId === entry.id;
+          const groupActive = groupIdForPath(location.pathname, [entry]) === entry.id;
+
           return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={() => onOpenChange(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                  isActive
-                    ? "bg-brand-muted text-brand"
+            <div key={entry.id} className="flex flex-col gap-0.5">
+              <button
+                type="button"
+                onClick={() => toggleGroup(entry.id)}
+                aria-expanded={isOpen}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
+                  groupActive
+                    ? "text-brand"
                     : "text-muted-foreground hover:bg-muted hover:text-brand"
-                }`
-              }
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              {item.label}
-            </NavLink>
+                }`}
+              >
+                <span className="flex-1">{entry.label}</span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  aria-hidden
+                />
+              </button>
+              {isOpen && (
+                <div className="ml-2 flex flex-col gap-0.5 border-l border-border pl-2">
+                  {entry.children.map((child) => (
+                    <NavEntryLink
+                      key={child.to}
+                      item={child}
+                      nested
+                      onNavigate={closeMobile}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
@@ -112,7 +196,7 @@ export function BackOfficeShell({
           type="button"
           className="fixed inset-0 z-30 bg-navy/40 lg:hidden"
           aria-label="Fermer le menu"
-          onClick={() => onOpenChange(false)}
+          onClick={closeMobile}
         />
       )}
       <div className={`${open ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 w-[270px] transition-transform lg:translate-x-0`}>

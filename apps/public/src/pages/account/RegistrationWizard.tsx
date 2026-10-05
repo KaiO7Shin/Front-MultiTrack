@@ -8,6 +8,7 @@ import { findRace } from "../../services/catalogService";
 import { useCourses } from "../../hooks/useCourses";
 import type { MissingFileNames } from "../../hooks/useRegistrationDraft";
 import type { Registration, RunnerDraft } from "../../types";
+import { ConfirmModal } from "../../components/ConfirmModal";
 import { PaymentModal, Summary } from "./PaymentSummary";
 import { RulesStep, RunnerStep } from "./RunnerStep";
 
@@ -36,7 +37,10 @@ export function RegistrationWizard({
 }) {
   const [stepError, setStepError] = useState("");
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const pendingRegistration = useRef<Registration | null>(null);
+  const acknowledging = useRef(false);
   const wizardRef = useRef<HTMLDivElement>(null);
   const { courses } = useCourses();
   const selectedCourse = courses.find((course) => course.id === draft.courseId);
@@ -100,8 +104,24 @@ export function RegistrationWizard({
       setStepError(result.error);
       return;
     }
-    await onClearDraft();
-    onValidate(mapInscription(result.data));
+    pendingRegistration.current = mapInscription(result.data);
+    acknowledging.current = false;
+    setLoading(false);
+    setPaymentOpen(false);
+    setSuccessOpen(true);
+  }
+
+  function acknowledgeSuccess() {
+    if (acknowledging.current) return;
+    acknowledging.current = true;
+    const registration = pendingRegistration.current;
+    pendingRegistration.current = null;
+    setSuccessOpen(false);
+    if (!registration) return;
+    void (async () => {
+      await onClearDraft();
+      onValidate(registration);
+    })();
   }
 
   return (
@@ -176,6 +196,18 @@ export function RegistrationWizard({
           onValidate={validate}
         />
       )}
+      <ConfirmModal
+        open={successOpen}
+        title="Inscription envoyée avec succès !"
+        message="Votre inscription a bien été enregistrée."
+        details="Vous recevrez un e-mail après validation par notre équipe."
+        note="Pensez à vérifier vos spams si vous ne recevez pas notre e-mail."
+        confirmLabel="Compris"
+        showCancel={false}
+        icon={<img src="/check.svg" alt="" width={28} height={28} />}
+        onCancel={acknowledgeSuccess}
+        onConfirm={acknowledgeSuccess}
+      />
     </div>
   );
 }

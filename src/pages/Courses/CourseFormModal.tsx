@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { Alert } from "@/components/ui/feedback";
 import type { Course, CourseCreateDTO, TypeCourse } from "@/lib/type";
 import { fetchTypesCourse } from "@/services/typesCourse";
 
@@ -13,31 +14,24 @@ type CourseFormModalProps = {
   onSubmit: (dto: CourseCreateDTO) => void;
 };
 
-function toTimeInput(value?: string): string {
-  if (!value) return "04:00";
+function toTimeInput(value?: string | null): string {
+  if (!value) return "";
   return value.length >= 5 ? value.slice(0, 5) : value;
 }
 
-function toTimeApi(value: string): string {
-  if (!value) return "04:00:00";
+function toTimeApi(value: string): string | null {
+  if (!value.trim()) return null;
   return value.length === 5 ? `${value}:00` : value;
-}
-
-function rangesFromType(type?: TypeCourse | null): Pick<CourseCreateDTO, "bibStart" | "bibEnd"> {
-  return {
-    bibStart: type?.bibStart,
-    bibEnd: type?.bibEnd,
-  };
 }
 
 const emptyForm: CourseCreateDTO = {
   libelle: "",
   typeCourseId: 0,
   distance: 0,
-  totalDenivele: 0,
-  dureeBarriereHoraire: "04:00",
-  bibStart: undefined,
-  bibEnd: undefined,
+  denivelePositif: 0,
+  dureeBarriereHoraire: null,
+  tarif: 0,
+  description: null,
 };
 
 export function CourseFormModal({
@@ -51,6 +45,7 @@ export function CourseFormModal({
 }: CourseFormModalProps) {
   const [form, setForm] = useState<CourseCreateDTO>(emptyForm);
   const [types, setTypes] = useState<TypeCourse[]>([]);
+  const [barriere, setBarriere] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -72,11 +67,12 @@ export function CourseFormModal({
         libelle: initial.name,
         typeCourseId,
         distance: initial.distanceKm ?? 0,
-        totalDenivele: initial.elevation ?? 0,
-        dureeBarriereHoraire: toTimeInput(initial.dureeBarriereHoraire),
-        bibStart: initial.bibStart,
-        bibEnd: initial.bibEnd,
+        denivelePositif: initial.elevation ?? 0,
+        dureeBarriereHoraire: initial.dureeBarriereHoraire ?? null,
+        tarif: initial.tarif ?? 0,
+        description: initial.description ?? null,
       });
+      setBarriere(toTimeInput(initial.dureeBarriereHoraire));
       return;
     }
 
@@ -84,36 +80,19 @@ export function CourseFormModal({
     setForm({
       ...emptyForm,
       typeCourseId: defaultType?.id ?? 0,
-      ...rangesFromType(defaultType),
     });
+    setBarriere("");
   }, [open, mode, initial, types]);
 
   if (!open) return null;
 
-  const selectedType = types.find((t) => t.id === form.typeCourseId);
-  const rangeValid =
-    form.bibStart != null &&
-    form.bibEnd != null &&
-    form.bibStart >= 1 &&
-    form.bibEnd >= form.bibStart;
-
   const isValid =
     form.libelle.trim().length > 0 &&
-    form.libelle.trim().length <= 25 &&
+    form.libelle.trim().length <= 75 &&
     form.typeCourseId > 0 &&
     form.distance > 0 &&
-    form.totalDenivele >= 0 &&
-    form.dureeBarriereHoraire.length > 0 &&
-    rangeValid;
-
-  function applyTypeDefaults(typeCourseId: number) {
-    const type = types.find((t) => t.id === typeCourseId);
-    setForm((f) => ({
-      ...f,
-      typeCourseId,
-      ...rangesFromType(type),
-    }));
-  }
+    form.denivelePositif > 0 &&
+    form.tarif > 0;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -121,10 +100,10 @@ export function CourseFormModal({
       libelle: form.libelle.trim(),
       typeCourseId: form.typeCourseId,
       distance: form.distance,
-      totalDenivele: form.totalDenivele,
-      dureeBarriereHoraire: toTimeApi(form.dureeBarriereHoraire),
-      bibStart: form.bibStart,
-      bibEnd: form.bibEnd,
+      denivelePositif: form.denivelePositif,
+      dureeBarriereHoraire: toTimeApi(barriere),
+      tarif: form.tarif,
+      description: form.description?.trim() || null,
     });
   }
 
@@ -162,6 +141,12 @@ export function CourseFormModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
+          {error && (
+            <Alert variant="error" role="alert">
+              {error}
+            </Alert>
+          )}
+
           <div className="space-y-1">
             <label htmlFor="course-libelle" className="text-xs font-medium text-slate-600">
               Libellé *
@@ -169,14 +154,14 @@ export function CourseFormModal({
             <input
               id="course-libelle"
               required
-              maxLength={25}
+              maxLength={75}
               className="w-full rounded-lg border px-3 py-2 text-sm"
-              placeholder="Ex. Boucle des collines"
+              placeholder="Ex. Challenge Initiation — Trail 12 km"
               value={form.libelle}
               onChange={(e) => setForm((f) => ({ ...f, libelle: e.target.value }))}
               disabled={saving}
             />
-            <p className="text-[10px] text-slate-400">25 caractères max.</p>
+            <p className="text-[10px] text-slate-400">75 caractères max. Unique.</p>
           </div>
 
           <div className="space-y-1">
@@ -188,7 +173,9 @@ export function CourseFormModal({
               required
               className="w-full rounded-lg border px-3 py-2 text-sm"
               value={form.typeCourseId || ""}
-              onChange={(e) => applyTypeDefaults(Number(e.target.value))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, typeCourseId: Number(e.target.value) }))
+              }
               disabled={saving || types.length === 0}
             >
               {types.length === 0 ? (
@@ -233,101 +220,79 @@ export function CourseFormModal({
                 id="course-elevation"
                 type="number"
                 required
-                min={0}
+                min={0.01}
                 step={1}
                 className="w-full rounded-lg border px-3 py-2 text-sm"
-                value={form.totalDenivele || ""}
+                value={form.denivelePositif || ""}
                 onChange={(e) =>
                   setForm((f) => ({
                     ...f,
-                    totalDenivele: e.target.value ? Number(e.target.value) : 0,
+                    denivelePositif: e.target.value ? Number(e.target.value) : 0,
                   }))
                 }
                 disabled={saving}
               />
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <label
-              htmlFor="course-barriere"
-              className="text-xs font-medium text-slate-600"
-            >
-              Barrière horaire *
-            </label>
-            <input
-              id="course-barriere"
-              type="time"
-              required
-              step={60}
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-              value={form.dureeBarriereHoraire}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  dureeBarriereHoraire: e.target.value,
-                }))
-              }
-              disabled={saving}
-            />
-            <p className="text-[10px] text-slate-400">
-              Durée limite pour terminer la course (ex. 04:00 = 4 h).
-            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
-              <label htmlFor="course-bib-start" className="text-xs font-medium text-slate-600">
-                Dossard début *
+              <label htmlFor="course-tarif" className="text-xs font-medium text-slate-600">
+                Tarif *
               </label>
               <input
-                id="course-bib-start"
+                id="course-tarif"
                 type="number"
                 required
-                min={1}
-                step={1}
+                min={0.01}
+                step={100}
                 className="w-full rounded-lg border px-3 py-2 text-sm"
-                value={form.bibStart ?? ""}
+                value={form.tarif || ""}
                 onChange={(e) =>
                   setForm((f) => ({
                     ...f,
-                    bibStart: e.target.value ? Number(e.target.value) : undefined,
+                    tarif: e.target.value ? Number(e.target.value) : 0,
                   }))
                 }
                 disabled={saving}
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor="course-bib-end" className="text-xs font-medium text-slate-600">
-                Dossard fin *
+              <label
+                htmlFor="course-barriere"
+                className="text-xs font-medium text-slate-600"
+              >
+                Barrière horaire
               </label>
               <input
-                id="course-bib-end"
-                type="number"
-                required
-                min={1}
-                step={1}
+                id="course-barriere"
+                type="time"
+                step={60}
                 className="w-full rounded-lg border px-3 py-2 text-sm"
-                value={form.bibEnd ?? ""}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    bibEnd: e.target.value ? Number(e.target.value) : undefined,
-                  }))
-                }
+                value={barriere}
+                onChange={(e) => setBarriere(e.target.value)}
                 disabled={saving}
               />
+              <p className="text-[10px] text-slate-400">Optionnel.</p>
             </div>
           </div>
-          <p className="text-[10px] text-slate-400 -mt-2">
-            {selectedType
-              ? `${selectedType.libelle} : ${selectedType.bibStart ?? "?"}–${selectedType.bibEnd ?? "?"} par défaut — modifiable si une autre course utilise déjà cette plage.`
-              : "Plage de dossards pour cette course (ex. XC 1–100, DH 101–200, Enduro 201–300)."}
-          </p>
 
-          {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
-          )}
+          <div className="space-y-1">
+            <label htmlFor="course-description" className="text-xs font-medium text-slate-600">
+              Description
+            </label>
+            <textarea
+              id="course-description"
+              rows={3}
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+              placeholder="Description optionnelle"
+              value={form.description ?? ""}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, description: e.target.value }))
+              }
+              disabled={saving}
+            />
+          </div>
 
           <div className="flex justify-end gap-2 border-t pt-4">
             <button

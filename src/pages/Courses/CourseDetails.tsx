@@ -7,7 +7,7 @@ import {
   formatDurationBetween,
   formatTimeShort,
   normalizeCourseStatus,
-  usesPhaseMancheStructure,
+  // usesPhaseMancheStructure, // phases/manches désactivés pour cette version
 } from "@/lib/utils";
 import { fetchCoursesDetailed } from "@/services/courses";
 import {
@@ -21,14 +21,14 @@ import {
   updatePhase,
 } from "@/services/raceStructure";
 import {
-  createControlPoint,
-  deleteControlPoint,
+  // createControlPoint, // création PC désactivée pour cette version
+  // deleteControlPoint,
   fetchControlPointsByCourse,
-  updateControlPoint,
+  // updateControlPoint,
 } from "@/services/controlPoints";
 import { PhaseFormModal } from "./PhaseFormModal";
 import { MancheFormModal } from "./MancheFormModal";
-import { ControlPointFormModal } from "./ControlPointFormModal";
+// import { ControlPointFormModal } from "./ControlPointFormModal";
 import type { ControlPointConfig } from "@/lib/type";
 
 export const CourseDetails = () => {
@@ -61,12 +61,15 @@ export const CourseDetails = () => {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [controlPoints, setControlPoints] = useState<ControlPointConfig[]>([]);
-  const [cpModal, setCpModal] = useState<{
-    open: boolean;
-    mode: "create" | "edit";
-    target: ControlPointConfig | null;
-  }>({ open: false, mode: "create", target: null });
-  const [revealedPasscode, setRevealedPasscode] = useState<string | null>(null);
+  // CRUD PC (création / édition / suppression) désactivé pour cette version TBB
+  // const [cpModal, setCpModal] = useState<{
+  //   open: boolean;
+  //   mode: "create" | "edit";
+  //   target: ControlPointConfig | null;
+  // }>({ open: false, mode: "create", target: null });
+  // const [revealedPasscode, setRevealedPasscode] = useState<string | null>(null);
+  // Remettre à true pour réactiver création / édition / suppression des PC
+  // const allowControlPointMutation = false;
 
   const loadCourse = useCallback(async () => {
     const list = await fetchCoursesDetailed();
@@ -111,8 +114,8 @@ export const CourseDetails = () => {
 
   useEffect(() => {
     loadCourse();
-    loadStructure();
-  }, [loadCourse, loadStructure]);
+    // loadStructure(); // phases/manches désactivés pour cette version
+  }, [loadCourse]);
 
   useEffect(() => {
     loadControlPoints();
@@ -122,15 +125,14 @@ export const CourseDetails = () => {
     loadResultats();
   }, [loadResultats]);
 
-  const showStructure = useMemo(
-    () => usesPhaseMancheStructure(course?.type),
-    [course?.type]
-  );
+  // Phases & manches désactivés pour cette version TBB
+  const showStructure = false;
+  // const showStructure = useMemo(
+  //   () => usesPhaseMancheStructure(course?.type),
+  //   [course?.type]
+  // );
 
-  const showControlPoints = useMemo(
-    () => course?.type === "TRAIL",
-    [course?.type]
-  );
+  const showControlPoints = Boolean(course);
 
   const totalManches = useMemo(
     () => structure.reduce((n, p) => n + p.manches.length, 0),
@@ -214,49 +216,50 @@ export const CourseDetails = () => {
     }
   }
 
-  async function handleControlPointSubmit(dto: {
-    courseId: number;
-    label: string;
-    numero: number;
-    passcode?: string;
-  }) {
-    setSaving(true);
-    setFormError(null);
-    setRevealedPasscode(null);
-    try {
-      if (cpModal.mode === "create") {
-        const created = await createControlPoint(dto);
-        if (created.passcode) setRevealedPasscode(created.passcode);
-      } else if (cpModal.target) {
-        const updated = await updateControlPoint(cpModal.target.id, {
-          label: dto.label,
-          numero: dto.numero,
-          passcode: dto.passcode,
-        });
-        if (updated.passcode) setRevealedPasscode(updated.passcode);
-      }
-      setCpModal({ open: false, mode: "create", target: null });
-      await loadControlPoints();
-      await loadCourse();
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } } };
-      setFormError(err.response?.data?.message ?? "Erreur point de contrôle");
-    } finally {
-      setSaving(false);
-    }
-  }
+  // CRUD points de contrôle désactivé pour cette version TBB
+  // async function handleControlPointSubmit(dto: {
+  //   courseId: number;
+  //   label: string;
+  //   numero: number;
+  //   passcode?: string;
+  // }) {
+  //   setSaving(true);
+  //   setFormError(null);
+  //   setRevealedPasscode(null);
+  //   try {
+  //     if (cpModal.mode === "create") {
+  //       const created = await createControlPoint(dto);
+  //       if (created.passcode) setRevealedPasscode(created.passcode);
+  //     } else if (cpModal.target) {
+  //       const updated = await updateControlPoint(cpModal.target.id, {
+  //         label: dto.label,
+  //         numero: dto.numero,
+  //         passcode: dto.passcode,
+  //       });
+  //       if (updated.passcode) setRevealedPasscode(updated.passcode);
+  //     }
+  //     setCpModal({ open: false, mode: "create", target: null });
+  //     await loadControlPoints();
+  //     await loadCourse();
+  //   } catch (e: unknown) {
+  //     const err = e as { response?: { data?: { message?: string } } };
+  //     setFormError(err.response?.data?.message ?? "Erreur point de contrôle");
+  //   } finally {
+  //     setSaving(false);
+  //   }
+  // }
 
-  async function handleDeleteControlPoint(cp: ControlPointConfig) {
-    if (!window.confirm(`Supprimer le point « ${cp.label} » ?`)) return;
-    try {
-      await deleteControlPoint(cp.id);
-      await loadControlPoints();
-      await loadCourse();
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } } };
-      alert(err.response?.data?.message ?? "Erreur lors de la suppression.");
-    }
-  }
+  // async function handleDeleteControlPoint(cp: ControlPointConfig) {
+  //   if (!window.confirm(`Supprimer le point « ${cp.label} » ?`)) return;
+  //   try {
+  //     await deleteControlPoint(cp.id);
+  //     await loadControlPoints();
+  //     await loadCourse();
+  //   } catch (e: unknown) {
+  //     const err = e as { response?: { data?: { message?: string } } };
+  //     alert(err.response?.data?.message ?? "Erreur lors de la suppression.");
+  //   }
+  // }
 
   if (!course) {
     return (
@@ -476,25 +479,29 @@ export const CourseDetails = () => {
               <div className="min-w-0">
                 <h2 className="font-semibold">Points de contrôle</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Chaque point génère un passcode collaborateur pour le scan
-                  dossard sur la page checkpoint.
+                  Consultation seule pour cette version. La création / édition
+                  de PC est temporairement désactivée.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setFormError(null);
-                  setRevealedPasscode(null);
-                  setCpModal({ open: true, mode: "create", target: null });
-                }}
-                className="inline-flex items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-[#8c9962]/10 shrink-0 w-full sm:w-auto"
-              >
-                <Plus className="h-3 w-3" />
-                Point de contrôle
-              </button>
+              {/* Création PC désactivée pour cette version TBB
+              {allowControlPointMutation && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormError(null);
+                    setRevealedPasscode(null);
+                    setCpModal({ open: true, mode: "create", target: null });
+                  }}
+                  className="inline-flex items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs hover:bg-[#8c9962]/10 shrink-0 w-full sm:w-auto"
+                >
+                  <Plus className="h-3 w-3" />
+                  Point de contrôle
+                </button>
+              )}
+              */}
             </div>
 
-            {revealedPasscode && (
+            {/* {revealedPasscode && (
               <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                 Passcode collaborateur :{" "}
                 <strong className="font-mono">{revealedPasscode}</strong>
@@ -502,13 +509,11 @@ export const CourseDetails = () => {
                   Notez-le maintenant : il ne sera plus affiché ensuite.
                 </span>
               </div>
-            )}
+            )} */}
 
             {controlPoints.length === 0 ? (
               <p className="text-sm text-slate-500 py-4">
-                Aucun point de contrôle. Ajoutez au moins un PC intermédiaire ;
-                l'arrivée finale se fait via le mode arrivée (admin) ou un PC
-                dédié.
+                Aucun point de contrôle pour cette course.
               </p>
             ) : (
               <ul className="mt-4 divide-y rounded-xl border overflow-hidden">
@@ -523,32 +528,36 @@ export const CourseDetails = () => {
                         n°{cp.numero}
                       </span>
                     </div>
-                    <div className="flex gap-1 shrink-0">
-                      <button
-                        type="button"
-                        className="p-1 rounded hover:bg-slate-100"
-                        title="Modifier"
-                        onClick={() => {
-                          setFormError(null);
-                          setRevealedPasscode(null);
-                          setCpModal({
-                            open: true,
-                            mode: "edit",
-                            target: cp,
-                          });
-                        }}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        className="p-1 rounded text-red-600 hover:bg-red-50"
-                        title="Supprimer"
-                        onClick={() => handleDeleteControlPoint(cp)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                    {/* Édition / suppression PC désactivées pour cette version
+                    {allowControlPointMutation && (
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          type="button"
+                          className="p-1 rounded hover:bg-slate-100"
+                          title="Modifier"
+                          onClick={() => {
+                            setFormError(null);
+                            setRevealedPasscode(null);
+                            setCpModal({
+                              open: true,
+                              mode: "edit",
+                              target: cp,
+                            });
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-1 rounded text-red-600 hover:bg-red-50"
+                          title="Supprimer"
+                          onClick={() => handleDeleteControlPoint(cp)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                    */}
                   </li>
                 ))}
               </ul>
@@ -662,6 +671,7 @@ export const CourseDetails = () => {
         />
       )}
 
+      {/* CRUD PC désactivé pour cette version TBB
       <ControlPointFormModal
         open={cpModal.open}
         mode={cpModal.mode}
@@ -676,6 +686,7 @@ export const CourseDetails = () => {
         }}
         onSubmit={handleControlPointSubmit}
       />
+      */}
     </section>
   );
 };

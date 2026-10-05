@@ -1,3 +1,4 @@
+// Phases / manches : désactivés pour cette version TBB (UI CourseDetails + endpoints commentés).
 // API désactivée : données statiques du back-office.
 // import api from "@/lib/api";
 // import { API } from "@/lib/apiEndpoints";

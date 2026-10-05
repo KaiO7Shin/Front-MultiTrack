@@ -6,7 +6,6 @@ import {
 import type {
   ApiRow,
   AssignedManche,
-  BikeType,
   Category,
   CategoryCreateDTO,
   CategoryGenre,
@@ -129,22 +128,24 @@ function trailCourse(
 }
 
 const courses: Course[] = [
-  trailCourse(1, "Boucle des collines", 1, 12, 310, 1, {
+  // Trail (SENTIER)
+  trailCourse(3, "Challenge Parent-Enfant — Trail 10 km", 1, 10, 210, 161),
+  trailCourse(1, "Challenge Initiation — Trail 12 km", 1, 12, 310, 1, {
     status: "En cours",
     startAt: liveStart,
     checkpoints: 2,
   }),
-  trailCourse(2, "Boucle des cretes", 1, 16, 470, 81),
-  trailCourse(3, "Boucle familiale", 1, 10, 210, 161),
-  trailCourse(4, "Boucle du sommet", 1, 25, 570, 241),
-  trailCourse(5, "Boucle en duo", 1, 25, 570, 321),
-  trailCourse(6, "Circuit familial", 2, 10, 210, 500),
-  trailCourse(7, "Circuit du sommet", 2, 25, 570, 581, {
+  trailCourse(2, "Challenge Explorateur — Trail 16 km", 1, 16, 470, 81),
+  trailCourse(4, "Challenge Suprême — Trail 25 km", 1, 25, 570, 241),
+  trailCourse(5, "Challenge des Amoureux — Trail 25 km", 1, 25, 570, 321),
+  // VTT (VELO)
+  trailCourse(6, "Challenge Parent-Enfant — VTT 10 km", 2, 10, 210, 500),
+  trailCourse(7, "Challenge Suprême — VTT 25 km", 2, 25, 570, 581, {
     status: "Terminee",
     startAt: finishedStart,
     checkpoints: 2,
   }),
-  trailCourse(8, "Circuit en duo", 2, 25, 570, 661),
+  trailCourse(8, "Challenge des Amoureux — VTT 25 km", 2, 25, 570, 661),
 ];
 
 const phases: Phase[] = [];
@@ -157,14 +158,12 @@ const controlPoints: ControlPointConfig[] = [
   { id: 72, courseId: 7, label: "Gue", numero: 2 },
 ];
 
-function participant(
-  partial: ParticipantProjection & { typeVelo?: BikeType }
-): ParticipantProjection {
+function participant(partial: ParticipantProjection): ParticipantProjection {
   return partial;
 }
 
-const BOUCLE_COLLINES = "Boucle des collines";
-const CIRCUIT_SOMMET = "Circuit du sommet";
+const COURSE_INITIATION = "Challenge Initiation — Trail 12 km";
+const COURSE_SUPREME_VTT = "Challenge Suprême — VTT 25 km";
 
 const participants: ParticipantProjection[] = [
   participant({
@@ -175,10 +174,13 @@ const participants: ParticipantProjection[] = [
     genre: "Femme",
     aliasCategorie: "Senior F",
     courseId: 1,
-    courseLibelle: BOUCLE_COLLINES,
-    nomCourse: BOUCLE_COLLINES,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
     statut: "En course",
     dateNaissance: "1996-11-03",
+    tailleTShirt: "M",
+    email: "lina.morel@email.com",
+    contact: "+261 34 00 11 018",
   }),
   participant({
     id: 12,
@@ -188,10 +190,13 @@ const participants: ParticipantProjection[] = [
     genre: "Homme",
     aliasCategorie: "Confirme H",
     courseId: 1,
-    courseLibelle: BOUCLE_COLLINES,
-    nomCourse: BOUCLE_COLLINES,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
     statut: "Finisher",
     dateNaissance: "1984-02-20",
+    tailleTShirt: "L",
+    email: "marc.elori@email.com",
+    contact: "+261 32 00 11 007",
   }),
   participant({
     id: 13,
@@ -201,10 +206,13 @@ const participants: ParticipantProjection[] = [
     genre: "Homme",
     aliasCategorie: "Senior H",
     courseId: 1,
-    courseLibelle: BOUCLE_COLLINES,
-    nomCourse: BOUCLE_COLLINES,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
     statut: "Present",
     dateNaissance: "1992-04-12",
+    tailleTShirt: "XL",
+    email: "aina.ravel@email.com",
+    contact: "+261 33 00 11 021",
   }),
   participant({
     id: 14,
@@ -214,10 +222,45 @@ const participants: ParticipantProjection[] = [
     genre: "Femme",
     aliasCategorie: "Eveil F",
     courseId: 1,
-    courseLibelle: BOUCLE_COLLINES,
-    nomCourse: BOUCLE_COLLINES,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
     statut: "Inscrit",
     dateNaissance: "2018-06-15",
+    tailleTShirt: "XS",
+    email: "parent.noro@email.com",
+    contact: "+261 34 00 11 004",
+  }),
+  participant({
+    id: 15,
+    nom: "Rakoto",
+    prenom: "Hery",
+    numDossard: "33",
+    genre: "Homme",
+    aliasCategorie: "Senior H",
+    courseId: 1,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
+    statut: "Attente validation",
+    dateNaissance: "1995-08-22",
+    tailleTShirt: "L",
+    email: "hery.rakoto@email.com",
+    contact: "+261 32 11 22 033",
+  }),
+  participant({
+    id: 16,
+    nom: "Razafy",
+    prenom: "Soa",
+    numDossard: "34",
+    genre: "Femme",
+    aliasCategorie: "Senior F",
+    courseId: 1,
+    courseLibelle: COURSE_INITIATION,
+    nomCourse: COURSE_INITIATION,
+    statut: "Attente validation",
+    dateNaissance: "1998-01-09",
+    tailleTShirt: "M",
+    email: "soa.razafy@email.com",
+    contact: "+261 33 44 55 034",
   }),
   participant({
     id: 71,
@@ -227,10 +270,13 @@ const participants: ParticipantProjection[] = [
     genre: "Homme",
     aliasCategorie: "Senior H",
     courseId: 7,
-    courseLibelle: CIRCUIT_SOMMET,
-    nomCourse: CIRCUIT_SOMMET,
+    courseLibelle: COURSE_SUPREME_VTT,
+    nomCourse: COURSE_SUPREME_VTT,
     statut: "Finisher",
     dateNaissance: "1990-09-14",
+    tailleTShirt: "L",
+    email: "joel.ando@email.com",
+    contact: "+261 34 00 71 590",
   }),
   participant({
     id: 72,
@@ -240,10 +286,13 @@ const participants: ParticipantProjection[] = [
     genre: "Femme",
     aliasCategorie: "Confirme F",
     courseId: 7,
-    courseLibelle: CIRCUIT_SOMMET,
-    nomCourse: CIRCUIT_SOMMET,
+    courseLibelle: COURSE_SUPREME_VTT,
+    nomCourse: COURSE_SUPREME_VTT,
     statut: "Finisher",
     dateNaissance: "1982-04-04",
+    tailleTShirt: "S",
+    email: "mira.solon@email.com",
+    contact: "+261 32 00 71 604",
   }),
 ];
 
@@ -332,11 +381,13 @@ function ageAt(birthDate: string): number {
   return age;
 }
 
-function categoryFor(genre: CategoryGenre, birthDate: string): Category {
+function categoryFor(genre: string, birthDate: string): Category {
+  const normalized: CategoryGenre =
+    genre.trim() === "Femme" ? "Femme" : "Homme";
   const age = ageAt(birthDate);
   const match = categories.find(
     (c) =>
-      c.genre === genre &&
+      c.genre === normalized &&
       age >= c.ageMin &&
       (c.ageMax == null || age <= c.ageMax)
   );
@@ -344,16 +395,24 @@ function categoryFor(genre: CategoryGenre, birthDate: string): Category {
   return match;
 }
 
+/** Dossard CHAR(4) : 1er chiffre = id course, 3 suivants = séquence. */
 function nextBib(course: Course): string {
-  const start = course.bibStart ?? 1;
-  const end = course.bibEnd ?? start + 998;
-  const used = new Set(
+  if (course.id < 1 || course.id > 9) {
+    fail("L'identifiant de course doit être entre 1 et 9 pour un dossard à 4 chiffres.");
+  }
+  const usedSuffixes = new Set(
     participants
       .filter((p) => p.courseId === course.id)
-      .map((p) => Number(p.numDossard))
+      .map((p) => {
+        const bib = String(p.numDossard).padStart(4, "0");
+        return Number(bib.slice(1));
+      })
+      .filter((n) => Number.isFinite(n) && n >= 1)
   );
-  for (let n = start; n <= end; n += 1) {
-    if (!used.has(n)) return String(n);
+  for (let seq = 1; seq <= 999; seq += 1) {
+    if (!usedSuffixes.has(seq)) {
+      return `${course.id}${String(seq).padStart(3, "0")}`;
+    }
   }
   fail("Plus aucun dossard disponible pour cette course.");
 }
@@ -418,7 +477,6 @@ function toResponse(p: ParticipantProjection): ParticipantResponse {
     genre: p.genre,
     categorie: p.aliasCategorie,
     statut: p.statut,
-    typeVelo: p.typeVelo,
   };
 }
 
@@ -434,6 +492,13 @@ function parseBirth(raw: string): string {
   fail(`Date de naissance invalide : ${raw}`);
 }
 
+function genreFromCategoryAlias(alias: string): CategoryGenre | null {
+  const last = alias.trim().toUpperCase().slice(-1);
+  if (last === "H") return "Homme";
+  if (last === "F") return "Femme";
+  return null;
+}
+
 function parseGenre(raw: string): CategoryGenre {
   const value = raw.trim().toLowerCase();
   if (value === "homme" || value === "h" || value === "m" || value === "masculin") {
@@ -443,14 +508,6 @@ function parseGenre(raw: string): CategoryGenre {
     return "Femme";
   }
   fail(`Genre invalide : ${raw}`);
-}
-
-function parseBike(raw: string | undefined): BikeType | undefined {
-  if (!raw?.trim()) return undefined;
-  const upper = raw.trim().toUpperCase();
-  if (upper === "TOUT SUSPENDU" || upper === "TOUT-SUSPENDU") return "TOUT SUSPENDU";
-  if (upper === "SEMI-RIGIDE" || upper === "SEMI RIGIDE") return "SEMI-RIGIDE";
-  fail(`Type de vélo invalide : ${raw}`);
 }
 
 export const staticStore = {
@@ -477,13 +534,15 @@ export const staticStore = {
       type: normalizeCourseType(typeCourse.libelle),
       typeCourseId: typeCourse.id,
       distanceKm: dto.distance,
-      elevation: dto.totalDenivele,
+      elevation: dto.denivelePositif ?? dto.totalDenivele,
       status: "A venir",
       checkpoints: 0,
-      dureeBarriereHoraire: dto.dureeBarriereHoraire,
+      dureeBarriereHoraire: dto.dureeBarriereHoraire ?? undefined,
       nomSequence: `seq_course_${id}`,
-      bibStart: dto.bibStart ?? typeCourse.bibStart,
-      bibEnd: dto.bibEnd ?? typeCourse.bibEnd,
+      tarif: dto.tarif,
+      description: dto.description ?? undefined,
+      bibStart: typeCourse.bibStart,
+      bibEnd: typeCourse.bibEnd,
     };
     courses.push(course);
     return clone(course);
@@ -499,12 +558,15 @@ export const staticStore = {
       course.typeCourseId = typeCourse.id;
     }
     if (dto.distance != null) course.distanceKm = dto.distance;
-    if (dto.totalDenivele != null) course.elevation = dto.totalDenivele;
-    if (dto.dureeBarriereHoraire != null) {
-      course.dureeBarriereHoraire = dto.dureeBarriereHoraire;
+    if (dto.denivelePositif != null) course.elevation = dto.denivelePositif;
+    else if (dto.totalDenivele != null) course.elevation = dto.totalDenivele;
+    if (dto.dureeBarriereHoraire !== undefined) {
+      course.dureeBarriereHoraire = dto.dureeBarriereHoraire ?? undefined;
     }
-    if (dto.bibStart != null) course.bibStart = dto.bibStart;
-    if (dto.bibEnd != null) course.bibEnd = dto.bibEnd;
+    if (dto.tarif != null) course.tarif = dto.tarif;
+    if (dto.description !== undefined) {
+      course.description = dto.description ?? undefined;
+    }
     renameCourseOnParticipants(course);
     return clone(course);
   },
@@ -558,10 +620,14 @@ export const staticStore = {
     ) {
       fail(`Une catégorie avec l'alias « ${alias} » existe déjà.`);
     }
+    const genre = dto.genre ?? genreFromCategoryAlias(alias);
+    if (!genre) {
+      fail("Le genre est requis (alias se terminant par H ou F).");
+    }
     const created: Category = {
       id: nextId(),
       alias,
-      genre: dto.genre,
+      genre,
       ageMin: dto.ageMin,
       ageMax: dto.ageMax,
     };
@@ -607,13 +673,21 @@ export const staticStore = {
     return clone(participants.filter((p) => p.courseId === raceId));
   },
 
+  listAllParticipants(): ParticipantProjection[] {
+    return clone(participants);
+  },
+
+  getParticipantById(id: number): ParticipantProjection | null {
+    const found = participants.find((p) => p.id === id);
+    return found ? clone(found) : null;
+  },
+
   createParticipant(
     dto: ParticipantCreateDTO
   ): RenderResponse<ParticipantResponse> {
     const course = requireCourse(dto.courseChoisieId);
-    if (course.type === "DH" || course.type === "ENDURO") {
-      if (!dto.typeVelo) fail("Le type de vélo est requis pour une course DH ou Enduro.");
-    }
+    const taille = dto.tailleTShirt?.trim().toUpperCase();
+    if (!taille) fail("La taille de t-shirt est requise.");
     const category = categoryFor(dto.genre, dto.dateNaissance);
     const created = participant({
       id: nextId(),
@@ -627,7 +701,7 @@ export const staticStore = {
       nomCourse: course.name,
       statut: "Inscrit",
       dateNaissance: dto.dateNaissance,
-      typeVelo: course.type === "DH" || course.type === "ENDURO" ? dto.typeVelo : undefined,
+      tailleTShirt: taille,
     });
     participants.push(created);
     return {
@@ -635,9 +709,9 @@ export const staticStore = {
       message: `Participant enregistré avec le dossard ${created.numDossard}.`,
       data: toResponse(created),
     };
-  },
+    },
 
-  updateParticipant(dto: ParticipantUpdateDTO): RenderResponse<ParticipantResponse> {
+    updateParticipant(dto: ParticipantUpdateDTO): RenderResponse<ParticipantResponse> {
     const current = findParticipantByBib(dto.bibNumber);
     const course = requireCourse(dto.courseChoisieId);
     const bibTaken = participants.some(
@@ -647,9 +721,6 @@ export const staticStore = {
         p.numDossard === dto.numDossard
     );
     if (bibTaken) fail("Ce dossard est déjà utilisé sur cette course.");
-    if ((course.type === "DH" || course.type === "ENDURO") && !dto.typeVelo) {
-      fail("Le type de vélo est requis pour une course DH ou Enduro.");
-    }
     const category = categoryFor(dto.genre, dto.dateNaissance);
     current.nom = dto.nom.trim();
     current.prenom = dto.prenom.trim();
@@ -661,8 +732,11 @@ export const staticStore = {
     current.nomCourse = course.name;
     current.aliasCategorie = category.alias;
     current.statut = dto.statut;
-    current.typeVelo =
-      course.type === "DH" || course.type === "ENDURO" ? dto.typeVelo : undefined;
+    if (dto.tailleTShirt !== undefined) {
+      const taille = dto.tailleTShirt.trim().toUpperCase();
+      if (!taille) fail("La taille de t-shirt est requise.");
+      current.tailleTShirt = taille;
+    }
     if (dto.statut === "DSQ") {
       this.disqualify({
         participantId: current.id,
@@ -690,6 +764,18 @@ export const staticStore = {
     } else {
       this.revokeDisqualification(current.id, false);
     }
+  },
+
+  deleteParticipant(id: number): RenderResponse<null> {
+    const index = participants.findIndex((p) => p.id === id);
+    if (index < 0) fail("Participant introuvable.");
+    const [removed] = participants.splice(index, 1);
+    this.revokeDisqualification(removed.id, false);
+    return {
+      code: 200,
+      message: "Participant supprimé avec succès.",
+      data: null,
+    };
   },
 
   disqualify(input: {
@@ -1040,6 +1126,7 @@ export const staticStore = {
           athleteName: `${p.prenom} ${p.nom}`.trim(),
           nom: p.nom,
           prenom: p.prenom,
+          genre: p.genre,
           categoryName: p.aliasCategorie,
           raceTime: raceMs != null && raceMs >= 0 ? formatMs(raceMs) : null,
           raceMs,
@@ -1061,9 +1148,19 @@ export const staticStore = {
       return a.raceMs - b.raceMs;
     });
 
+    const genderCounters: Record<string, number> = {};
+    const categoryCounters: Record<string, number> = {};
+
     let rank = 0;
     return ranked.map((row) => {
       const place = row.raceMs == null ? null : (rank += 1);
+      let genderRank: number | null = null;
+      let categoryRank: number | null = null;
+      if (row.raceMs != null) {
+        genderRank = (genderCounters[row.genre] = (genderCounters[row.genre] ?? 0) + 1);
+        categoryRank = (categoryCounters[row.categoryName] =
+          (categoryCounters[row.categoryName] ?? 0) + 1);
+      }
       return {
         rank: place,
         participantId: row.participantId,
@@ -1071,10 +1168,13 @@ export const staticStore = {
         athleteName: row.athleteName,
         nom: row.nom,
         prenom: row.prenom,
+        genre: row.genre,
         categoryName: row.categoryName,
         raceTime: row.raceTime,
         status: row.status,
         controlPoints: row.controlPoints,
+        categoryRank,
+        genderRank,
       };
     });
   },
@@ -1159,7 +1259,6 @@ export const staticStore = {
         const prenom = hasHeader
           ? read("prenom", -1)
           : cells[4] ?? "";
-        const typeVelo = hasHeader ? read("typevelo", -1) || read("type_velo", -1) : cells[5];
         if (!nom || !dtn || !genre || !courseLabel) {
           fail("Colonnes nom, dtn, genre et course requises.");
         }
@@ -1173,7 +1272,7 @@ export const staticStore = {
           dateNaissance: parseBirth(dtn),
           genre: parseGenre(genre),
           courseChoisieId: course.id,
-          typeVelo: parseBike(typeVelo),
+          tailleTShirt: "M",
         });
         imported += 1;
       } catch (error) {
@@ -1188,7 +1287,7 @@ export const staticStore = {
   },
 };
 
-/** Session du compte démo CHECKPOINT : pointeur du belvédère, Boucle des collines. */
+/** Session du compte démo CHECKPOINT : pointeur du belvédère, Challenge Initiation. */
 export function demoCheckpointSession(): {
   libelle: string;
   assignedControlPoint: {
