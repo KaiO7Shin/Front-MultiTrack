@@ -103,6 +103,21 @@ export async function fetchInscriptionById(id: number): Promise<InscriptionDetai
   }
 }
 
+export async function resendInscriptionValidationMail(
+  id: number
+): Promise<RenderResponse<InscriptionReviewResponse>> {
+  try {
+    const { data } = await api.post<RenderResponse<InscriptionReviewResponse>>(
+      API.inscriptionValidationMail(id)
+    );
+    return data;
+  } catch (err) {
+    throw new Error(
+      apiErrorMessage(err, "Impossible de renvoyer le mail de validation.")
+    );
+  }
+}
+
 export async function reviewInscription(
   id: number,
   decision: InscriptionReviewDecision,
