@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useSession } from "../hooks/useSession";
+import { handoffFacebookClick, requestFacebookBrowserNotice } from "../lib/facebookBrowser";
 import type { Theme } from "../types";
 import { ConfirmModal } from "./ConfirmModal";
 import { LogoutIcon, MoonIcon, SunIcon } from "./icons";
@@ -81,7 +82,17 @@ export function SiteHeader() {
               </button>
             </div>
           ) : (
-            <Link className="button button-dark button-small" to="/inscription" onClick={() => setMenuOpen(false)}>
+            <Link
+              className="button button-dark button-small"
+              to="/inscription"
+              onClick={(event) => {
+                setMenuOpen(false);
+                handoffFacebookClick(event, "/inscription", () => {
+                  requestFacebookBrowserNotice();
+                  navigate("/inscription");
+                });
+              }}
+            >
               S’inscrire
             </Link>
           )}
