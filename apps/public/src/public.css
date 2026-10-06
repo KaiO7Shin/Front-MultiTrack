@@ -133,7 +133,25 @@ h1, h2, h3, h4 {
   backdrop-filter: blur(10px);
 }
 
-.public-app main { padding-top: var(--header-height); }
+.public-app main { padding-top: calc(var(--header-height) + var(--facebook-notice-offset, 0px)); }
+
+.facebook-browser-notice {
+  position: fixed;
+  top: var(--header-height);
+  right: 0;
+  left: 0;
+  z-index: 39;
+  background: var(--mt-navy-hover);
+  color: var(--mt-off-white);
+  border-bottom: 3px solid var(--mt-olive);
+}
+
+.facebook-browser-notice p {
+  margin: 0;
+  padding: 12px 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
 
 .header-inner {
   min-height: var(--header-height);

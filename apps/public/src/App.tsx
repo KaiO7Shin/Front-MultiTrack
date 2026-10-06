@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { FacebookBrowserNotice } from "./components/FacebookBrowserNotice";
 import { SiteFooter, SiteHeader, ThemeSwitcher } from "./components/Layout";
 import { LoadingOverlay } from "./components/LoadingOverlay";
 import { SessionProvider } from "./context/SessionProvider";
@@ -45,6 +46,7 @@ function PublicShell() {
   return (
     <div className="public-app">
       <SiteHeader />
+      <FacebookBrowserNotice />
       <main>
         <AppRoutes />
       </main>

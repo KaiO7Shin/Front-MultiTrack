@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState, type MouseEvent } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   RaceBikeIcon,
   RaceCoinsIcon,
@@ -6,12 +7,15 @@ import {
   RaceMountainIcon,
   RacePinIcon,
 } from "../components/icons";
-import { useState, type MouseEvent } from "react";
-import { apiUrl } from "@multitrack/api-client";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { Page } from "../components/Layout";
 import { useCourses } from "../hooks/useCourses";
 import { apiDownloadHref, downloadBinary } from "../lib/downloadBinary";
+import {
+  handoffFacebookClick,
+  isFacebookInAppBrowser,
+  requestFacebookBrowserNotice,
+} from "../lib/facebookBrowser";
 import { courseGroupTitle } from "../services/catalogService";
 
 function courseGpxFilename(libelle: string) {
@@ -31,6 +35,17 @@ async function downloadCourseGpx(courseId: number, libelle: string) {
   });
 }
 
+function claimGpxAutoStart(courseId: number): boolean {
+  const key = `mt-gpx-auto:${courseId}`;
+  try {
+    if (sessionStorage.getItem(key) === "1") return false;
+    sessionStorage.setItem(key, "1");
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 function formatStatNumber(value: number, maximumFractionDigits: number) {
   if (!Number.isFinite(value)) return "—";
   return new Intl.NumberFormat("fr-FR", { maximumFractionDigits }).format(value);
@@ -43,14 +58,54 @@ function CourseBadgeIcon({ type }: { type: string }) {
 }
 
 export function CoursesPage() {
-  const { groups, loading, error } = useCourses();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { courses, groups, loading, error } = useCourses();
   const [gpxError, setGpxError] = useState<string | null>(null);
+  const gpxQuery = searchParams.get("gpx");
+
+  useEffect(() => {
+    if (!gpxQuery || isFacebookInAppBrowser() || loading) return;
+    const courseId = Number(gpxQuery);
+    if (!Number.isInteger(courseId) || courseId <= 0) {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.delete("gpx");
+        return next;
+      }, { replace: true });
+      return;
+    }
+    if (!claimGpxAutoStart(courseId)) return;
+
+    const libelle = courses.find((course) => course.id === courseId)?.libelle ?? "course";
+    downloadCourseGpx(courseId, libelle)
+      .catch((reason: unknown) => {
+        setGpxError(reason instanceof Error ? reason.message : "Impossible de télécharger le fichier GPX");
+      })
+      .finally(() => {
+        setSearchParams((current) => {
+          const next = new URLSearchParams(current);
+          next.delete("gpx");
+          return next;
+        }, { replace: true });
+      });
+  }, [courses, gpxQuery, loading, setSearchParams]);
 
   async function handleGpxDownload(
     event: MouseEvent<HTMLAnchorElement>,
     courseId: number,
     libelle: string,
   ) {
+    const handedOff = handoffFacebookClick(
+      event,
+      apiDownloadHref(courseGpxPath(courseId)),
+      () => {
+        requestFacebookBrowserNotice();
+        navigate(`/courses?gpx=${courseId}`, { replace: true });
+      },
+    );
+    if (handedOff) return;
+
     event.preventDefault();
     setGpxError(null);
     try {

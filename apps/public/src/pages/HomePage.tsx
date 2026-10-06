@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Countdown } from "../components/Countdown";
 import { BeerIcon, BikeIcon, TrailIcon } from "../components/icons";
 import { HIGHLIGHTS } from "../data/catalog";
+import { handoffFacebookClick, requestFacebookBrowserNotice } from "../lib/facebookBrowser";
 
 const ICONS = {
   trail: <TrailIcon />,
@@ -13,6 +14,7 @@ const ICONS = {
 const HERO_CROSSFADE_INTERVAL_MS = 5_000;
 
 export function HomePage() {
+  const navigate = useNavigate();
   const [showAltHero, setShowAltHero] = useState(false);
 
   useEffect(() => {
@@ -57,7 +59,18 @@ export function HomePage() {
               Rejoignez la communauté pour une expérience inoubliable.
             </p>
             <div className="hero-actions">
-              <Link className="button button-dark" to="/inscription">Je participe</Link>
+              <Link
+                className="button button-dark"
+                to="/inscription"
+                onClick={(event) => {
+                  handoffFacebookClick(event, "/inscription", () => {
+                    requestFacebookBrowserNotice();
+                    navigate("/inscription");
+                  });
+                }}
+              >
+                Je participe
+              </Link>
               <Link className="button button-outline" to="/a-propos">En savoir plus</Link>
             </div>
           </div>
