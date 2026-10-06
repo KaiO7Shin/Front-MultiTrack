@@ -188,6 +188,20 @@ export type RenderResponse<T> = {
   error?: string;
 };
 
+export type CompteUtilisateurRow = {
+  id: number;
+  username: string;
+  email: string;
+  phone: string;
+};
+
+export type CompteUpdatePayload = {
+  username: string;
+  email: string;
+  phone: string;
+  password?: string;
+};
+
 export type ParticipantStatus =
   | "Envoyée"
   | "Attente validation"

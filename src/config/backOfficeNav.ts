@@ -26,6 +26,7 @@ export type BackOfficeNavItem = {
 const ADMIN_NAV: BackOfficeNavEntry[] = [
   { kind: "link", to: "/dashboard", label: "Tableau de bord", end: true },
   { kind: "link", to: "/participants", label: "Participants" },
+  { kind: "link", to: "/comptes", label: "Comptes utilisateurs", end: true },
   {
     kind: "group",
     id: "referentiels",

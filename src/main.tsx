@@ -31,6 +31,7 @@ import { StatutsPage } from "./pages/Statuts/StatutsPage";
 import { EligibilitesPage } from "./pages/Eligibilites/EligibilitesPage";
 import { ErrorLogDetailPage } from "./pages/ErrorLogs/ErrorLogDetailPage";
 import { ErrorLogsPage } from "./pages/ErrorLogs/ErrorLogsPage";
+import { ComptesPage } from "./pages/Comptes/ComptesPage";
 
 import {
   AuthProvider,
@@ -98,6 +99,15 @@ const router = createBrowserRouter([
       },
 
       { path: "leaderboard", element: <LeaderboardPage /> },
+
+      {
+        path: "comptes",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <ComptesPage />
+          </RequireRole>
+        ),
+      },
 
       {
         path: "journaux",

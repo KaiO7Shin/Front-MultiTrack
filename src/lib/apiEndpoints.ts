@@ -77,5 +77,8 @@ export const API = {
 
   errorLogs: "/error-logs",
   errorLogById: (id: number) => `/error-logs/${id}`,
+
+  comptesUtilisateur: "/comptes",
+  compteUtilisateurById: (id: number) => `/comptes/${id}`,
   // pointeurManches: (id: number) => `/pointeur/${id}/manches`,
 } as const;
