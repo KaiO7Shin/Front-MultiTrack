@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import {
+  Barcode,
   ChevronDown,
   Flag,
   LayoutDashboard,
@@ -27,6 +28,7 @@ import {
 const NAV_ICONS: Record<string, LucideIcon> = {
   "/dashboard": LayoutDashboard,
   "/courses": Flag,
+  "/dossards": Barcode,
   "/categories": Tags,
   "/statuts": ListChecks,
   "/eligibilites": Tags,

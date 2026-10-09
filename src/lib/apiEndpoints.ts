@@ -80,5 +80,8 @@ export const API = {
 
   comptesUtilisateur: "/comptes",
   compteUtilisateurById: (id: number) => `/comptes/${id}`,
+
+  dossardsPreflight: "/dossards/preflight",
+  dossardsGenerate: "/dossards/generate",
   // pointeurManches: (id: number) => `/pointeur/${id}/manches`,
 } as const;

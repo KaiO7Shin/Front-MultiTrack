@@ -42,6 +42,7 @@ const ADMIN_NAV: BackOfficeNavEntry[] = [
     label: "Courses",
     children: [
       { kind: "link", to: "/courses", label: "Courses" },
+      { kind: "link", to: "/dossards", label: "Dossards", end: true },
       { kind: "link", to: "/eligibilites", label: "Éligibilités", end: true },
     ],
   },
