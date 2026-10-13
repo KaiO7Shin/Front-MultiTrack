@@ -22,6 +22,7 @@ import { ParticipantsPage } from "./pages/Participants/ParticipantsPage";
 import { ParticipantDetailPage } from "./pages/Participants/ParticipantDetailPage";
 import { InscriptionDetailPage } from "./pages/Participants/InscriptionDetailPage";
 import { TshirtsPage } from "./pages/Tshirts/TshirtsPage";
+import { DossardsPage } from "./pages/Dossards/DossardsPage";
 import { CheckpointScan } from "./pages/Checkpoint/CheckpointScan";
 import { CheckpointHistory } from "./pages/Checkpoint/CheckpointHistory";
 import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
@@ -85,6 +86,14 @@ const router = createBrowserRouter([
       { path: "participants/:id", element: <ParticipantDetailPage /> },
       { path: "inscriptions/:id", element: <InscriptionDetailPage /> },
       { path: "tshirts", element: <TshirtsPage /> },
+      {
+        path: "dossards",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <DossardsPage />
+          </RequireRole>
+        ),
+      },
 
       { path: "checkpoint/scan", element: <CheckpointScan /> },
       { path: "checkpoint/history", element: <CheckpointHistory /> },
