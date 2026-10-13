@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { deleteParticipant } from "@/services/participants";
 import { fetchCategories, fetchCoursesDetailed } from "@/services/courses";
 import { fetchGenres, type GenreOption } from "@/services/genres";
@@ -18,12 +16,12 @@ import {
   statutScopeParam,
   type ParticipantListSource,
 } from "./participantListSource";
-import { statusLabel } from "./participantStatus";
 import {
   filterParticipantsByQuery,
   useParticipantListSearch,
 } from "./useParticipantListSearch";
 import { Alert } from "@/components/ui/feedback";
+import { exportParticipantsPdf } from "./participantsPdf";
 
 type UICourse = { id: number; label: string };
 type UICategory = { id: number; alias: string };
@@ -176,27 +174,11 @@ export function ParticipantsPage() {
   };
 
   const exportPdf = () => {
-    if (filteredRows.length === 0) return;
-    const doc = new jsPDF("p", "mm", "a4");
-    const title =
-      source === "INSCRIPTION" ? "Liste des inscriptions" : "Liste des participants";
-    doc.setFontSize(16);
-    doc.text(title, 14, 20);
-    autoTable(doc, {
-      startY: 28,
-      head: [["Id", "Dossard", "Nom", "Prénom", "Genre", "Course", "Statut"]],
-      body: filteredRows.map((p) => [
-        String(p.id),
-        source === "INSCRIPTION" ? "—" : p.numDossard || "—",
-        p.nom,
-        p.prenom,
-        p.genre,
-        p.courseLibelle || p.nomCourse || "—",
-        statusLabel(p.statut),
-      ]),
-      styles: { fontSize: 9 },
+    exportParticipantsPdf(filteredRows, {
+      title:
+        source === "INSCRIPTION" ? "Liste des inscriptions" : "Liste des participants",
+      filename: source === "INSCRIPTION" ? "inscriptions.pdf" : "participants.pdf",
     });
-    doc.save(source === "INSCRIPTION" ? "inscriptions.pdf" : "participants.pdf");
   };
 
   return (

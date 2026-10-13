@@ -1,7 +1,8 @@
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import { useSession } from "../../hooks/useSession";
 import { ProfilePage } from "./ProfilePage";
-import { RegistrationDetailPage, RegistrationsPage } from "./RegistrationsPage";
+import { RegistrationDetailPage } from "./RegistrationDetailPage";
+import { RegistrationsPage } from "./RegistrationsPage";
 
 export function UserArea() {
   const { user } = useSession();
