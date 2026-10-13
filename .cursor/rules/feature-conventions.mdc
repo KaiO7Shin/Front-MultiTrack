@@ -1,5 +1,5 @@
 ---
-description: Conventions permanentes pour toute nouvelle fonctionnalité MultiTrack (charte, formulaires, erreurs RenderResponse)
+description: Conventions permanentes pour toute nouvelle fonctionnalité MultiTrack (charte, formulaires, tableaux, exports PDF, erreurs RenderResponse)
 alwaysApply: false
 ---
 # Fonctionnalités — front-end
@@ -22,6 +22,32 @@ Avant d’implémenter : demander les infos manquantes ou importantes (champs, m
 Code bien organisé et factorisé : hooks, pages, services, config, context, etc. Respecter ce découpage plutôt que tout mettre dans les pages.
 
 Pas de fichiers trop longs : viser un maximum d’environ 250 lignes. Découper au-delà.
+
+## Tableaux (interface et exports)
+
+Tout tableau affiché dans l’UI (back-office, front-office) ou généré en export (PDF, CSV, etc.) respecte la même convention d’alignement et de formatage des cellules — en-têtes (`th`) et corps (`td`) inclus.
+
+| Type de contenu | Alignement | Format |
+| --- | --- | --- |
+| Nombres (montants, quantités, compteurs, IDs numériques, etc.) | À droite | Séparateur de milliers locale `fr-FR` (`Intl.NumberFormat("fr-FR")` ou `toLocaleString("fr-FR")`). Préférer `tabular-nums` en UI pour l’alignement des chiffres. |
+| Textes (libellés, noms, descriptions, e-mails, etc.) | À gauche | — |
+| Statuts, abréviations (ex. catégorie), dates, heures, codes courts, cases à cocher, icônes d’état | Centré | Dates/heures au format français habituel du projet |
+
+En UI : classes Tailwind `text-left`, `text-right`, `text-center` (ou équivalent charte `mt-*` / styles table existants).
+
+En export : reproduire les mêmes `halign` (ex. jsPDF-AutoTable `columnStyles` / `styles.halign`).
+
+Ne pas mélanger les alignements au sein d’une même colonne selon la ligne.
+
+En PDF, Helvetica ne rend pas l’espace insécable fin de `Intl.NumberFormat("fr-FR")` (il apparaît comme « / »). Utiliser `formatPdfNumber`.
+
+## Exports PDF
+
+Tout export PDF (interface admin, organisateur ou public) porte **sur chaque page** le pied de page centré :
+
+`© 2026 MultiTrack - Powered by VAHIRA`
+
+Réutiliser `addPdfFooter` (`src/lib/pdfExport.ts` ou `apps/public/src/lib/pdfExport.ts`). Réserver une marge basse (`PDF_FOOTER_MARGIN`) pour que le contenu ne recouvre pas le pied.
 
 ## Erreurs de formulaire
 

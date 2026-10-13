@@ -1,15 +1,10 @@
 import { useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import { INSCRIPTION_STATUS } from "@multitrack/types";
-import { DocumentIcon } from "../../components/icons";
+import { Link } from "react-router-dom";
 import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { StatusPill } from "../../components/StatusPill";
 import { useRegistrationDraft } from "../../hooks/useRegistrationDraft";
 import { useSession } from "../../hooks/useSession";
-import { needsPartnerTShirt, partnerTShirtLabel } from "../../lib/duoCourses";
-import { isMinor, participantFullName } from "../../lib/participant";
-import { formatAmount } from "../../lib/utils";
-import { findRegistration } from "../../services/registrationService";
+import { participantFullName } from "../../lib/participant";
 import { RegistrationWizard } from "./RegistrationWizard";
 
 export function RegistrationsPage() {
@@ -109,130 +104,4 @@ export function RegistrationsPage() {
       </div>
     </div>
   );
-}
-
-export function RegistrationDetailPage() {
-  const { registrationId } = useParams();
-  const { registrations, loadRegistrations } = useSession();
-  const registration = findRegistration(registrations, registrationId);
-
-  useEffect(() => {
-    if (!registration) {
-      void loadRegistrations();
-    }
-  }, [loadRegistrations, registration]);
-
-  if (!registration) {
-    return (
-      <div className="account-content">
-        <Link className="arrow-link" to="/espace/inscriptions">← Retour aux inscriptions</Link>
-        <p className="form-message">Cette inscription est introuvable.</p>
-      </div>
-    );
-  }
-
-  const minor = isMinor(registration.runner.birthDate);
-
-  return (
-    <div className="account-content registration-detail">
-      <Link className="arrow-link" to="/espace/inscriptions">← Retour aux inscriptions</Link>
-      <div className="content-title-row">
-        <div>
-          <p className="eyebrow">{registration.runner.race}</p>
-          <h2>Détail de l’inscription</h2>
-          <p className="section-lead">Inscrit le {registration.createdAt}</p>
-        </div>
-        <StatusPill status={registration.status} />
-      </div>
-
-      <section className="registration-section">
-        <h3>Participant</h3>
-        <dl className="profile-details">
-          <div><dt>Nom</dt><dd>{registration.runner.lastName || "—"}</dd></div>
-          <div><dt>Prénom</dt><dd>{registration.runner.firstName || "—"}</dd></div>
-          {registration.status === INSCRIPTION_STATUS.VALIDATED && (
-            <>
-              <div><dt>Numéro de dossard</dt><dd>{registration.numDossard?.trim() || "—"}</dd></div>
-              <div><dt>Catégorie</dt><dd>{registration.runner.category?.trim() || "—"}</dd></div>
-            </>
-          )}
-          <div>
-            <dt>Date de naissance</dt>
-            <dd>{formatBirthDate(registration.runner.birthDate)}</dd>
-          </div>
-          <div><dt>Genre</dt><dd>{registration.runner.gender || "—"}</dd></div>
-          <div><dt>Taille t-shirt</dt><dd>{registration.runner.tshirtSize || "—"}</dd></div>
-          {needsPartnerTShirt(registration.runner.race) && (
-            <div>
-              <dt>{partnerTShirtLabel(registration.runner.race)}</dt>
-              <dd>{registration.runner.tshirtSizeBinome || "—"}</dd>
-            </div>
-          )}
-        </dl>
-      </section>
-
-      <section className="registration-section">
-        <h3>Documents et frais</h3>
-        <dl className="profile-details">
-          <div>
-            <dt>Pièce d’identité</dt>
-            <dd><DocumentValue url={registration.runner.identityDocument} /></dd>
-          </div>
-          <div>
-            <dt>Certificat médical</dt>
-            <dd><DocumentValue url={registration.runner.medicalCertificate} /></dd>
-          </div>
-          {minor && (
-            <div>
-              <dt>Autorisation parentale</dt>
-              <dd><DocumentValue url={registration.runner.parentalAuthorization} /></dd>
-            </div>
-          )}
-          <div><dt>Moyen de paiement</dt><dd>{registration.paymentMethod || "—"}</dd></div>
-          <div>
-            <dt>Montant</dt>
-            <dd>{registration.totalAmount ? formatAmount(registration.totalAmount) : "—"}</dd>
-          </div>
-          <div><dt>Référence</dt><dd>{registration.paymentReference || "—"}</dd></div>
-        </dl>
-      </section>
-
-      <section className="registration-section">
-        <h3>Contact d’urgence</h3>
-        <dl className="profile-details">
-          <div><dt>Nom</dt><dd>{registration.runner.emergencyContactName || "—"}</dd></div>
-          <div><dt>Contact</dt><dd>{registration.runner.emergencyContactPhone || "—"}</dd></div>
-        </dl>
-      </section>
-    </div>
-  );
-}
-
-function DocumentValue({ url }: { url?: string }) {
-  if (!isApiDocumentUrl(url)) {
-    return "Non fourni";
-  }
-  return (
-    <a
-      className="document-file-link"
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <DocumentIcon />
-      Ouvrir
-    </a>
-  );
-}
-
-function isApiDocumentUrl(url?: string) {
-  if (!url) return false;
-  if (/drive\.google\.com/i.test(url)) return false;
-  return /\/api\/me\/registrations\/[^/]+\/documents\//.test(url);
-}
-
-function formatBirthDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("fr-FR");
 }
