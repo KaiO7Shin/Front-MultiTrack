@@ -501,3 +501,41 @@ export type EnduroPhaseRanking = {
   scratch: EnduroRankingRow[];
   byCategory: { categorie: string; rows: EnduroRankingRow[] }[];
 };
+
+export type DossardAnomalie = {
+  code: string;
+  participantId: number | null;
+  numDossard: string | null;
+  message: string;
+};
+
+export type DossardLayoutResume = {
+  barcodeXMm: number;
+  barcodeYMm: number;
+  barcodeWidthMm: number;
+  barcodeHeightMm: number;
+  moduleWidthMm: number;
+  minModuleMm: number;
+  numeroActive: boolean;
+  nomActive: boolean;
+  prenomActive: boolean;
+  categorieActive: boolean;
+  police: string;
+};
+
+export type DossardPreflight = {
+  courseId: number;
+  courseLibelle: string;
+  duo: boolean;
+  /** Participants au statut « Inscrit » (seuls dossards imprimés) */
+  participants: number;
+  /** Participants exclus car d’un autre statut */
+  participantsIgnores: number;
+  dossardsPrincipaux: number;
+  dossardsBinome: number;
+  pages: number;
+  generable: boolean;
+  erreurs: DossardAnomalie[];
+  avertissements: DossardAnomalie[];
+  layout: DossardLayoutResume;
+};

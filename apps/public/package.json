@@ -18,6 +18,8 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-international-phone": "^4.8.0",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
     "react-router-dom": "^7.9.1",
     "vite": "^7.1.7"
   },

@@ -1176,6 +1176,28 @@ html[data-theme="dark"] .race-card {
 .content-title-row { align-items: flex-start; }
 .wizard-header { align-items: flex-end; }
 
+.content-title-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: none;
+}
+
+.registration-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.registration-detail .content-title-actions .button {
+  flex: none;
+  width: auto;
+  white-space: nowrap;
+}
+
 .content-title-row h2, .wizard-header h2 {
   margin: 0;
   font-size: clamp(36px, 5vw, 58px);
@@ -2189,6 +2211,11 @@ html[data-theme="dark"] .menu-toggle span { background: var(--theme-panel-text);
     letter-spacing: .08em;
   }
   .content-title-row, .wizard-header { align-items: flex-start; flex-direction: column; }
+  .content-title-actions { justify-content: flex-start; width: 100%; }
+  .registration-detail .content-title-actions {
+    width: auto;
+    max-width: 100%;
+  }
   .page-heading-title .button { width: 100%; }
   .stepper li { font-size: 0; }
   .stepper li span { font-size: 12px; }

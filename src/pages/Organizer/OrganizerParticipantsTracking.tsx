@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Users } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { fetchCoursesDetailed } from "@/services/courses";
 import { fetchAllParticipants } from "@/services/participants";
 import type { ParticipantProjection, ParticipantStatus } from "@/lib/type";
@@ -15,6 +13,7 @@ import {
   statusBadgeClass,
   statusLabel,
 } from "@/pages/Participants/participantStatus";
+import { exportParticipantsPdf } from "@/pages/Participants/participantsPdf";
 
 type UICourse = { id: number; label: string };
 
@@ -91,24 +90,10 @@ export function OrganizerParticipantsTracking({
   }, [filtered, pageSize, currentPage]);
 
   const exportPdf = () => {
-    if (filtered.length === 0) return;
-    const doc = new jsPDF("p", "mm", "a4");
-    doc.setFontSize(16);
-    doc.text("Suivi des participants", 14, 20);
-    autoTable(doc, {
-      startY: 28,
-      head: [["Id", "Nom et prénom", "Naissance", "Genre", "Course", "Statut"]],
-      body: filtered.map((p) => [
-        String(p.id),
-        formatParticipantName(p.prenom, p.nom),
-        p.dateNaissance || "—",
-        p.genre,
-        p.courseLibelle || p.nomCourse || "—",
-        statusLabel(p.statut),
-      ]),
-      styles: { fontSize: 9 },
+    exportParticipantsPdf(filtered, {
+      title: "Suivi des participants",
+      filename: "participants-suivi.pdf",
     });
-    doc.save("participants-suivi.pdf");
   };
 
   const rangeLabel = (() => {

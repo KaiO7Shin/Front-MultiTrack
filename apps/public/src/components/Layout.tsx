@@ -127,7 +127,7 @@ export function SiteFooter() {
         <div className="footer-meta">
           <p>© 2026 MultiTrack</p>
           <span className="footer-dot" aria-hidden="true" />
-          <span>Powered by Vahira</span>
+          <span>Powered by VAHIRA</span>
         </div>
       </div>
     </footer>
