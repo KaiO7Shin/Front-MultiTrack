@@ -1,128 +1,88 @@
+import api from "@/lib/api";
+import { API } from "@/lib/apiEndpoints";
+import type { RenderResponse } from "@/lib/type";
+import { formatDashboardDate, type TrendMonth } from "@/pages/Dashboard/dashboardView";
 import type {
-  Course,
-  CourseStatus,
-  CourseType,
-  ParticipantProjection,
-} from "@/lib/type";
-import { fetchCoursesDetailed } from "@/services/courses";
-import { fetchParticipantsByCourse } from "@/services/participants";
+  DashboardCourse,
+  DashboardFilters,
+  DashboardView,
+  FollowUpRow,
+  PopularityRow,
+  TrackingRow,
+} from "@/pages/Dashboard/dashboardTypes";
 
-export type LiveCourseSummary = {
-  id: number;
-  name: string;
-  type: CourseType;
-  status: CourseStatus;
-  participantCount: number;
-  presentCount: number;
-  enCourseCount: number;
-  arriveeCount: number;
-  departCount: number;
+type DashboardApiData = {
+  courses: DashboardCourse[];
+  years: number[];
+  kpis: DashboardView["kpis"];
+  trend: { date: string; count: number }[];
+  popularity: PopularityRow[];
+  tracking: TrackingRow[];
+  trackingTotals: DashboardView["trackingTotals"];
+  followUp: FollowUpRow[];
 };
 
-export type DashboardStats = {
-  courses: {
-    total: number;
-    enCours: number;
-    aVenir: number;
-    terminees: number;
-    byType: Record<CourseType, number>;
-  };
-  participants: {
-    total: number;
-    inscrits: number;
-    presents: number;
-    enCourse: number;
-    dnf: number;
-    dns: number;
-    dsq: number;
-  };
-  resultats: {
-    departs: number;
-    arrivees: number;
-    enAttenteArrivee: number;
-    disqualifications: number;
-  };
-  liveCourses: LiveCourseSummary[];
+export type DashboardData = {
+  courses: DashboardCourse[];
+  years: number[];
+  view: DashboardView;
 };
 
-function countParticipants(participants: ParticipantProjection[]) {
-  return {
-    total: participants.length,
-    inscrits: participants.filter((p) => p.statut === "Inscrit").length,
-    presents: participants.filter(
-      (p) => p.statut === "Present" || p.statut === "Présent"
-    ).length,
-    enCourse: participants.filter((p) => p.statut === "En course").length,
-    dnf: participants.filter((p) => p.statut === "DNF").length,
-    dns: participants.filter((p) => p.statut === "DNS").length,
-    dsq: participants.filter((p) => p.statut === "DSQ").length,
-  };
-}
-
-function summarizeCourses(courses: Course[]) {
-  const byType: Record<CourseType, number> = {
-    TRAIL: 0,
-    VTT: 0,
-    DH: 0,
-    XC: 0,
-    ENDURO: 0,
-  };
-  for (const c of courses) {
-    byType[c.type] += 1;
+function apiErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === "object" && "response" in err) {
+    const data = (err as { response?: { data?: { message?: string; error?: string } } })
+      .response?.data;
+    const message = data?.message?.trim();
+    if (message && message !== "Erreur interne") return message;
   }
-  return {
-    total: courses.length,
-    enCours: courses.filter((c) => c.status === "En cours").length,
-    aVenir: courses.filter((c) => c.status === "A venir").length,
-    terminees: courses.filter((c) => c.status === "Terminee").length,
-    byType,
-  };
+  if (err instanceof Error && err.message.trim() && !("response" in err)) {
+    return err.message;
+  }
+  return fallback;
 }
 
-export async function fetchDashboardStats(): Promise<DashboardStats> {
-  const courses = await fetchCoursesDetailed();
-
-  const participantsByCourse = await Promise.all(
-    courses.map(async (course) => ({
-      courseId: course.id,
-      participants: await fetchParticipantsByCourse(course.id),
-    }))
-  );
-
-  const allParticipants = participantsByCourse.flatMap((x) => x.participants);
-  const participantCounts = countParticipants(allParticipants);
-
-  const liveCourses: LiveCourseSummary[] = courses
-    .filter((c) => c.status === "En cours")
-    .map((course) => {
-      const plist =
-        participantsByCourse.find((x) => x.courseId === course.id)
-          ?.participants ?? [];
-
-      return {
-        id: course.id,
-        name: course.name,
-        type: course.type,
-        status: course.status,
-        participantCount: plist.length,
-        presentCount: plist.filter(
-          (p) => p.statut === "Present" || p.statut === "Présent"
-        ).length,
-        enCourseCount: plist.filter((p) => p.statut === "En course").length,
-        arriveeCount: 0,
-        departCount: 0,
-      };
-    });
-
-  return {
-    courses: summarizeCourses(courses),
-    participants: participantCounts,
-    resultats: {
-      departs: 0,
-      arrivees: allParticipants.filter((p) => p.statut === "Finisher").length,
-      enAttenteArrivee: 0,
-      disqualifications: participantCounts.dsq,
-    },
-    liveCourses,
+export async function fetchDashboard(
+  filters: DashboardFilters,
+  trendMonth: TrendMonth
+): Promise<DashboardData> {
+  const params: Record<string, string | number> = {
+    period: filters.period,
+    year: trendMonth.year,
+    month: trendMonth.month,
   };
+  if (filters.courseId !== "all") params.courseId = filters.courseId;
+  if (filters.inscriptionStatut !== "all") {
+    params.inscriptionStatut = filters.inscriptionStatut;
+  }
+  if (filters.participantStatut !== "all") {
+    params.participantStatut = filters.participantStatut;
+  }
+
+  try {
+    const { data } = await api.get<RenderResponse<DashboardApiData>>(API.dashboard, {
+      params,
+    });
+    if (!data.data) {
+      throw new Error("Impossible de charger le tableau de bord.");
+    }
+    const payload = data.data;
+    return {
+      courses: payload.courses ?? [],
+      years: payload.years ?? [],
+      view: {
+        kpis: payload.kpis,
+        popularity: payload.popularity ?? [],
+        tracking: payload.tracking ?? [],
+        trackingTotals: payload.trackingTotals,
+        followUp: payload.followUp ?? [],
+        trend: (payload.trend ?? []).map((point) => ({
+          date: point.date,
+          count: point.count,
+          label: formatDashboardDate(point.date),
+        })),
+      },
+    };
+  } catch (err) {
+    throw new Error(apiErrorMessage(err, "Impossible de charger le tableau de bord."));
+  }
 }

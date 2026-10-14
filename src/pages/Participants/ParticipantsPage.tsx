@@ -22,6 +22,12 @@ import {
 } from "./useParticipantListSearch";
 import { Alert } from "@/components/ui/feedback";
 import { exportParticipantsPdf } from "./participantsPdf";
+import {
+  nextParticipantSort,
+  sortParticipants,
+  type ParticipantSort,
+  type ParticipantSortKey,
+} from "./participantTableSort";
 
 type UICourse = { id: number; label: string };
 type UICategory = { id: number; alias: string };
@@ -75,6 +81,15 @@ export function ParticipantsPage() {
     () => filterParticipantsByQuery(rows, query),
     [rows, query]
   );
+  const [sort, setSort] = useState<ParticipantSort>(null);
+  const displayRows = useMemo(
+    () => sortParticipants(filteredRows, sort),
+    [filteredRows, sort]
+  );
+
+  function handleSort(key: ParticipantSortKey) {
+    setSort((current) => nextParticipantSort(current, key));
+  }
 
   const [editingParticipant, setEditingParticipant] =
     useState<ParticipantProjection | null>(null);
@@ -174,7 +189,7 @@ export function ParticipantsPage() {
   };
 
   const exportPdf = () => {
-    exportParticipantsPdf(filteredRows, {
+    exportParticipantsPdf(displayRows, {
       title:
         source === "INSCRIPTION" ? "Liste des inscriptions" : "Liste des participants",
       filename: source === "INSCRIPTION" ? "inscriptions.pdf" : "participants.pdf",
@@ -264,6 +279,7 @@ export function ParticipantsPage() {
           setSource(value);
           setSelectedCategoryId("all");
           setSelectedStatus(DEFAULT_STATUT_BY_SOURCE[value]);
+          setSort(null);
           setActionSuccess(null);
         }}
         onCourseChange={(value) => {
@@ -277,7 +293,9 @@ export function ParticipantsPage() {
 
       <ParticipantsTable
         loading={loading}
-        rows={filteredRows}
+        rows={displayRows}
+        sort={sort}
+        onSort={handleSort}
         sourceMode={source}
         onEdit={(row) => {
           setActionSuccess(null);

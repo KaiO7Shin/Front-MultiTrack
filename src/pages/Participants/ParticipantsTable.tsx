@@ -2,11 +2,15 @@ import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Users } from "lucide-react";
 import type { ParticipantProjection } from "@/lib/type";
 import { EmptyState, Spinner } from "@/components/ui/feedback";
+import { ParticipantSortableHeader } from "./ParticipantSortableHeader";
 import { statusBadgeClass, statusLabel } from "./participantStatus";
+import type { ParticipantSort, ParticipantSortKey } from "./participantTableSort";
 
 type ParticipantsTableProps = {
   loading: boolean;
   rows: ParticipantProjection[];
+  sort: ParticipantSort;
+  onSort: (key: ParticipantSortKey) => void;
   /** Mode inscription : pas d’édition / suppression participant. */
   sourceMode?: "INSCRIPTION" | "PARTICIPANT";
   onEdit: (row: ParticipantProjection) => void;
@@ -16,6 +20,8 @@ type ParticipantsTableProps = {
 export function ParticipantsTable({
   loading,
   rows,
+  sort,
+  onSort,
   sourceMode = "PARTICIPANT",
   onEdit,
   onDelete,
@@ -56,12 +62,32 @@ export function ParticipantsTable({
         <table>
           <thead className="bg-slate-50">
             <tr>
-              <th className="px-3 py-2 text-left">Id</th>
+              <ParticipantSortableHeader
+                label="Id"
+                sortKey="id"
+                sort={sort}
+                onSort={onSort}
+              />
               {!isInscription && (
-                <th className="px-3 py-2 text-left">Dossard</th>
+                <ParticipantSortableHeader
+                  label="Dossard"
+                  sortKey="numDossard"
+                  sort={sort}
+                  onSort={onSort}
+                />
               )}
-              <th className="px-3 py-2 text-left">Nom</th>
-              <th className="px-3 py-2 text-left">Prénom</th>
+              <ParticipantSortableHeader
+                label="Nom"
+                sortKey="nom"
+                sort={sort}
+                onSort={onSort}
+              />
+              <ParticipantSortableHeader
+                label="Prénom"
+                sortKey="prenom"
+                sort={sort}
+                onSort={onSort}
+              />
               <th className="px-3 py-2 text-left">Genre</th>
               <th className="px-3 py-2 text-left">Course</th>
               <th className="px-3 py-2 text-left">
@@ -77,7 +103,7 @@ export function ParticipantsTable({
             {rows.map((p) => {
               const detailPath = isInscription
                 ? `/inscriptions/${p.id}`
-                : `/participants/${p.id}`;
+                : `/participants/${p.id}?from=participants`;
               return (
                 <tr
                   key={`${p.source ?? sourceMode}-${p.id}`}
