@@ -31,6 +31,7 @@ export type RegistrationDraftState = {
   step: number;
   rulesAccepted: boolean;
   draft: RunnerDraft;
+  idempotencyKey: string;
 };
 
 export type RegistrationDraftSnapshot = RegistrationDraftState & {
@@ -48,6 +49,7 @@ type StoredPayload = {
   rulesAccepted: boolean;
   fields: StoredFields;
   fileNames?: Partial<Record<FileKey, string>>;
+  idempotencyKey?: string;
 };
 
 function fieldsFromDraft(draft: RunnerDraft): StoredFields {
@@ -191,6 +193,7 @@ export async function loadRegistrationDraft(): Promise<RegistrationDraftSnapshot
     rulesAccepted: payload.rulesAccepted === true,
     draft: draftFromFields(payload.fields, files),
     missingFileNames,
+    idempotencyKey: payload.idempotencyKey ?? "",
   };
 }
 
@@ -202,6 +205,7 @@ export async function saveRegistrationDraft(state: RegistrationDraftState): Prom
     rulesAccepted: state.rulesAccepted,
     fields: fieldsFromDraft(state.draft),
     fileNames: fileNamesFromDraft(state.draft),
+    idempotencyKey: state.idempotencyKey,
   };
   localStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(payload));
 }

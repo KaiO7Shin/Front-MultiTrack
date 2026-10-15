@@ -18,6 +18,7 @@ export function useRegistrationDraft() {
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [draft, setDraft] = useState<RunnerDraft>(EMPTY_DRAFT);
   const [missingFileNames, setMissingFileNames] = useState<MissingFileNames>({});
+  const [idempotencyKey, setIdempotencyKey] = useState("");
   const persistEnabled = useRef(false);
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export function useRegistrationDraft() {
         setRulesAccepted(saved.rulesAccepted);
         setDraft(saved.draft);
         setMissingFileNames(saved.missingFileNames);
+        setIdempotencyKey(saved.idempotencyKey);
       })
       .finally(() => {
         if (!cancelled) {
@@ -46,10 +48,10 @@ export function useRegistrationDraft() {
     if (!hydrated || !persistEnabled.current) return;
     const timer = window.setTimeout(() => {
       if (!persistEnabled.current) return;
-      void saveRegistrationDraft({ wizardOpen, step, rulesAccepted, draft });
+      void saveRegistrationDraft({ wizardOpen, step, rulesAccepted, draft, idempotencyKey });
     }, 150);
     return () => window.clearTimeout(timer);
-  }, [hydrated, wizardOpen, step, rulesAccepted, draft]);
+  }, [hydrated, wizardOpen, step, rulesAccepted, draft, idempotencyKey]);
 
   const identityFile = draft.identityFile;
   const medicalFile = draft.medicalFile;
@@ -79,7 +81,19 @@ export function useRegistrationDraft() {
   const setWizardOpen = useCallback((open: boolean) => {
     persistEnabled.current = true;
     setWizardOpenState(open);
-  }, []);
+    if (!open) return;
+    setIdempotencyKey((current) => {
+      const key = current || crypto.randomUUID();
+      void saveRegistrationDraft({
+        wizardOpen: true,
+        step,
+        rulesAccepted,
+        draft,
+        idempotencyKey: key,
+      });
+      return key;
+    });
+  }, [step, rulesAccepted, draft]);
 
   const clearDraft = useCallback(async () => {
     persistEnabled.current = false;
@@ -89,6 +103,7 @@ export function useRegistrationDraft() {
     setRulesAccepted(false);
     setDraft(EMPTY_DRAFT);
     setMissingFileNames({});
+    setIdempotencyKey("");
   }, []);
 
   return {
@@ -102,6 +117,7 @@ export function useRegistrationDraft() {
     draft,
     setDraft,
     missingFileNames,
+    idempotencyKey,
     clearDraft,
   };
 }

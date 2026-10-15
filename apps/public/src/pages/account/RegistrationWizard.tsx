@@ -23,6 +23,7 @@ export function RegistrationWizard({
   onCancel,
   onValidate,
   onClearDraft,
+  idempotencyKey,
 }: {
   step: number;
   rulesAccepted: boolean;
@@ -34,6 +35,7 @@ export function RegistrationWizard({
   onCancel: () => void;
   onValidate: (registration: Registration) => void;
   onClearDraft: () => Promise<void>;
+  idempotencyKey: string;
 }) {
   const [stepError, setStepError] = useState("");
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -41,6 +43,7 @@ export function RegistrationWizard({
   const [loading, setLoading] = useState(false);
   const pendingRegistration = useRef<Registration | null>(null);
   const acknowledging = useRef(false);
+  const submitting = useRef(false);
   const wizardRef = useRef<HTMLDivElement>(null);
   const { courses } = useCourses();
   const selectedCourse = courses.find((course) => course.id === draft.courseId);
@@ -90,25 +93,32 @@ export function RegistrationWizard({
   }
 
   async function validate(paymentMethod: Registration["paymentMethod"], paymentReference: string) {
+    if (submitting.current) return;
     const payment = { method: paymentMethod, reference: paymentReference };
     const clientError = validateDraft(draft) ?? validatePayment(payment);
     if (clientError) {
       setStepError(clientError);
       return;
     }
+    submitting.current = true;
     setStepError("");
     setLoading(true);
-    const result = await submitRegistration(draft, payment);
-    if (!result.ok) {
+    let succeeded = false;
+    try {
+      const result = await submitRegistration(draft, payment, idempotencyKey);
+      if (!result.ok) {
+        setStepError(result.error);
+        return;
+      }
+      pendingRegistration.current = mapInscription(result.data);
+      acknowledging.current = false;
+      succeeded = true;
+      setPaymentOpen(false);
+      setSuccessOpen(true);
+    } finally {
       setLoading(false);
-      setStepError(result.error);
-      return;
+      if (!succeeded) submitting.current = false;
     }
-    pendingRegistration.current = mapInscription(result.data);
-    acknowledging.current = false;
-    setLoading(false);
-    setPaymentOpen(false);
-    setSuccessOpen(true);
   }
 
   function acknowledgeSuccess() {
