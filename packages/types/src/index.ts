@@ -173,6 +173,8 @@ export interface InscriptionResponse {
   numDossard?: string | null;
   /** Libellé de catégorie du participant lié, renseigné après validation. */
   category?: string | null;
+  /** identite / certificat / autorisation → EN_COURS ou ECHEC tant que Drive n’a pas fini. */
+  documentStates?: Partial<Record<"identite" | "certificat" | "autorisation", string>> | null;
 }
 
 export interface OrganizerDashboard {
