@@ -91,7 +91,9 @@ export const DashboardPage = () => {
       {view && (
         <>
           <p className="sr-only" aria-live="polite">
-            {view.kpis.total.toLocaleString("fr-FR")} inscriptions,{" "}
+            {view.kpis.participantCount.toLocaleString("fr-FR")} inscriptions
+            totales, {view.kpis.total.toLocaleString("fr-FR")} inscriptions en
+            ligne,{" "}
             {view.followUp.length.toLocaleString("fr-FR")} participants à suivre.
           </p>
           <DashboardKpiGrid kpis={view.kpis} />
