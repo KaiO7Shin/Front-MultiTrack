@@ -8,7 +8,16 @@ const cards: {
   title: string;
   icon: ReactNode;
 }[] = [
-  { key: "total", title: "Inscriptions totales", icon: <Users className="h-4 w-4" /> },
+  {
+    key: "participantCount",
+    title: "Inscriptions totales",
+    icon: <Users className="h-4 w-4" />,
+  },
+  {
+    key: "total",
+    title: "Inscriptions en ligne",
+    icon: <UserCheck className="h-4 w-4" />,
+  },
   {
     key: "validated",
     title: "Inscriptions validées",
@@ -18,11 +27,6 @@ const cards: {
     key: "pending",
     title: "Inscriptions en attente",
     icon: <Clock3 className="h-4 w-4" />,
-  },
-  {
-    key: "participantCount",
-    title: "Inscrits",
-    icon: <UserCheck className="h-4 w-4" />,
   },
 ];
 
@@ -45,9 +49,9 @@ export function DashboardKpiGrid({ kpis }: { kpis: DashboardKpis }) {
         ))}
       </div>
       <p className="text-xs text-muted-foreground">
-        Les inscriptions totales, validées et en attente suivent la course et la
-        période. Le nombre d’inscrits correspond aux dossiers participant pour la
-        course sélectionnée.
+        Les inscriptions totales correspondent aux dossiers participant pour la
+        course sélectionnée. Les inscriptions en ligne, validées et en attente
+        suivent la course et la période.
       </p>
     </div>
   );
