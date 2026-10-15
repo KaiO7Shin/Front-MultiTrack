@@ -36,6 +36,8 @@ export type Registration = {
   totalAmount: number;
   /** Présent une fois l’inscription validée. */
   numDossard?: string | null;
+  /** identite / certificat / autorisation → EN_COURS ou ECHEC tant que Drive n’a pas fini. */
+  documentStates?: Partial<Record<"identite" | "certificat" | "autorisation", string>>;
   runner: Runner;
 };
 

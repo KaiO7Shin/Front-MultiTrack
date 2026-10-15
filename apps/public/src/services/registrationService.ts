@@ -62,6 +62,7 @@ export function mapInscription(item: InscriptionResponse): Registration {
     paymentMethod: method,
     totalAmount: Number(item.totalAmount ?? 0),
     numDossard: item.numDossard?.trim() || null,
+    documentStates: item.documentStates ?? undefined,
     runner: {
       id: item.id,
       firstName: item.firstName ?? "",
@@ -102,6 +103,7 @@ export async function listMyRegistrations(): Promise<Registration[]> {
 export async function submitRegistration(
   draft: RunnerDraft,
   payment: PaymentInput,
+  idempotencyKey: string,
 ): Promise<{ ok: true; data: InscriptionResponse } | { ok: false; error: string }> {
   const clientError = validateDraft(draft);
   if (clientError) {
@@ -113,6 +115,9 @@ export async function submitRegistration(
   }
   if (typeof draft.courseId !== "number" || !draft.identityFile) {
     return { ok: false, error: "La pièce d’identité est obligatoire." };
+  }
+  if (!idempotencyKey.trim()) {
+    return { ok: false, error: "La demande d’inscription est incomplète. Rechargez la page et réessayez." };
   }
 
   const genderId = GENDERS.find((gender) => gender.label === draft.gender)?.id;
@@ -137,6 +142,7 @@ export async function submitRegistration(
   // Le montant n’est jamais envoyé : le serveur le calcule depuis le tarif de la course.
   body.append("paymentMethod", payment.method);
   body.append("paymentReference", payment.reference.trim());
+  body.append("idempotencyKey", idempotencyKey.trim());
   body.append("identityFile", draft.identityFile);
   if (draft.medicalFile) body.append("medicalFile", draft.medicalFile);
   if (isMinor(draft.birthDate) && draft.parentalFile) {

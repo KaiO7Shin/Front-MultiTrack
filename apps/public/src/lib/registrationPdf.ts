@@ -122,13 +122,13 @@ function drawHeader(doc: jsPDF, registration: Registration, pageW: number) {
 function documentRows(registration: Registration): KvRow[] {
   const { runner } = registration;
   const rows: KvRow[] = [
-    { label: "Pièce d'identité", value: providedLabel(runner.identityDocument), align: "center" },
-    { label: "Certificat médical", value: providedLabel(runner.medicalCertificate), align: "center" },
+    { label: "Pièce d'identité", value: providedLabel(runner.identityDocument, registration.documentStates?.identite), align: "center" },
+    { label: "Certificat médical", value: providedLabel(runner.medicalCertificate, registration.documentStates?.certificat), align: "center" },
   ];
   if (isMinor(runner.birthDate)) {
     rows.push({
       label: "Autorisation parentale",
-      value: providedLabel(runner.parentalAuthorization),
+      value: providedLabel(runner.parentalAuthorization, registration.documentStates?.autorisation),
       align: "center",
     });
   }
@@ -222,8 +222,11 @@ function applyHeadAlign(
   if (align) data.cell.styles.halign = align;
 }
 
-function providedLabel(url?: string) {
-  return isDocumentProvided(url) ? "Fourni" : "Non fourni";
+function providedLabel(url?: string, state?: string) {
+  if (isDocumentProvided(url)) return "Fourni";
+  if (state === "EN_COURS") return "En cours d'envoi";
+  if (state === "ECHEC") return "Echec d'envoi";
+  return "Non fourni";
 }
 
 function isDocumentProvided(url?: string) {

@@ -16,11 +16,21 @@ export function RegistrationDetailPage() {
   const { registrations, loadRegistrations } = useSession();
   const registration = findRegistration(registrations, registrationId);
 
+  const documentsPending = hasPendingDocument(registration);
+
   useEffect(() => {
     if (!registration) {
       void loadRegistrations();
     }
   }, [loadRegistrations, registration]);
+
+  useEffect(() => {
+    if (!documentsPending) return;
+    const timer = window.setInterval(() => {
+      void loadRegistrations();
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [documentsPending, loadRegistrations]);
 
   if (!registration) {
     return (
@@ -109,16 +119,21 @@ function DocumentsSection({
       <dl className="profile-details">
         <div>
           <dt>Pièce d’identité</dt>
-          <dd><DocumentValue url={runner.identityDocument} /></dd>
+          <dd><DocumentValue url={runner.identityDocument} state={registration.documentStates?.identite} /></dd>
         </div>
         <div>
           <dt>Certificat médical</dt>
-          <dd><DocumentValue url={runner.medicalCertificate} /></dd>
+          <dd><DocumentValue url={runner.medicalCertificate} state={registration.documentStates?.certificat} /></dd>
         </div>
         {minor && (
           <div>
             <dt>Autorisation parentale</dt>
-            <dd><DocumentValue url={runner.parentalAuthorization} /></dd>
+            <dd>
+              <DocumentValue
+                url={runner.parentalAuthorization}
+                state={registration.documentStates?.autorisation}
+              />
+            </dd>
           </div>
         )}
         <div><dt>Moyen de paiement</dt><dd>{registration.paymentMethod || "—"}</dd></div>
@@ -145,8 +160,10 @@ function EmergencySection({ registration }: { registration: Registration }) {
   );
 }
 
-function DocumentValue({ url }: { url?: string }) {
+function DocumentValue({ url, state }: { url?: string; state?: string }) {
   if (!isApiDocumentUrl(url)) {
+    if (state === "EN_COURS") return "Document en cours d’envoi";
+    if (state === "ECHEC") return "L’envoi du document a échoué. L’équipe peut le reprendre.";
     return "Non fourni";
   }
   return (
@@ -160,6 +177,11 @@ function DocumentValue({ url }: { url?: string }) {
       Ouvrir
     </a>
   );
+}
+
+function hasPendingDocument(registration: Registration | undefined) {
+  if (!registration?.documentStates) return false;
+  return Object.values(registration.documentStates).some((state) => state === "EN_COURS");
 }
 
 function isApiDocumentUrl(url?: string) {
