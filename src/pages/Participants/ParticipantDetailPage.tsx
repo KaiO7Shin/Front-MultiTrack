@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   changeParticipantStatus,
   fetchParticipantById,
@@ -28,8 +28,17 @@ import {
   EmergencyAndDocumentsSection,
 } from "./PersonDetailSections";
 
+function participantBackLink(from: string | null) {
+  if (from === "dashboard") {
+    return { to: "/dashboard", label: "Retour au tableau de bord" };
+  }
+  return { to: "/participants", label: "Retour aux participants" };
+}
+
 export function ParticipantDetailPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const back = participantBackLink(searchParams.get("from"));
   const { user } = useAuth();
   const isAdmin = user?.role === ROLE_ADMIN;
 
@@ -112,9 +121,9 @@ export function ParticipantDetailPage() {
     return (
       <section className="page-section">
         <Link
-          to="/participants"
+          to={back.to}
           className="inline-flex items-center mb-3 hover:opacity-80"
-          aria-label="Retour"
+          aria-label={back.label}
         >
           <img src="/bouton-retour.svg" alt="" className="h-8 w-8" aria-hidden />
         </Link>
@@ -141,9 +150,9 @@ export function ParticipantDetailPage() {
         </div>
         <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
           <Link
-            to="/participants"
+            to={back.to}
             className="inline-flex items-center hover:opacity-80"
-            aria-label="Retour"
+            aria-label={back.label}
           >
             <img src="/bouton-retour.svg" alt="" className="h-8 w-8" aria-hidden />
           </Link>

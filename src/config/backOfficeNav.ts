@@ -51,6 +51,7 @@ const ADMIN_NAV: BackOfficeNavEntry[] = [
 ];
 
 const ORGANIZER_NAV: BackOfficeNavEntry[] = [
+  { kind: "link", to: "/dashboard", label: "Tableau de bord", end: true },
   { kind: "link", to: "/participants", label: "Gestion participant" },
   { kind: "link", to: "/tshirts", label: "T-shirts", end: true },
   { kind: "link", to: "/leaderboard", label: "Résultats", end: true },
@@ -85,6 +86,7 @@ export function isPathAllowedForRole(path: string, role: number | undefined): bo
   if (role === ROLE_CHECKPOINT) return path.startsWith("/checkpoint");
   if (role === ROLE_ORGANIZER) {
     const allowedExact = new Set([
+      "/dashboard",
       "/participants",
       "/tshirts",
       "/leaderboard",
