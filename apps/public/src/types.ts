@@ -38,6 +38,8 @@ export type Registration = {
   numDossard?: string | null;
   /** identite / certificat / autorisation → EN_COURS ou ECHEC tant que Drive n’a pas fini. */
   documentStates?: Partial<Record<"identite" | "certificat" | "autorisation", string>>;
+  /** Motif du dernier refus. Présent seulement si le statut est « Refusée ». */
+  refusalComment?: string | null;
   runner: Runner;
 };
 

@@ -175,6 +175,8 @@ export interface InscriptionResponse {
   category?: string | null;
   /** identite / certificat / autorisation → EN_COURS ou ECHEC tant que Drive n’a pas fini. */
   documentStates?: Partial<Record<"identite" | "certificat" | "autorisation", string>> | null;
+  /** Dernier motif du log « Refusée ». Absent ou vide hors de ce statut. */
+  refusalComment?: string | null;
 }
 
 export interface OrganizerDashboard {

@@ -72,8 +72,17 @@ export async function fetchDashboard(
       view: {
         kpis: payload.kpis,
         popularity: payload.popularity ?? [],
-        tracking: payload.tracking ?? [],
-        trackingTotals: payload.trackingTotals,
+        tracking: (payload.tracking ?? []).map((row) => ({
+          ...row,
+          finishers: row.finishers ?? 0,
+          enCourse: row.enCourse ?? 0,
+          dnf: row.dnf ?? 0,
+        })),
+        trackingTotals: {
+          finishers: payload.trackingTotals?.finishers ?? 0,
+          enCourse: payload.trackingTotals?.enCourse ?? 0,
+          dnf: payload.trackingTotals?.dnf ?? 0,
+        },
         followUp: payload.followUp ?? [],
         trend: (payload.trend ?? []).map((point) => ({
           date: point.date,

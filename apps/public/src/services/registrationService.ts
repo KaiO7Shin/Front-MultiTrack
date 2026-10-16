@@ -1,6 +1,7 @@
 import { API, ApiError, apiRequest, apiUrl, listFrom, toErrorMessage } from "@multitrack/api-client";
 import { INSCRIPTION_STATUS, type InscriptionResponse, type RenderResponse } from "@multitrack/types";
-import { draftToRunner, isMinor, validateDraft } from "../lib/participant";
+import { needsPartnerTShirt } from "../lib/duoCourses";
+import { draftToRunner, isMinor, validateDraft, validateRegistrationEdit, type RegistrationEditInput } from "../lib/participant";
 import { formatInscriptionDate } from "../lib/utils";
 import {
   GENDERS,
@@ -63,6 +64,9 @@ export function mapInscription(item: InscriptionResponse): Registration {
     totalAmount: Number(item.totalAmount ?? 0),
     numDossard: item.numDossard?.trim() || null,
     documentStates: item.documentStates ?? undefined,
+    refusalComment: item.status === INSCRIPTION_STATUS.REFUSED
+      ? item.refusalComment?.trim() || null
+      : null,
     runner: {
       id: item.id,
       firstName: item.firstName ?? "",
@@ -161,6 +165,58 @@ export async function submitRegistration(
       };
     }
     return { ok: true, data: payload.data };
+  } catch (error: unknown) {
+    if (error instanceof ApiError && error.message.trim()) {
+      return { ok: false, error: error.message };
+    }
+    return { ok: false, error: toErrorMessage(error) };
+  }
+}
+
+export async function updateRegistration(
+  registrationId: string,
+  input: RegistrationEditInput,
+  payment: PaymentInput,
+): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  const clientError = validateRegistrationEdit(input) ?? validatePayment(payment);
+  if (clientError) return { ok: false, error: clientError };
+
+  const genderId = GENDERS.find((gender) => gender.label === input.gender)?.id;
+  const tShirtSizeId = TSHIRT_SIZES.find((size) => size.alias === input.tshirtSize)?.id;
+  const tShirtSizeBinomeId = needsPartnerTShirt(input.race)
+    ? TSHIRT_SIZES.find((size) => size.alias === input.tshirtSizeBinome)?.id
+    : undefined;
+  if (!genderId || !tShirtSizeId || (needsPartnerTShirt(input.race) && !tShirtSizeBinomeId)) {
+    return { ok: false, error: "Genre ou taille de t-shirt introuvable." };
+  }
+
+  const body = new FormData();
+  body.append("lastName", input.lastName.trim());
+  body.append("firstName", input.firstName.trim());
+  body.append("birthDate", input.birthDate);
+  body.append("genderId", String(genderId));
+  body.append("tShirtSizeId", String(tShirtSizeId));
+  if (tShirtSizeBinomeId) body.append("tShirtSizeBinomeId", String(tShirtSizeBinomeId));
+  body.append("emergencyContactName", input.emergencyContactName.trim());
+  body.append("emergencyContactPhone", input.emergencyContactPhone);
+  body.append("paymentMethod", payment.method);
+  body.append("paymentReference", payment.reference.trim());
+  if (input.identityFile) body.append("identityFile", input.identityFile);
+  if (input.medicalFile) body.append("medicalFile", input.medicalFile);
+  if (isMinor(input.birthDate) && input.parentalFile) body.append("parentalFile", input.parentalFile);
+
+  try {
+    const payload = await apiRequest<RenderResponse<InscriptionResponse>>(API.myRegistration(registrationId), {
+      method: "PUT",
+      body,
+    });
+    if (payload.code !== 200 || !payload.data) {
+      return {
+        ok: false,
+        error: payload.message?.trim() || payload.error?.trim() || "Impossible de modifier l’inscription.",
+      };
+    }
+    return { ok: true, message: payload.message?.trim() || "Inscription mise à jour avec succès" };
   } catch (error: unknown) {
     if (error instanceof ApiError && error.message.trim()) {
       return { ok: false, error: error.message };
