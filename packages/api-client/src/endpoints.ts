@@ -9,6 +9,7 @@ export const API = {
   logout: "/api/auth/logout",
   me: "/api/me",
   myRegistrations: "/api/me/registrations",
+  myRegistration: (inscriptionId: string | number) => `/api/me/registrations/${inscriptionId}`,
   myRegistrationDocument: (
     inscriptionId: string | number,
     type: "identite" | "certificat" | "autorisation",

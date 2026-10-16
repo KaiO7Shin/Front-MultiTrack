@@ -68,6 +68,58 @@ export function validateParentalFile(file: File) {
   return fileError(file, PARENTAL_MAX_BYTES, "L’autorisation parentale");
 }
 
+export type RegistrationEditInput = {
+  lastName: string;
+  firstName: string;
+  birthDate: string;
+  gender: string;
+  race: string;
+  tshirtSize: string;
+  tshirtSizeBinome: string;
+  identityFile: File | null;
+  medicalFile: File | null;
+  parentalFile: File | null;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+};
+
+/** Mêmes contraintes que la création, sans course ni pièce d’identité obligatoire. */
+export function validateRegistrationEdit(input: RegistrationEditInput): string | null {
+  if (!input.lastName.trim()) return "Saisissez le nom du participant.";
+  if (input.lastName.trim().length > 100) return "Le nom ne doit pas dépasser 100 caractères.";
+  if (!input.firstName.trim()) return "Saisissez le prénom du participant.";
+  if (input.firstName.trim().length > 75) return "Le prénom ne doit pas dépasser 75 caractères.";
+  if (!input.birthDate) return "Saisissez la date de naissance.";
+  if (input.birthDate >= new Date().toISOString().slice(0, 10)) {
+    return "La date de naissance doit être dans le passé.";
+  }
+  if (!input.gender) return "Choisissez un genre.";
+  if (input.identityFile) {
+    const identityError = validateIdentityFile(input.identityFile);
+    if (identityError) return identityError;
+  }
+  if (input.medicalFile) {
+    const medicalError = validateMedicalFile(input.medicalFile);
+    if (medicalError) return medicalError;
+  }
+  if (isMinor(input.birthDate) && input.parentalFile) {
+    const parentalError = validateParentalFile(input.parentalFile);
+    if (parentalError) return parentalError;
+  }
+  if (!input.tshirtSize) return "Choisissez une taille de t-shirt.";
+  if (needsPartnerTShirt(input.race) && !input.tshirtSizeBinome) {
+    return partnerTShirtChoiceMessage(input.race);
+  }
+  if (!input.emergencyContactName.trim()) return "Saisissez le nom du contact d’urgence.";
+  if (input.emergencyContactName.trim().length > 175) {
+    return "Le nom du contact d’urgence ne doit pas dépasser 175 caractères.";
+  }
+  if (!isValidPhone(input.emergencyContactPhone)) {
+    return "Saisissez un numéro de téléphone valide pour le contact d’urgence.";
+  }
+  return null;
+}
+
 export function validateDraft(draft: RunnerDraft): string | null {
   if (!draft.lastName.trim()) return "Saisissez le nom du participant.";
   if (!draft.firstName.trim()) return "Saisissez le prénom du participant.";

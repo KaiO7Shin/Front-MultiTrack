@@ -1,10 +1,11 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { StatusPill } from "../../components/StatusPill";
 import { useRegistrationDraft } from "../../hooks/useRegistrationDraft";
 import { useSession } from "../../hooks/useSession";
 import { participantFullName } from "../../lib/participant";
+import type { Registration } from "../../types";
 import { RegistrationWizard } from "./RegistrationWizard";
 
 export function RegistrationsPage() {
@@ -93,17 +94,42 @@ export function RegistrationsPage() {
           </thead>
           <tbody>
             {registrations.map((registration) => (
-              <tr key={registration.id}>
-                <td data-label="Date d’inscription">{registration.createdAt}</td>
-                <td data-label="Participant"><strong>{participantFullName(registration.runner)}</strong></td>
-                <td data-label="Course">{registration.runner.race}</td>
-                <td data-label="Statut"><StatusPill status={registration.status} /></td>
-                <td data-label="Action"><Link className="table-link" to={`/espace/inscriptions/${registration.id}`}>Consulter</Link></td>
-              </tr>
+              <RegistrationRow key={registration.id} registration={registration} />
             ))}
           </tbody>
         </table>
       </div>
     </div>
+  );
+}
+
+function RegistrationRow({ registration }: { registration: Registration }) {
+  const navigate = useNavigate();
+  const detailPath = `/espace/inscriptions/${registration.id}`;
+  return (
+    <tr
+      className="is-clickable"
+      role="link"
+      tabIndex={0}
+      onClick={() => navigate(detailPath)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          navigate(detailPath);
+        }
+      }}
+    >
+      <td data-label="Date d’inscription">{registration.createdAt}</td>
+      <td data-label="Participant"><strong>{participantFullName(registration.runner)}</strong></td>
+      <td data-label="Course">{registration.runner.race}</td>
+      <td data-label="Statut"><StatusPill status={registration.status} /></td>
+      <td
+        data-label="Action"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        <Link className="table-link" to={detailPath}>Consulter</Link>
+      </td>
+    </tr>
   );
 }
