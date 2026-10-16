@@ -16,6 +16,7 @@ import { ROLE_ADMIN, ROLE_ORGANIZER, useAuth } from "@/lib/auth";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import {
   INSCRIPTION_PENDING_STATUS,
+  INSCRIPTION_REFUSED_STATUS,
   statusBadgeClass,
   statusLabel,
 } from "@/pages/Participants/participantStatus";
@@ -188,7 +189,9 @@ export function InscriptionDetailPage() {
   }
 
   const canReview =
-    isAdmin && inscription.statut === INSCRIPTION_PENDING_STATUS;
+    isAdmin &&
+    (inscription.statut === INSCRIPTION_PENDING_STATUS ||
+      inscription.statut === INSCRIPTION_REFUSED_STATUS);
   const canResendValidationMail =
     isAdmin || user?.role === ROLE_ORGANIZER;
   const fullName = formatParticipantName(inscription.prenom, inscription.nom);

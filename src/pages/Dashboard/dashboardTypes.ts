@@ -68,6 +68,7 @@ export type TrackingRow = {
   course: string;
   finishers: number;
   enCourse: number;
+  dnf: number;
 };
 
 export const DASHBOARD_MONTHS = [
@@ -111,6 +112,7 @@ export type DashboardView = {
   trackingTotals: {
     finishers: number;
     enCourse: number;
+    dnf: number;
   };
   followUp: FollowUpRow[];
 };

@@ -31,6 +31,7 @@ export const PARTICIPANT_STATUS_LABELS: Record<ParticipantStatus, string> = {
 };
 
 export const INSCRIPTION_PENDING_STATUS: ParticipantStatus = "Attente validation";
+export const INSCRIPTION_REFUSED_STATUS: ParticipantStatus = "Refusée";
 
 export function statusLabel(statut: ParticipantStatus | string | null | undefined) {
   if (!statut) return "—";

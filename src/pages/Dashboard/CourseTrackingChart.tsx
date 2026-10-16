@@ -15,6 +15,7 @@ import type { TrackingRow } from "./dashboardTypes";
 const SERIES = [
   { key: "finishers", name: "Finishers", color: "#8c9962" },
   { key: "enCourse", name: "En course", color: "#0f172b" },
+  { key: "dnf", name: "DNF", color: "#c2410c" },
 ] as const;
 
 export function CourseTrackingChart({
@@ -22,11 +23,11 @@ export function CourseTrackingChart({
   totals,
 }: {
   rows: TrackingRow[];
-  totals: { finishers: number; enCourse: number };
+  totals: { finishers: number; enCourse: number; dnf: number };
 }) {
   return (
     <DashboardPanel title="Suivi des courses">
-      <ul className="mb-4 grid gap-2 sm:grid-cols-2">
+      <ul className="mb-4 grid gap-2 sm:grid-cols-3">
         {SERIES.map((series) => (
           <li
             key={series.key}

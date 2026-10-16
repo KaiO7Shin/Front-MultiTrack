@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { INSCRIPTION_STATUS } from "@multitrack/types";
 import { DocumentIcon } from "../../components/icons";
@@ -10,12 +10,15 @@ import { exportRegistrationPdf } from "../../lib/registrationPdf";
 import { formatAmount } from "../../lib/utils";
 import { findRegistration } from "../../services/registrationService";
 import type { Registration } from "../../types";
+import { RegistrationEditModal } from "./RegistrationEditModal";
 
 export function RegistrationDetailPage() {
   const { registrationId } = useParams();
   const { registrations, loadRegistrations } = useSession();
   const registration = findRegistration(registrations, registrationId);
 
+  const [editing, setEditing] = useState(false);
+  const [notice, setNotice] = useState("");
   const documentsPending = hasPendingDocument(registration);
 
   useEffect(() => {
@@ -42,6 +45,9 @@ export function RegistrationDetailPage() {
   }
 
   const minor = isMinor(registration.runner.birthDate);
+  const canEdit = registration.status === INSCRIPTION_STATUS.PENDING
+    || registration.status === INSCRIPTION_STATUS.REFUSED;
+  const documentsFailed = notice.includes("nouveaux documents");
 
   return (
     <div className="account-content registration-detail">
@@ -67,17 +73,48 @@ export function RegistrationDetailPage() {
         </div>
       </div>
 
+      {notice && (
+        <p className={documentsFailed ? "form-error" : "form-message"} role={documentsFailed ? "alert" : "status"}>{notice}</p>
+      )}
       <ParticipantSection registration={registration} />
       <DocumentsSection registration={registration} minor={minor} />
       <EmergencySection registration={registration} />
+      {canEdit && (
+        <div className="registration-edit-launch">
+          <button type="button" className="button button-dark" onClick={() => setEditing(true)}>
+            Modifier
+          </button>
+        </div>
+      )}
+      {editing && (
+        <RegistrationEditModal
+          registration={registration}
+          onClose={() => setEditing(false)}
+          onSaved={(message) => {
+            setNotice(message);
+            setEditing(false);
+            void loadRegistrations();
+          }}
+        />
+      )}
     </div>
   );
 }
 
 function ParticipantSection({ registration }: { registration: Registration }) {
   const { runner } = registration;
+  const refusalComment = registration.status === INSCRIPTION_STATUS.REFUSED
+    ? registration.refusalComment?.trim()
+    : "";
   return (
     <section className="registration-section">
+      {refusalComment ? (
+        <p className="registration-refusal">
+          <strong>Motif</strong>
+          {" : "}
+          {refusalComment}
+        </p>
+      ) : null}
       <h3>Participant</h3>
       <dl className="profile-details">
         <div><dt>Nom</dt><dd>{runner.lastName || "—"}</dd></div>
