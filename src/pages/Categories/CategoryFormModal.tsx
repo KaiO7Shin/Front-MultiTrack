@@ -15,9 +15,16 @@ type CategoryFormModalProps = {
 
 const emptyForm = {
   alias: "",
+  libelle: "",
   ageMin: 18,
   ageMax: 39 as number | null,
 };
+
+function defaultLibelle(alias: string): string {
+  const genre = genreFromAlias(alias);
+  if (!alias.trim() || !genre) return "";
+  return `${alias.trim().toUpperCase()} ${genre}`.slice(0, 30);
+}
 
 function genreFromAlias(alias: string): CategoryGenre | null {
   const last = alias.trim().toUpperCase().slice(-1);
@@ -43,6 +50,7 @@ export function CategoryFormModal({
     if (mode === "edit" && initial) {
       setForm({
         alias: initial.alias,
+        libelle: initial.libelle?.trim() || defaultLibelle(initial.alias),
         ageMin: initial.ageMin,
         ageMax: initial.ageMax,
       });
@@ -61,6 +69,7 @@ export function CategoryFormModal({
     const genre = genreFromAlias(alias);
     onSubmit({
       alias,
+      libelle: mode === "edit" ? form.libelle.trim() : undefined,
       genre: genre ?? "Homme",
       ageMin: form.ageMin,
       ageMax: noMaxAge ? null : form.ageMax,
@@ -118,7 +127,20 @@ export function CategoryFormModal({
               className="w-full rounded-lg border px-3 py-2 text-sm uppercase"
               placeholder="Ex. SNH, M1F"
               value={form.alias}
-              onChange={(e) => setForm((f) => ({ ...f, alias: e.target.value }))}
+              onChange={(e) => {
+                const alias = e.target.value;
+                setForm((current) => {
+                  const previousDefault = defaultLibelle(current.alias);
+                  const nextDefault = defaultLibelle(alias);
+                  const customized =
+                    current.libelle.trim() !== "" && current.libelle.trim() !== previousDefault;
+                  return {
+                    ...current,
+                    alias,
+                    libelle: customized ? current.libelle : nextDefault,
+                  };
+                });
+              }}
               disabled={saving}
             />
             <p className="text-[10px] text-slate-400">
@@ -126,6 +148,26 @@ export function CategoryFormModal({
               est déduit automatiquement.
             </p>
           </div>
+
+          {mode === "edit" && (
+            <div className="space-y-1">
+              <label htmlFor="cat-libelle" className="text-xs font-medium text-slate-600">
+                Libellé *
+              </label>
+              <input
+                id="cat-libelle"
+                required
+                maxLength={30}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                value={form.libelle}
+                onChange={(e) => setForm((current) => ({ ...current, libelle: e.target.value }))}
+                disabled={saving}
+              />
+              <p className="text-[10px] text-slate-400">
+                Valeur proposée : alias suivi du genre. 30 caractères max.
+              </p>
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
@@ -192,7 +234,7 @@ export function CategoryFormModal({
             </button>
             <button
               type="submit"
-              disabled={saving || !form.alias.trim()}
+              disabled={saving || !form.alias.trim() || (mode === "edit" && !form.libelle.trim())}
               className="rounded-xl bg-navy px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-40"
             >
               {saving ? "Enregistrement..." : mode === "create" ? "Créer" : "Enregistrer"}

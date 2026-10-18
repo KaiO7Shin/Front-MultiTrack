@@ -1,4 +1,29 @@
 import type { CompteUtilisateurRow } from "@/lib/type";
+import { compareTextFr, sortRows, type ColumnSort } from "@/lib/tableSort";
+
+export type CompteSortKey = "id" | "username" | "email";
+export type CompteSort = ColumnSort<CompteSortKey>;
+
+export function sortComptes(
+  rows: CompteUtilisateurRow[],
+  sort: CompteSort
+): CompteUtilisateurRow[] {
+  return sortRows(
+    rows,
+    sort,
+    (left, right, key) => {
+      switch (key) {
+        case "id":
+          return left.id - right.id;
+        case "username":
+          return compareTextFr(left.username, right.username);
+        case "email":
+          return compareTextFr(left.email, right.email);
+      }
+    },
+    (left, right) => left.id - right.id
+  );
+}
 
 export const COMPTE_PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 export type ComptePageSize = (typeof COMPTE_PAGE_SIZE_OPTIONS)[number] | "all";

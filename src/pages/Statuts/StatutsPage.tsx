@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/feedback";
+import { SortableHeader } from "@/components/ui/SortableHeader";
+import { nextColumnSort } from "@/lib/tableSort";
 import {
   statusBadgeClass,
   statusLabel,
 } from "@/pages/Participants/participantStatus";
 import { fetchStatuts, type StatutOption } from "@/services/statuts";
 import type { ParticipantStatus } from "@/lib/type";
+import { sortStatuts, type StatutSort, type StatutSortKey } from "./statutTableSort";
 
 export function StatutsPage() {
   const [statuts, setStatuts] = useState<StatutOption[]>([]);
+  const [sort, setSort] = useState<StatutSort>(null);
   const [scope, setScope] = useState<"all" | "inscription" | "participant">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +34,12 @@ export function StatutsPage() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  const rows = useMemo(() => sortStatuts(statuts, sort), [statuts, sort]);
+
+  function handleSort(key: StatutSortKey) {
+    setSort((current) => nextColumnSort(current, key));
+  }
 
   return (
     <section className="page-section">
@@ -67,7 +77,7 @@ export function StatutsPage() {
           <div className="p-8 text-center text-sm text-slate-500">
             Chargement des statuts…
           </div>
-        ) : statuts.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
             Aucun statut pour ce filtre.
           </div>
@@ -76,17 +86,29 @@ export function StatutsPage() {
             <table>
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">Id</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    Libellé
-                  </th>
+                  <SortableHeader
+                    label="Id"
+                    sortKey="id"
+                    sort={sort}
+                    onSort={handleSort}
+                    className="text-right"
+                  />
+                  <SortableHeader
+                    label="Libellé"
+                    sortKey="libelle"
+                    sort={sort}
+                    onSort={handleSort}
+                    className="text-left"
+                  />
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {statuts.map((s) => (
+                {rows.map((s) => (
                   <tr key={s.id} className="hover:bg-[#8c9962]/5">
-                    <td className="px-4 py-3 text-slate-500">{s.id}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-right tabular-nums text-slate-500">
+                      {s.id.toLocaleString("fr-FR")}
+                    </td>
+                    <td className="px-4 py-3 text-left">
                       <span
                         className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass(
                           s.libelle as ParticipantStatus

@@ -600,7 +600,7 @@ export const CourseDetails = () => {
               <table>
                 <thead className="bg-slate-50 text-left">
                   <tr>
-                    <th className="px-4 py-2">Dossard</th>
+                    <th className="px-4 py-2 text-right">Dossard</th>
                     <th className="px-4 py-2">Prénom</th>
                     <th className="px-4 py-2">Nom</th>
                     <th className="px-4 py-2">Départ</th>
@@ -611,7 +611,7 @@ export const CourseDetails = () => {
                 <tbody className="divide-y">
                   {resultats.map((r) => (
                     <tr key={r.id}>
-                      <td className="px-4 py-2 font-medium">{r.numDossard}</td>
+                      <td className="px-4 py-2 text-right tabular-nums font-medium">{r.numDossard}</td>
                       <td className="px-4 py-2">{r.prenom}</td>
                       <td className="px-4 py-2">{r.nom}</td>
                       <td className="px-4 py-2 tabular-nums">

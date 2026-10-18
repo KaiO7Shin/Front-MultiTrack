@@ -187,7 +187,7 @@ export function TshirtsPage() {
                       {size}
                     </th>
                   ))}
-                  <th className="px-1 py-2 text-center font-semibold w-[10%]">
+                  <th className="px-1 py-2 text-right font-semibold w-[10%]">
                     Total
                   </th>
                 </tr>
@@ -204,12 +204,12 @@ export function TshirtsPage() {
                     {visible.sizes.map((size) => (
                       <td
                         key={size}
-                        className="px-1 py-2 text-center tabular-nums text-sm"
+                        className="px-1 py-2 text-right tabular-nums text-sm"
                       >
                         {visible.counts[size]?.[course.id] ?? 0}
                       </td>
                     ))}
-                    <td className="px-1 py-2 text-center font-semibold tabular-nums">
+                    <td className="px-1 py-2 text-right font-semibold tabular-nums">
                       {visible.columnTotals[course.id] ?? 0}
                     </td>
                   </tr>
@@ -221,12 +221,12 @@ export function TshirtsPage() {
                   {visible.sizes.map((size) => (
                     <td
                       key={size}
-                      className="px-1 py-2 text-center tabular-nums"
+                      className="px-1 py-2 text-right tabular-nums"
                     >
                       {visible.rowTotals[size] ?? 0}
                     </td>
                   ))}
-                  <td className="px-1 py-2 text-center tabular-nums">
+                  <td className="px-1 py-2 text-right tabular-nums">
                     {visible.grandTotal}
                   </td>
                 </tr>

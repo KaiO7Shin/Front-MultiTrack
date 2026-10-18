@@ -241,7 +241,7 @@ export function OrganizerParticipantsTracking({
               <table>
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-3 py-2 text-left">Id</th>
+                    <th className="px-3 py-2 text-right">Id</th>
                     <th className="px-3 py-2 text-left">Nom et prénom</th>
                     <th className="px-3 py-2 text-left">Date de naissance</th>
                     <th className="px-3 py-2 text-left">Genre</th>
@@ -253,7 +253,9 @@ export function OrganizerParticipantsTracking({
                 <tbody className="divide-y">
                   {paged.map((p) => (
                     <tr key={p.id} className="hover:bg-[#8c9962]/5">
-                      <td className="px-3 py-2 tabular-nums">{p.id}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {p.id.toLocaleString("fr-FR")}
+                      </td>
                       <td className="px-3 py-2">
                         {formatParticipantName(p.prenom, p.nom)}
                       </td>
