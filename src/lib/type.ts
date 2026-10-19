@@ -58,6 +58,8 @@ export type CategoryCreateDTO = {
   alias: string;
   /** Déduit de l'alias (H/F) si omis. */
   genre?: CategoryGenre;
+  /** À la modification : libellé saisi, sinon alias + genre. */
+  libelle?: string;
   ageMin: number;
   ageMax: number | null;
 };

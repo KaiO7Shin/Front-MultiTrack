@@ -190,8 +190,8 @@ export function EnduroLeaderboard({
               <table>
                 <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-4 py-2 text-left">#</th>
-                    <th className="px-4 py-2 text-left">Dossard</th>
+                    <th className="px-4 py-2 text-right">#</th>
+                    <th className="px-4 py-2 text-right">Dossard</th>
                     <th className="px-4 py-2 text-left">Prénom</th>
                     <th className="px-4 py-2 text-left">Nom</th>
                     <th className="px-4 py-2 text-left">Cat.</th>
@@ -219,8 +219,8 @@ export function EnduroLeaderboard({
                           <tr
                             className={`hover:bg-[#8c9962]/5 ${row.disqualified ? "opacity-60" : ""}`}
                           >
-                            <td className="px-4 py-2 font-medium">{rank ?? "—"}</td>
-                            <td className="px-4 py-2">{row.dossard}</td>
+                            <td className="px-4 py-2 text-right tabular-nums font-medium">{rank ?? "—"}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{row.dossard}</td>
                             <td className="px-4 py-2">{row.prenom}</td>
                             <td className="px-4 py-2">{row.nom}</td>
                             <td className="px-4 py-2">{row.categorie}</td>

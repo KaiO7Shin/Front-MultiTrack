@@ -6,12 +6,16 @@ import type { CompteUtilisateurRow } from "@/lib/type";
 import { fetchComptesUtilisateur, updateCompteUtilisateur } from "@/services/comptes";
 import { CompteEditModal } from "./CompteEditModal";
 import { ComptesTable } from "./ComptesTable";
+import { nextColumnSort } from "@/lib/tableSort";
 import {
   COMPTE_PAGE_SIZE_OPTIONS,
   compteRangeLabel,
   filterComptesByQuery,
   paginateComptes,
+  sortComptes,
   type ComptePageSize,
+  type CompteSort,
+  type CompteSortKey,
 } from "./compteListUtils";
 
 export function ComptesPage() {
@@ -19,6 +23,7 @@ export function ComptesPage() {
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<CompteSort>(null);
   const [pageSize, setPageSize] = useState<ComptePageSize>(20);
   const [page, setPage] = useState(1);
 
@@ -51,15 +56,20 @@ export function ComptesPage() {
     () => filterComptesByQuery(rows, query),
     [rows, query]
   );
+  const sorted = useMemo(() => sortComptes(filtered, sort), [filtered, sort]);
 
   useEffect(() => {
     setPage(1);
-  }, [query, pageSize]);
+  }, [query, pageSize, sort]);
 
   const { paged, totalPages, currentPage } = useMemo(
-    () => paginateComptes(filtered, pageSize, page),
-    [filtered, pageSize, page]
+    () => paginateComptes(sorted, pageSize, page),
+    [sorted, pageSize, page]
   );
+
+  function handleSort(key: CompteSortKey) {
+    setSort((current) => nextColumnSort(current, key));
+  }
 
   async function handleEditSubmit(payload: {
     username: string;
@@ -156,6 +166,8 @@ export function ComptesPage() {
       <ComptesTable
         loading={loading}
         rows={paged}
+        sort={sort}
+        onSort={handleSort}
         onEdit={(row) => {
           setActionSuccess(null);
           setEditError(null);

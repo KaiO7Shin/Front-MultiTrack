@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { Category, CategoryCreateDTO, CategoryGenre } from "@/lib/type";
-import { formatAgeRange } from "@/lib/utils";
+import { nextColumnSort } from "@/lib/tableSort";
 import {
   createCategory,
   deleteCategory,
   fetchCategoriesDetailed,
   updateCategory,
 } from "@/services/categories";
+import { CategoriesTable } from "./CategoriesTable";
+import { sortCategories, type CategorySort, type CategorySortKey } from "./categorySort";
 import { CategoryFormModal } from "./CategoryFormModal";
 
 function genreFromAlias(alias: string): CategoryGenre | null {
@@ -19,6 +21,7 @@ function genreFromAlias(alias: string): CategoryGenre | null {
 
 export const CategoriesList = () => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [sort, setSort] = useState<CategorySort>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -44,14 +47,17 @@ export const CategoriesList = () => {
     refresh();
   }, [refresh]);
 
-  const sorted = useMemo(
-    () =>
-      [...categories].sort((a, b) => {
-        if (a.ageMin !== b.ageMin) return a.ageMin - b.ageMin;
-        return a.alias.localeCompare(b.alias);
-      }),
-    [categories]
-  );
+  const sorted = useMemo(() => {
+    const byAge = [...categories].sort((a, b) => {
+      if (a.ageMin !== b.ageMin) return a.ageMin - b.ageMin;
+      return a.alias.localeCompare(b.alias);
+    });
+    return sortCategories(byAge, sort);
+  }, [categories, sort]);
+
+  function handleSort(key: CategorySortKey) {
+    setSort((current) => nextColumnSort(current, key));
+  }
 
   function openCreate() {
     setModalMode("create");
@@ -77,6 +83,10 @@ export const CategoriesList = () => {
   function validateDto(dto: CategoryCreateDTO, excludeId?: number): string | null {
     if (!dto.alias.trim()) return "L'alias est requis.";
     if (dto.alias.trim().length > 5) return "L'alias ne peut pas dépasser 5 caractères.";
+    if (dto.libelle != null && dto.libelle.trim().length > 30) {
+      return "Le libellé ne doit pas dépasser 30 caractères.";
+    }
+    if (modalMode === "edit" && !dto.libelle?.trim()) return "Le libellé est requis.";
     const genre = dto.genre ?? genreFromAlias(dto.alias);
     if (!genre) {
       return "L'alias doit se terminer par H (Homme) ou F (Femme).";
@@ -178,49 +188,13 @@ export const CategoriesList = () => {
             Aucune catégorie. Ajoutez une tranche d&apos;âge pour commencer.
           </div>
         ) : (
-          <div className="table-scroll">
-            <table>
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">Alias</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    Tranche d&apos;âge
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {sorted.map((cat) => (
-                  <tr key={cat.id} className="hover:bg-[#8c9962]/5">
-                    <td className="px-4 py-3 font-semibold">{cat.alias}</td>
-                    <td className="px-4 py-3 text-slate-700">
-                      {formatAgeRange(cat.ageMin, cat.ageMax)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex flex-col sm:flex-row sm:inline-flex gap-2 justify-end">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(cat)}
-                          className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs hover:bg-[#8c9962]/10"
-                        >
-                          <Pencil className="h-3 w-3" />
-                          Modifier
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(cat)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          Supprimer
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <CategoriesTable
+            rows={sorted}
+            sort={sort}
+            onSort={handleSort}
+            onEdit={openEdit}
+            onDelete={(cat) => void handleDelete(cat)}
+          />
         )}
       </div>
 

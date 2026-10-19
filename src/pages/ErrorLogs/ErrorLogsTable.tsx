@@ -1,15 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { ScrollText } from "lucide-react";
 import { EmptyState, Spinner } from "@/components/ui/feedback";
+import { SortableHeader } from "@/components/ui/SortableHeader";
 import type { ErrorLogListItem } from "@/services/errorLogs";
 import { displayErrorLogValue, formatErrorLogDate } from "./errorLogFormat";
+import type { ErrorLogSort, ErrorLogSortKey } from "./errorLogSort";
 
 export function ErrorLogsTable({
   loading,
   rows,
+  sort,
+  onSort,
 }: {
   loading: boolean;
   rows: ErrorLogListItem[];
+  sort: ErrorLogSort;
+  onSort: (key: ErrorLogSortKey) => void;
 }) {
   const navigate = useNavigate();
 
@@ -42,7 +48,13 @@ export function ErrorLogsTable({
         <table>
           <thead className="bg-slate-50">
             <tr>
-              <th className="px-3 py-2 text-left">Date</th>
+              <SortableHeader
+                label="Date"
+                sortKey="date"
+                sort={sort}
+                onSort={onSort}
+                className="text-center"
+              />
               <th className="px-3 py-2 text-left">Type</th>
               <th className="px-3 py-2 text-left">Niveau</th>
               <th className="px-3 py-2 text-left">Code</th>
@@ -63,7 +75,7 @@ export function ErrorLogsTable({
                 }}
                 className="cursor-pointer hover:bg-[#8c9962]/5 focus-visible:bg-[#8c9962]/10 focus-visible:outline-none"
               >
-                <td className="px-3 py-2 tabular-nums">
+                <td className="px-3 py-2 text-center tabular-nums">
                   {formatErrorLogDate(row.dateCreation)}
                 </td>
                 <td className="px-3 py-2">{displayErrorLogValue(row.type)}</td>

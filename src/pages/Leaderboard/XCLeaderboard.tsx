@@ -46,13 +46,13 @@ function RankingTable({
     <table className="min-w-full text-sm">
       <thead className="bg-slate-50">
         <tr>
-          {showPouleRank && <th className="px-4 py-2 text-left">#</th>}
-          <th className="px-4 py-2 text-left">Dossard</th>
+          {showPouleRank && <th className="px-4 py-2 text-right">#</th>}
+          <th className="px-4 py-2 text-right">Dossard</th>
           <th className="px-4 py-2 text-left">Prénom</th>
           <th className="px-4 py-2 text-left">Nom</th>
           <th className="px-4 py-2 text-left">Cat.</th>
           <th className="px-4 py-2 text-left">Arrivée</th>
-          {showCategoryRank && <th className="px-4 py-2">Clt cat.</th>}
+          {showCategoryRank && <th className="px-4 py-2 text-right">Clt cat.</th>}
           {onDQ && <th className="px-4 py-2"></th>}
         </tr>
       </thead>
@@ -63,11 +63,11 @@ function RankingTable({
             className={row.disqualified ? "opacity-60" : undefined}
           >
             {showPouleRank && (
-              <td className="px-4 py-2 font-medium">
+              <td className="px-4 py-2 text-right tabular-nums font-medium">
                 {row.timeMs != null ? (row.rankScratch ?? "—") : "—"}
               </td>
             )}
-            <td className="px-4 py-2">{row.dossard}</td>
+            <td className="px-4 py-2 text-right tabular-nums">{row.dossard}</td>
             <td className="px-4 py-2">{row.prenom}</td>
             <td className="px-4 py-2">{row.nom}</td>
             <td className="px-4 py-2">{row.categorie}</td>
@@ -80,7 +80,7 @@ function RankingTable({
               )}
             </td>
             {showCategoryRank && (
-              <td className="px-4 py-2 text-center">{row.rankCategory ?? "—"}</td>
+              <td className="px-4 py-2 text-right tabular-nums">{row.rankCategory ?? "—"}</td>
             )}
             {onDQ && (
               <td className="px-4 py-2">
