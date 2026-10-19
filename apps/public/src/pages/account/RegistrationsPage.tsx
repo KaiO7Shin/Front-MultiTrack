@@ -21,7 +21,7 @@ export function RegistrationsPage() {
     draft,
     setDraft,
     missingFileNames,
-    idempotencyKey,
+    resolveIdempotencyKey,
     clearDraft,
   } = useRegistrationDraft();
 
@@ -45,7 +45,7 @@ export function RegistrationsPage() {
         onDraftChange={setDraft}
         onCancel={() => { void clearDraft(); }}
         onClearDraft={clearDraft}
-        idempotencyKey={idempotencyKey}
+        resolveIdempotencyKey={resolveIdempotencyKey}
         onValidate={(registration) => {
           addRegistration(registration);
           void loadRegistrations();

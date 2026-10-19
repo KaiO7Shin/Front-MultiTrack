@@ -1,6 +1,7 @@
 import { API, ApiError, apiRequest, apiUrl, listFrom, toErrorMessage } from "@multitrack/api-client";
 import { INSCRIPTION_STATUS, type InscriptionResponse, type RenderResponse } from "@multitrack/types";
 import { needsPartnerTShirt } from "../lib/duoCourses";
+import { isIdempotencyKey } from "../lib/idempotencyKey";
 import { draftToRunner, isMinor, validateDraft, validateRegistrationEdit, type RegistrationEditInput } from "../lib/participant";
 import { formatInscriptionDate } from "../lib/utils";
 import {
@@ -120,7 +121,7 @@ export async function submitRegistration(
   if (typeof draft.courseId !== "number" || !draft.identityFile) {
     return { ok: false, error: "La pièce d’identité est obligatoire." };
   }
-  if (!idempotencyKey.trim()) {
+  if (!isIdempotencyKey(idempotencyKey)) {
     return { ok: false, error: "La demande d’inscription est incomplète. Rechargez la page et réessayez." };
   }
 

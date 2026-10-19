@@ -23,7 +23,7 @@ export function RegistrationWizard({
   onCancel,
   onValidate,
   onClearDraft,
-  idempotencyKey,
+  resolveIdempotencyKey,
 }: {
   step: number;
   rulesAccepted: boolean;
@@ -35,7 +35,7 @@ export function RegistrationWizard({
   onCancel: () => void;
   onValidate: (registration: Registration) => void;
   onClearDraft: () => Promise<void>;
-  idempotencyKey: string;
+  resolveIdempotencyKey: () => string;
 }) {
   const [stepError, setStepError] = useState("");
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -105,7 +105,7 @@ export function RegistrationWizard({
     setLoading(true);
     let succeeded = false;
     try {
-      const result = await submitRegistration(draft, payment, idempotencyKey);
+      const result = await submitRegistration(draft, payment, resolveIdempotencyKey());
       if (!result.ok) {
         setStepError(result.error);
         return;
