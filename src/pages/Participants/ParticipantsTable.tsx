@@ -67,6 +67,7 @@ export function ParticipantsTable({
                 sortKey="id"
                 sort={sort}
                 onSort={onSort}
+                className="text-right"
               />
               {!isInscription && (
                 <ParticipantSortableHeader
@@ -74,6 +75,7 @@ export function ParticipantsTable({
                   sortKey="numDossard"
                   sort={sort}
                   onSort={onSort}
+                  className="text-right"
                 />
               )}
               <ParticipantSortableHeader
@@ -119,9 +121,11 @@ export function ParticipantsTable({
                   }}
                   className="cursor-pointer hover:bg-[#8c9962]/5 focus-visible:bg-[#8c9962]/10 focus-visible:outline-none"
                 >
-                  <td className="px-3 py-2 tabular-nums font-medium">{p.id}</td>
+                  <td className="px-3 py-2 text-right tabular-nums font-medium">
+                    {p.id.toLocaleString("fr-FR")}
+                  </td>
                   {!isInscription && (
-                    <td className="px-3 py-2 tabular-nums">
+                    <td className="px-3 py-2 text-right tabular-nums">
                       {p.numDossard?.trim() || "—"}
                     </td>
                   )}

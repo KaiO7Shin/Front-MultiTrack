@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ensureIdempotencyKey,
+  resetIdempotencyKey,
+} from "../lib/idempotencyKey";
+import {
   REGISTRATION_FILE_KEYS,
   clearRegistrationDraft,
   loadRegistrationDraft,
@@ -24,14 +28,32 @@ export function useRegistrationDraft() {
   useEffect(() => {
     let cancelled = false;
     loadRegistrationDraft()
-      .then((saved) => {
+      .then(async (saved) => {
         if (cancelled || !saved) return;
+        let key = saved.idempotencyKey;
+        if (saved.wizardOpen) {
+          key = ensureIdempotencyKey(saved.idempotencyKey);
+          if (key !== (saved.idempotencyKey ?? "").trim()) {
+            try {
+              await saveRegistrationDraft({
+                wizardOpen: saved.wizardOpen,
+                step: saved.step,
+                rulesAccepted: saved.rulesAccepted,
+                draft: saved.draft,
+                idempotencyKey: key,
+              });
+            } catch {
+              // La clé reste en mémoire même si localStorage est plein / bloqué.
+            }
+          }
+        }
+        if (cancelled) return;
         setWizardOpenState(saved.wizardOpen);
         setStep(saved.step);
         setRulesAccepted(saved.rulesAccepted);
         setDraft(saved.draft);
         setMissingFileNames(saved.missingFileNames);
-        setIdempotencyKey(saved.idempotencyKey);
+        setIdempotencyKey(key);
       })
       .finally(() => {
         if (!cancelled) {
@@ -83,7 +105,7 @@ export function useRegistrationDraft() {
     setWizardOpenState(open);
     if (!open) return;
     setIdempotencyKey((current) => {
-      const key = current || crypto.randomUUID();
+      const key = ensureIdempotencyKey(current);
       void saveRegistrationDraft({
         wizardOpen: true,
         step,
@@ -95,8 +117,24 @@ export function useRegistrationDraft() {
     });
   }, [step, rulesAccepted, draft]);
 
+  const resolveIdempotencyKey = useCallback(() => {
+    const key = ensureIdempotencyKey(idempotencyKey);
+    if (key !== idempotencyKey.trim()) {
+      setIdempotencyKey(key);
+      void saveRegistrationDraft({
+        wizardOpen: true,
+        step,
+        rulesAccepted,
+        draft,
+        idempotencyKey: key,
+      });
+    }
+    return key;
+  }, [idempotencyKey, step, rulesAccepted, draft]);
+
   const clearDraft = useCallback(async () => {
     persistEnabled.current = false;
+    resetIdempotencyKey();
     await clearRegistrationDraft();
     setWizardOpenState(false);
     setStep(1);
@@ -118,6 +156,7 @@ export function useRegistrationDraft() {
     setDraft,
     missingFileNames,
     idempotencyKey,
+    resolveIdempotencyKey,
     clearDraft,
   };
 }

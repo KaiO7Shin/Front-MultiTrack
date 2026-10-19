@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/feedback";
+import { nextColumnSort } from "@/lib/tableSort";
 import {
   apiErrorMessage,
   fetchErrorLogs,
   type ErrorLogListItem,
   type ErrorLogPageSize,
 } from "@/services/errorLogs";
+import { sortErrorLogs, type ErrorLogSort, type ErrorLogSortKey } from "./errorLogSort";
 import { ErrorLogsPagination } from "./ErrorLogsPagination";
 import { ErrorLogsTable } from "./ErrorLogsTable";
 
@@ -15,6 +17,7 @@ export function ErrorLogsPage() {
   const [rows, setRows] = useState<ErrorLogListItem[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [sort, setSort] = useState<ErrorLogSort>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +42,12 @@ export function ErrorLogsPage() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  const displayRows = useMemo(() => sortErrorLogs(rows, sort), [rows, sort]);
+
+  function handleSort(key: ErrorLogSortKey) {
+    setSort((current) => nextColumnSort(current, key));
+  }
 
   return (
     <section className="page-section">
@@ -70,7 +79,7 @@ export function ErrorLogsPage() {
         }}
       />
 
-      <ErrorLogsTable loading={loading} rows={rows} />
+      <ErrorLogsTable loading={loading} rows={displayRows} sort={sort} onSort={handleSort} />
     </section>
   );
 }

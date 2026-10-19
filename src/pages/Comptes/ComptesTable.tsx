@@ -1,14 +1,18 @@
 import { Pencil, UserCircle } from "lucide-react";
 import type { CompteUtilisateurRow } from "@/lib/type";
 import { EmptyState, Spinner } from "@/components/ui/feedback";
+import { SortableHeader } from "@/components/ui/SortableHeader";
+import type { CompteSort, CompteSortKey } from "./compteListUtils";
 
 type ComptesTableProps = {
   loading: boolean;
   rows: CompteUtilisateurRow[];
+  sort: CompteSort;
+  onSort: (key: CompteSortKey) => void;
   onEdit: (row: CompteUtilisateurRow) => void;
 };
 
-export function ComptesTable({ loading, rows, onEdit }: ComptesTableProps) {
+export function ComptesTable({ loading, rows, sort, onSort, onEdit }: ComptesTableProps) {
   if (loading) {
     return (
       <div className="bg-white border rounded-2xl overflow-hidden">
@@ -38,9 +42,25 @@ export function ComptesTable({ loading, rows, onEdit }: ComptesTableProps) {
         <table>
           <thead className="bg-slate-50">
             <tr>
-              <th className="px-3 py-2 text-left">Id</th>
-              <th className="px-3 py-2 text-left">Nom d'utilisateur</th>
-              <th className="px-3 py-2 text-left">E-mail</th>
+              <SortableHeader
+                label="Id"
+                sortKey="id"
+                sort={sort}
+                onSort={onSort}
+                className="text-right"
+              />
+              <SortableHeader
+                label="Nom d'utilisateur"
+                sortKey="username"
+                sort={sort}
+                onSort={onSort}
+              />
+              <SortableHeader
+                label="E-mail"
+                sortKey="email"
+                sort={sort}
+                onSort={onSort}
+              />
               <th className="px-3 py-2 text-left">Téléphone</th>
               <th className="px-3 py-2 text-right">Actions</th>
             </tr>
@@ -48,7 +68,9 @@ export function ComptesTable({ loading, rows, onEdit }: ComptesTableProps) {
           <tbody className="divide-y">
             {rows.map((row) => (
               <tr key={row.id} className="hover:bg-[#8c9962]/5">
-                <td className="px-3 py-2 tabular-nums font-medium">{row.id}</td>
+                <td className="px-3 py-2 text-right tabular-nums font-medium">
+                  {row.id.toLocaleString("fr-FR")}
+                </td>
                 <td className="px-3 py-2">{row.username}</td>
                 <td className="px-3 py-2">{row.email}</td>
                 <td className="px-3 py-2 tabular-nums">{row.phone}</td>
