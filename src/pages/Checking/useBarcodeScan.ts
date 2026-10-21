@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BIB_LENGTH, INVALID_BIB } from "./checkingForm";
+import { BIB_LENGTH, digitFromHidEvent, invalidBibMessage } from "./checkingForm";
 
 type UseBarcodeScanOptions = {
   enabled: boolean;
@@ -45,16 +45,18 @@ export function useBarcodeScan({ enabled, onScan, onInvalid }: UseBarcodeScanOpt
         event.preventDefault();
         event.stopPropagation();
         if (bufferRef.current.length === 0) return;
+        const attempted = bufferRef.current;
         bufferRef.current = "";
         setValue("");
-        onInvalidRef.current(INVALID_BIB);
+        onInvalidRef.current(invalidBibMessage(attempted));
         return;
       }
 
-      if (event.key >= "0" && event.key <= "9") {
+      const digit = digitFromHidEvent(event);
+      if (digit) {
         event.preventDefault();
         event.stopPropagation();
-        const next = bufferRef.current + event.key;
+        const next = bufferRef.current + digit;
         bufferRef.current = next;
         setValue(next);
         if (next.length === BIB_LENGTH) {
@@ -68,9 +70,10 @@ export function useBarcodeScan({ enabled, onScan, onInvalid }: UseBarcodeScanOpt
       if (event.key.length === 1) {
         event.preventDefault();
         event.stopPropagation();
+        const attempted = bufferRef.current + event.key;
         bufferRef.current = "";
         setValue("");
-        onInvalidRef.current(INVALID_BIB);
+        onInvalidRef.current(invalidBibMessage(attempted));
       }
     }
 

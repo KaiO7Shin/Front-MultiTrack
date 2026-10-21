@@ -1,7 +1,12 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { FormField, inputClassName } from "@/components/ui/form-field";
 import { cn } from "@/lib/utils";
-import { digitsOnly, isValidBib, INVALID_BIB, MISMATCH_BIBS } from "./checkingForm";
+import {
+  digitsOnly,
+  invalidBibMessage,
+  isValidBib,
+  mismatchBibMessage,
+} from "./checkingForm";
 
 /** Pavé 0-9 sur iOS/Android (type tel + pattern [0-9]*), comme l’ancien checking. */
 function BibNumberInput({
@@ -57,11 +62,11 @@ export function ManualCheckForm({
     event.preventDefault();
     if (busy) return;
     if (!isValidBib(bib) || !isValidBib(confirm)) {
-      onInvalid(INVALID_BIB);
+      onInvalid(invalidBibMessage(!isValidBib(bib) ? bib : confirm));
       return;
     }
     if (bib !== confirm) {
-      onInvalid(MISMATCH_BIBS);
+      onInvalid(mismatchBibMessage(bib, confirm));
       return;
     }
     const ok = await onSubmit(bib);
