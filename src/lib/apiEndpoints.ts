@@ -69,6 +69,7 @@ export const API = {
   // mancheAssignments: "/manche-assignments",
 
   checkingPc: "/checking/pc",
+  checkingPresence: "/checking/presence",
   checkingFinishline: "/checking/finishline",
 
   pointeurs: "/pointeurs",

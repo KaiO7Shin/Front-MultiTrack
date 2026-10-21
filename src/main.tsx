@@ -33,6 +33,7 @@ import { EligibilitesPage } from "./pages/Eligibilites/EligibilitesPage";
 import { ErrorLogDetailPage } from "./pages/ErrorLogs/ErrorLogDetailPage";
 import { ErrorLogsPage } from "./pages/ErrorLogs/ErrorLogsPage";
 import { ComptesPage } from "./pages/Comptes/ComptesPage";
+import { CheckingPage } from "./pages/Checking/CheckingPage";
 
 import {
   AuthProvider,
@@ -80,6 +81,14 @@ const router = createBrowserRouter([
       { path: "courses/:id", element: <CourseDetails /> },
 
       { path: "participants", element: <ParticipantsPage /> },
+      {
+        path: "checking",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <CheckingPage />
+          </RequireRole>
+        ),
+      },
       { path: "participants/import", element: <ImportParticipants /> },
       { path: "participants/add", element: <AddParticipant /> },
       { path: "participants/identity", element: <ParticipantPage /> },

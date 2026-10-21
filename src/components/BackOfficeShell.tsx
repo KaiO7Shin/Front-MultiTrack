@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import {
   Barcode,
   ChevronDown,
+  ClipboardCheck,
   Flag,
   LayoutDashboard,
   ListChecks,
@@ -33,6 +34,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/statuts": ListChecks,
   "/eligibilites": Tags,
   "/participants": Users,
+  "/checking": ClipboardCheck,
   "/participants/add": UserPlus,
   "/tshirts": Shirt,
   "/checkpoint/scan": ScanLine,
