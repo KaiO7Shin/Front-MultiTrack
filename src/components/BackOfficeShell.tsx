@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   ScanLine,
+  Settings,
   Shirt,
   Tags,
   Trophy,
@@ -50,6 +51,7 @@ type BackOfficeShellProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLogout: () => void;
+  settingsTo?: string;
   children: ReactNode;
 };
 
@@ -94,6 +96,7 @@ export function BackOfficeShell({
   open,
   onOpenChange,
   onLogout,
+  settingsTo,
   children,
 }: BackOfficeShellProps) {
   const location = useLocation();
@@ -184,11 +187,35 @@ export function BackOfficeShell({
           );
         })}
       </nav>
-      <div className="border-t border-border p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-cta">
-          {roleLabel}
-        </p>
-        <p className="mt-1 truncate text-sm text-brand">{userName || "Session"}</p>
+      <div className="flex items-center gap-3 border-t border-border p-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-cta">
+            {roleLabel}
+          </p>
+          <p className="mt-1 truncate text-sm text-brand">{userName || "Session"}</p>
+        </div>
+        {settingsTo && (
+          <NavLink
+            to={settingsTo}
+            end
+            aria-label="Paramètres"
+            className={({ isActive }) =>
+              `group relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition ${
+                isActive
+                  ? "bg-brand-muted text-brand"
+                  : "text-muted-foreground hover:bg-muted hover:text-brand"
+              }`
+            }
+          >
+            <Settings className="h-4 w-4" aria-hidden />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute right-0 bottom-[calc(100%+0.35rem)] z-10 hidden whitespace-nowrap rounded-md bg-navy px-2 py-1 text-[11px] font-medium normal-case tracking-normal text-white shadow-sm group-hover:block group-focus-visible:block"
+            >
+              Paramètres
+            </span>
+          </NavLink>
+        )}
       </div>
     </aside>
   );

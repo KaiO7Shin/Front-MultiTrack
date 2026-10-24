@@ -84,6 +84,11 @@ export const API = {
   comptesUtilisateur: "/comptes",
   compteUtilisateurById: (id: number) => `/comptes/${id}`,
 
+  classementByCourse: (id: number) => `/courses/${id}/classement`,
+
+  parametres: "/parametres",
+  parametreByCle: (cle: string) => `/parametres/${encodeURIComponent(cle)}`,
+
   dossardsPreflight: "/dossards/preflight",
   dossardsGenerate: "/dossards/generate",
   // pointeurManches: (id: number) => `/pointeur/${id}/manches`,

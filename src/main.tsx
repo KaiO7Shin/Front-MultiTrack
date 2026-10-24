@@ -34,6 +34,7 @@ import { ErrorLogDetailPage } from "./pages/ErrorLogs/ErrorLogDetailPage";
 import { ErrorLogsPage } from "./pages/ErrorLogs/ErrorLogsPage";
 import { ComptesPage } from "./pages/Comptes/ComptesPage";
 import { CheckingPage } from "./pages/Checking/CheckingPage";
+import { ParametresPage } from "./pages/Parametres/ParametresPage";
 
 import {
   AuthProvider,
@@ -127,6 +128,14 @@ const router = createBrowserRouter([
         ),
       },
 
+      {
+        path: "parametres",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <ParametresPage />
+          </RequireRole>
+        ),
+      },
       {
         path: "journaux",
         element: (
