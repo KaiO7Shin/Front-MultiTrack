@@ -27,7 +27,8 @@ const ADMIN_NAV: BackOfficeNavEntry[] = [
   { kind: "link", to: "/dashboard", label: "Tableau de bord", end: true },
   { kind: "link", to: "/participants", label: "Participants" },
   { kind: "link", to: "/checking", label: "Checking", end: true },
-  { kind: "link", to: "/comptes", label: "Comptes utilisateurs", end: true },
+  // Pack essential : comptes utilisateurs commentés.
+  // { kind: "link", to: "/comptes", label: "Comptes utilisateurs", end: true },
   {
     kind: "group",
     id: "referentiels",
@@ -48,7 +49,8 @@ const ADMIN_NAV: BackOfficeNavEntry[] = [
     ],
   },
   { kind: "link", to: "/leaderboard", label: "Résultats", end: true },
-  { kind: "link", to: "/journaux", label: "Journaux d’erreurs" },
+  // Pack essential : journaux d’erreurs commentés.
+  // { kind: "link", to: "/journaux", label: "Journaux d’erreurs" },
 ];
 
 const ORGANIZER_NAV: BackOfficeNavEntry[] = [

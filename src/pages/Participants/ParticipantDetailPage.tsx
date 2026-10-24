@@ -4,12 +4,12 @@ import {
   changeParticipantStatus,
   fetchParticipantById,
 } from "@/services/participants";
+import { ParticipantTempsForm } from "./ParticipantTempsForm";
 import { fetchParticipantStatutLogs } from "@/services/statutLogs";
 import type {
   ParticipantProjection,
   ParticipantStatus,
 } from "@/lib/type";
-import { needsPartnerTShirt, partnerTShirtLabel } from "@/lib/duoCourses";
 import { formatParticipantName } from "@/lib/utils";
 import { ROLE_ADMIN, useAuth } from "@/lib/auth";
 import { Alert, Spinner } from "@/components/ui/feedback";
@@ -23,10 +23,11 @@ import {
   StatutHistoryModal,
 } from "./StatutHistoryModal";
 import { DetailRow, formatBirthDate } from "./detailShared";
-import {
-  AccountContactSection,
-  EmergencyAndDocumentsSection,
-} from "./PersonDetailSections";
+// Pack essential : compte de création, documents et urgence commentés.
+// import {
+//   AccountContactSection,
+//   EmergencyAndDocumentsSection,
+// } from "./PersonDetailSections";
 
 function participantBackLink(from: string | null) {
   if (from === "dashboard") {
@@ -185,18 +186,9 @@ export function ParticipantDetailPage() {
               {formatBirthDate(participant.dateNaissance)}
             </DetailRow>
             <DetailRow label="Genre">{participant.genre || "—"}</DetailRow>
-            <DetailRow label="Taille t-shirt">
-              {participant.tailleTShirt || "—"}
-            </DetailRow>
-            {needsPartnerTShirt(participant.courseLibelle || participant.nomCourse || "") && (
-              <DetailRow
-                label={partnerTShirtLabel(
-                  participant.courseLibelle || participant.nomCourse || ""
-                )}
-              >
-                {participant.tailleTShirtBinome || "—"}
-              </DetailRow>
-            )}
+            {/* Pack essential : taille de t-shirt commentée.
+            <DetailRow label="Taille t-shirt">{participant.tailleTShirt || "—"}</DetailRow>
+            */}
           </dl>
         </section>
 
@@ -213,7 +205,22 @@ export function ParticipantDetailPage() {
               {participant.aliasCategorie || "—"}
             </DetailRow>
             <DetailRow label="Statut">{statusLabel(participant.statut)}</DetailRow>
+            {participant.statut === "Finisher" && (
+              <DetailRow label="Temps">
+                <div className="text-center tabular-nums">{participant.temps || "—"}</div>
+              </DetailRow>
+            )}
           </dl>
+
+          {isAdmin && participant.statut === "Finisher" && (
+            <ParticipantTempsForm
+              key={`${participant.id}-${participant.temps ?? ""}`}
+              participant={participant}
+              onUpdated={setParticipant}
+              onSubmitStart={() => setSuccess(null)}
+              onSuccess={setSuccess}
+            />
+          )}
 
           {isAdmin && (
             <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
@@ -232,20 +239,10 @@ export function ParticipantDetailPage() {
           )}
         </section>
 
+        {/* Pack essential : compte de création, documents et urgence commentés.
         <AccountContactSection data={participant} />
-
-        <EmergencyAndDocumentsSection
-          data={{
-            nomContactUrgence: participant.nomContactUrgence,
-            telephoneContactUrgence: participant.telephoneContactUrgence,
-            hasPieceIdentite: Boolean(participant.hasPieceIdentite),
-            hasCertificatMedical: Boolean(participant.hasCertificatMedical),
-            hasAutorisationParentale: Boolean(participant.hasAutorisationParentale),
-            pieceIdentiteUrl: participant.pieceIdentiteUrl,
-            certificatMedicalUrl: participant.certificatMedicalUrl,
-            autorisationParentaleUrl: participant.autorisationParentaleUrl,
-          }}
-        />
+        <EmergencyAndDocumentsSection data={participant} />
+        */}
       </div>
 
       <div className="flex justify-start">

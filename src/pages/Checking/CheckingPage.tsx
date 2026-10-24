@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   apiErrorMessage,
   checkArrival,
@@ -6,11 +6,12 @@ import {
   type CheckingMode,
 } from "@/services/checking";
 import { CheckingFeedback } from "./CheckingFeedback";
-import type { CheckingInputMethod } from "./checkingForm";
 import { CheckingTabs } from "./CheckingTabs";
 import { ManualCheckForm } from "./ManualCheckForm";
-import { ScanField } from "./ScanField";
-import { useBarcodeScan } from "./useBarcodeScan";
+// Pack essential : saisie par scan commentée. Seule la saisie manuelle reste.
+// import { ScanField } from "./ScanField";
+// import { useBarcodeScan } from "./useBarcodeScan";
+// import type { CheckingInputMethod } from "./checkingForm";
 
 const MODES: { id: CheckingMode; label: string; hint: string }[] = [
   {
@@ -25,21 +26,12 @@ const MODES: { id: CheckingMode; label: string; hint: string }[] = [
   },
 ];
 
-const INPUT_METHODS: { id: CheckingInputMethod; label: string }[] = [
-  { id: "scan", label: "Scan" },
-  { id: "manuel", label: "Manuel" },
-];
-
 export function CheckingPage() {
   const [mode, setMode] = useState<CheckingMode>("presence");
-  const [inputMethod, setInputMethod] = useState<CheckingInputMethod>("scan");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [manualKey, setManualKey] = useState(0);
-
-  const clearRef = useRef<() => void>(() => {});
-  const focusRef = useRef<() => void>(() => {});
 
   const submit = useCallback(
     async (bib: string) => {
@@ -56,51 +48,17 @@ export function CheckingPage() {
         return false;
       } finally {
         setBusy(false);
-        clearRef.current();
-        if (inputMethod === "scan") focusRef.current();
       }
     },
-    [inputMethod, mode]
+    [mode]
   );
-
-  const scan = useBarcodeScan({
-    enabled: !busy && inputMethod === "scan",
-    onScan: (bib) => {
-      void submit(bib);
-    },
-    onInvalid: (message) => {
-      setSuccess(null);
-      setError(message);
-    },
-  });
-
-  clearRef.current = scan.clear;
-  focusRef.current = scan.focus;
-
-  useEffect(() => {
-    if (inputMethod === "scan" && !busy) focusRef.current();
-  }, [busy, inputMethod]);
-
-  function resetFeedback() {
-    setError(null);
-    setSuccess(null);
-    scan.clear();
-  }
 
   function selectMode(next: CheckingMode) {
     if (next === mode || busy) return;
     setMode(next);
-    resetFeedback();
+    setError(null);
+    setSuccess(null);
     setManualKey((key) => key + 1);
-    if (inputMethod === "scan") scan.focus();
-  }
-
-  function selectInputMethod(next: CheckingInputMethod) {
-    if (next === inputMethod || busy) return;
-    setInputMethod(next);
-    resetFeedback();
-    setManualKey((key) => key + 1);
-    if (next === "scan") scan.focus();
   }
 
   const active = MODES.find((item) => item.id === mode) ?? MODES[0];
@@ -111,7 +69,7 @@ export function CheckingPage() {
         <div className="min-w-0">
           <h1 className="page-title">Checking</h1>
           <p className="page-subtitle">
-            Enregistrez la présence ou l'arrivée par scan ou saisie manuelle.
+            Enregistrez la présence ou l'arrivée par saisie manuelle du dossard.
           </p>
         </div>
       </div>
@@ -127,32 +85,16 @@ export function CheckingPage() {
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="mb-4 text-sm text-slate-500">{active.hint}</p>
-          <div className="mb-4">
-            <CheckingTabs
-              label="Saisie du dossard"
-              value={inputMethod}
-              options={INPUT_METHODS}
-              disabled={busy}
-              onChange={selectInputMethod}
-            />
-          </div>
-          {inputMethod === "scan" ? (
-            <div className="space-y-4">
-              <CheckingFeedback error={error} success={success} />
-              <ScanField value={scan.value} busy={busy} inputRef={scan.inputRef} />
-            </div>
-          ) : (
-            <ManualCheckForm
-              key={manualKey}
-              busy={busy}
-              feedback={<CheckingFeedback error={error} success={success} />}
-              onSubmit={submit}
-              onInvalid={(message) => {
-                setSuccess(null);
-                setError(message);
-              }}
-            />
-          )}
+          <ManualCheckForm
+            key={manualKey}
+            busy={busy}
+            feedback={<CheckingFeedback error={error} success={success} />}
+            onSubmit={submit}
+            onInvalid={(message) => {
+              setSuccess(null);
+              setError(message);
+            }}
+          />
         </div>
       </div>
     </section>

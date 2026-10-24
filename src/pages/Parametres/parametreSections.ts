@@ -2,8 +2,9 @@ import type { AppParametre } from "@/services/parametres";
 
 export const PARAMETRE_CLES = [
   "type_classement",
-  "fin_inscription",
-  "pub_resultat",
+  // Pack essential : arrêt des inscriptions et publication des résultats commentés.
+  // "fin_inscription",
+  // "pub_resultat",
 ] as const;
 
 export type ParametreCle = (typeof PARAMETRE_CLES)[number];
@@ -20,14 +21,14 @@ export const APPLICATION_PARAMETRES: ParametreSection[] = [
     label: "Cumuler les classements",
     hint: "Oui : un coureur au scratch général de son genre conserve aussi son classement de catégorie. Non : il n’est plus classé dans sa catégorie.",
   },
-  {
-    cle: "fin_inscription",
-    label: "Arrêt des inscriptions",
-  },
-  {
-    cle: "pub_resultat",
-    label: "Publier les résultats",
-  },
+  // {
+  //   cle: "fin_inscription",
+  //   label: "Arrêt des inscriptions",
+  // },
+  // {
+  //   cle: "pub_resultat",
+  //   label: "Publier les résultats",
+  // },
 ];
 
 export type ParametreDraft = Record<ParametreCle, boolean>;

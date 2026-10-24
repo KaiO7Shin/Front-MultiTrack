@@ -319,6 +319,9 @@ export function normalizeParticipantProjection(
       raw.inscriptionId != null && raw.inscriptionId !== ""
         ? Number(raw.inscriptionId)
         : null,
+    ...(raw.temps != null && String(raw.temps).trim()
+      ? { temps: String(raw.temps).trim() }
+      : {}),
     ...(raw.commentaireInscription
       ? { commentaireInscription: String(raw.commentaireInscription) }
       : {}),

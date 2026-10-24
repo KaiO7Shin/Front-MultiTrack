@@ -30,9 +30,10 @@ import { LoginPage } from "./pages/Auth/LoginPage";
 import { PointeursList } from "./pages/Pointeurs/PointeursList";
 import { StatutsPage } from "./pages/Statuts/StatutsPage";
 import { EligibilitesPage } from "./pages/Eligibilites/EligibilitesPage";
-import { ErrorLogDetailPage } from "./pages/ErrorLogs/ErrorLogDetailPage";
-import { ErrorLogsPage } from "./pages/ErrorLogs/ErrorLogsPage";
-import { ComptesPage } from "./pages/Comptes/ComptesPage";
+// Pack essential : pages comptes et journaux commentées.
+// import { ErrorLogDetailPage } from "./pages/ErrorLogs/ErrorLogDetailPage";
+// import { ErrorLogsPage } from "./pages/ErrorLogs/ErrorLogsPage";
+// import { ComptesPage } from "./pages/Comptes/ComptesPage";
 import { CheckingPage } from "./pages/Checking/CheckingPage";
 import { ParametresPage } from "./pages/Parametres/ParametresPage";
 
@@ -119,14 +120,15 @@ const router = createBrowserRouter([
 
       { path: "leaderboard", element: <LeaderboardPage /> },
 
-      {
-        path: "comptes",
-        element: (
-          <RequireRole role={ROLE_ADMIN}>
-            <ComptesPage />
-          </RequireRole>
-        ),
-      },
+      // Pack essential : comptes utilisateurs commentés.
+      // {
+      //   path: "comptes",
+      //   element: (
+      //     <RequireRole role={ROLE_ADMIN}>
+      //       <ComptesPage />
+      //     </RequireRole>
+      //   ),
+      // },
 
       {
         path: "parametres",
@@ -136,22 +138,23 @@ const router = createBrowserRouter([
           </RequireRole>
         ),
       },
-      {
-        path: "journaux",
-        element: (
-          <RequireRole role={ROLE_ADMIN}>
-            <ErrorLogsPage />
-          </RequireRole>
-        ),
-      },
-      {
-        path: "journaux/:id",
-        element: (
-          <RequireRole role={ROLE_ADMIN}>
-            <ErrorLogDetailPage />
-          </RequireRole>
-        ),
-      },
+      // Pack essential : journaux d’erreurs commentés.
+      // {
+      //   path: "journaux",
+      //   element: (
+      //     <RequireRole role={ROLE_ADMIN}>
+      //       <ErrorLogsPage />
+      //     </RequireRole>
+      //   ),
+      // },
+      // {
+      //   path: "journaux/:id",
+      //   element: (
+      //     <RequireRole role={ROLE_ADMIN}>
+      //       <ErrorLogDetailPage />
+      //     </RequireRole>
+      //   ),
+      // },
 
       {
         path: "organisateur",

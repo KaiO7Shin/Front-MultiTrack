@@ -13,7 +13,6 @@ import { sortStatuts, type StatutSort, type StatutSortKey } from "./statutTableS
 export function StatutsPage() {
   const [statuts, setStatuts] = useState<StatutOption[]>([]);
   const [sort, setSort] = useState<StatutSort>(null);
-  const [scope, setScope] = useState<"all" | "inscription" | "participant">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +20,7 @@ export function StatutsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchStatuts(scope === "all" ? undefined : scope);
+      const data = await fetchStatuts();
       setStatuts(data);
     } catch {
       setError("Impossible de charger les statuts.");
@@ -29,7 +28,7 @@ export function StatutsPage() {
     } finally {
       setLoading(false);
     }
-  }, [scope]);
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -51,19 +50,6 @@ export function StatutsPage() {
             ne sont pas exposées pour préserver l&apos;intégrité des workflows.
           </p>
         </div>
-        <div className="page-actions">
-          <select
-            className="rounded-xl border px-3 py-2 text-sm"
-            value={scope}
-            onChange={(e) =>
-              setScope(e.target.value as "all" | "inscription" | "participant")
-            }
-          >
-            <option value="all">Tous</option>
-            <option value="inscription">Inscription</option>
-            <option value="participant">Participant</option>
-          </select>
-        </div>
       </div>
 
       {error && (
@@ -79,7 +65,7 @@ export function StatutsPage() {
           </div>
         ) : rows.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
-            Aucun statut pour ce filtre.
+            Aucun statut.
           </div>
         ) : (
           <div className="table-scroll">
