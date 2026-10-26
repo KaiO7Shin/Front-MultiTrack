@@ -10,7 +10,6 @@ type ClassementExportMenuProps = {
 export function ClassementExportMenu({
   disabled,
   onGeneral,
-  onPodium,
 }: ClassementExportMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -53,7 +52,7 @@ export function ClassementExportMenu({
           >
             Classement général
           </button>
-          <button
+          {/* <button
             type="button"
             role="menuitem"
             className="block w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
@@ -63,7 +62,7 @@ export function ClassementExportMenu({
             }}
           >
             Classement podium
-          </button>
+          </button> */}
         </div>
       )}
     </div>

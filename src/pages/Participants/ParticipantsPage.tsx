@@ -12,7 +12,6 @@ import { ParticipantListFilters } from "./ParticipantListFilters";
 import { ParticipantsTable } from "./ParticipantsTable";
 import {
   DEFAULT_STATUT_BY_SOURCE,
-  defaultListSourceForRole,
   statutScopeParam,
   type ParticipantListSource,
 } from "./participantListSource";
@@ -22,6 +21,7 @@ import {
 } from "./useParticipantListSearch";
 import { Alert } from "@/components/ui/feedback";
 import { exportParticipantsPdf } from "./participantsPdf";
+import { ParticipantsExportMenu } from "./ParticipantsExportMenu";
 import {
   nextParticipantSort,
   sortParticipants,
@@ -52,15 +52,14 @@ export function ParticipantsPage() {
   const isAdmin = user?.role === ROLE_ADMIN;
   const feedbackRef = useRef<HTMLDivElement>(null);
 
-  const [source, setSource] = useState<ParticipantListSource>(() =>
-    defaultListSourceForRole(user?.role)
-  );
+  // Pack essential : liste figée sur les participants (filtre Type masqué).
+  const [source, setSource] = useState<ParticipantListSource>("PARTICIPANT");
   const [query, setQuery] = useState("");
   const [selectedCourseId, setSelectedCourseId] = useState<number | "all">("all");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
   const [selectedGender, setSelectedGender] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState(() =>
-    DEFAULT_STATUT_BY_SOURCE[defaultListSourceForRole(user?.role)]
+  const [selectedStatus, setSelectedStatus] = useState(
+    () => DEFAULT_STATUT_BY_SOURCE.PARTICIPANT
   );
 
   const [courses, setCourses] = useState<UICourse[]>([]);
@@ -188,11 +187,12 @@ export function ParticipantsPage() {
     }
   };
 
-  const exportPdf = () => {
+  const exportPdf = (kind: "checking" | "publication") => {
+    const label = kind === "checking" ? "Checking" : "Publication";
     exportParticipantsPdf(displayRows, {
-      title:
-        source === "INSCRIPTION" ? "Liste des inscriptions" : "Liste des participants",
-      filename: source === "INSCRIPTION" ? "inscriptions.pdf" : "participants.pdf",
+      kind,
+      title: `Participants — ${label}`,
+      filename: `participants-${kind}.pdf`,
     });
   };
 
@@ -203,20 +203,16 @@ export function ParticipantsPage() {
           <h1 className="page-title">Participants</h1>
           <p className="page-subtitle">
             {isAdmin
-              ? "Gérez les inscrits, validez les dossiers et suivez les courses."
+              ? "Créer, modifier et gérer les participants"
               : "Ajoutez un coureur et suivez les inscrits."}
           </p>
         </div>
         <div className="page-actions">
-          <button
-            type="button"
-            onClick={exportPdf}
+          <ParticipantsExportMenu
             disabled={filteredRows.length === 0}
-            className="btn-secondary px-3 py-2 text-sm disabled:opacity-40"
-          >
-            <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
-            Exporter
-          </button>
+            onChecking={() => exportPdf("checking")}
+            onPublication={() => exportPdf("publication")}
+          />
           {isAdmin && (
             <Link
               to="/participants/import"

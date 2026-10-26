@@ -3,7 +3,7 @@ import { FormField, selectClassName } from "@/components/ui/form-field";
 import type { GenreOption } from "@/services/genres";
 import type { StatutOption } from "@/services/statuts";
 import {
-  PARTICIPANT_LIST_SOURCES,
+  // PARTICIPANT_LIST_SOURCES,
   type ParticipantListSource,
 } from "./participantListSource";
 
@@ -33,25 +33,19 @@ export type ParticipantListFiltersProps = {
 
 export function ParticipantListFilters({
   query,
-  source,
   selectedCourseId,
-  selectedCategoryId,
   selectedGender,
   selectedStatus,
   courses,
-  categories,
   genres,
   statuts,
   resultCount,
   showCount = false,
   onQueryChange,
-  onSourceChange,
   onCourseChange,
-  onCategoryChange,
   onGenderChange,
   onStatusChange,
 }: ParticipantListFiltersProps) {
-  const isParticipantSource = source === "PARTICIPANT";
 
   return (
     <div className="filter-panel">
@@ -71,6 +65,7 @@ export function ParticipantListFilters({
       </div>
 
       <div className="filter-fields">
+        {/* Pack essential : filtre Type Participant / Inscription masqué.
         <FormField label="Type" htmlFor="filter-source">
           <select
             id="filter-source"
@@ -87,6 +82,7 @@ export function ParticipantListFilters({
             ))}
           </select>
         </FormField>
+        */}
 
         <FormField label="Course" htmlFor="filter-course">
           <select
@@ -108,6 +104,7 @@ export function ParticipantListFilters({
           </select>
         </FormField>
 
+        {/* Pack essential : filtre catégorie masqué (classement scratch uniquement).
         {isParticipantSource && (
           <FormField label="Catégorie" htmlFor="filter-category">
             <select
@@ -129,6 +126,7 @@ export function ParticipantListFilters({
             </select>
           </FormField>
         )}
+        */}
 
         <FormField label="Genre" htmlFor="filter-gender">
           <select

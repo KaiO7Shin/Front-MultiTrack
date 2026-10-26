@@ -13,7 +13,7 @@ const GAP = 6;
 
 type KvRow = { label: string; value: string; align: Styles["halign"] };
 
-export function exportRegistrationPdf(registration: Registration) {
+export async function exportRegistrationPdf(registration: Registration) {
   const doc = new jsPDF("p", "mm", "a4");
   const pageW = doc.internal.pageSize.getWidth();
   const usable = pageW - MARGIN * 2;
@@ -89,7 +89,7 @@ export function exportRegistrationPdf(registration: Registration) {
   kvTable(doc, docRows, tablesTop, MARGIN, half, half * 0.42);
   kvTable(doc, contactRows, tablesTop, leftRight, half, half * 0.4);
 
-  addPdfFooter(doc);
+  await addPdfFooter(doc);
   doc.save(`inscription-${slugPart(runner.lastName)}-${slugPart(runner.firstName)}.pdf`);
 }
 
@@ -116,7 +116,7 @@ function drawHeader(doc: jsPDF, registration: Registration, pageW: number) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...NAVY);
-  doc.text(status, pageW - MARGIN, 22, { align: "right" });
+  doc.text(status, pageW - MARGIN - 18, 22, { align: "right" });
 }
 
 function documentRows(registration: Registration): KvRow[] {

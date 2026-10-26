@@ -34,7 +34,8 @@ const ADMIN_NAV: BackOfficeNavEntry[] = [
     id: "referentiels",
     label: "Référentiels",
     children: [
-      { kind: "link", to: "/categories", label: "Catégories", end: true },
+      // Pack essential : catégories commentées (classement scratch uniquement).
+      // { kind: "link", to: "/categories", label: "Catégories", end: true },
       { kind: "link", to: "/statuts", label: "Statuts", end: true },
     ],
   },
@@ -45,7 +46,8 @@ const ADMIN_NAV: BackOfficeNavEntry[] = [
     children: [
       { kind: "link", to: "/courses", label: "Courses" },
       { kind: "link", to: "/dossards", label: "Dossards", end: true },
-      { kind: "link", to: "/eligibilites", label: "Éligibilités", end: true },
+      // Pack essential : éligibilités commentées.
+      // { kind: "link", to: "/eligibilites", label: "Éligibilités", end: true },
     ],
   },
   { kind: "link", to: "/leaderboard", label: "Résultats", end: true },

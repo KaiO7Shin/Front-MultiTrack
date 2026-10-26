@@ -3,7 +3,6 @@ import autoTable from "jspdf-autotable";
 import { addPdfFooter, formatPdfNumber, PDF_FOOTER_MARGIN } from "@/lib/pdfExport";
 import type { ClassementLigne } from "@/services/classement";
 import {
-  formatCltCategorie,
   formatCltGenre,
   podiumTables,
   type ClassementCategorie,
@@ -11,15 +10,14 @@ import {
 
 const NAVY: [number, number, number] = [15, 23, 43];
 const MARGIN_X = 14;
+// Pack essential : colonnes Cat. / Clt cat. masquées (scratch uniquement).
 const HEAD = [
   "Rang",
   "Dossard",
   "Nom",
   "Prénom",
-  "Cat.",
   "Temps",
   "Clt genre",
-  "Clt cat.",
   "Statut",
 ];
 
@@ -31,19 +29,17 @@ const COLUMN_STYLES = {
   4: { halign: "center" as const },
   5: { halign: "center" as const },
   6: { halign: "center" as const },
-  7: { halign: "center" as const },
-  8: { halign: "center" as const },
 };
 
-export function exportClassementGeneral(rows: ClassementLigne[], courseLabel: string) {
+export async function exportClassementGeneral(rows: ClassementLigne[], courseLabel: string) {
   const doc = new jsPDF("l", "mm", "a4");
   drawTitle(doc, `Classement général — ${courseLabel}`);
   drawTable(doc, rows, 22);
-  addPdfFooter(doc);
+  await addPdfFooter(doc);
   doc.save(fileName("classement-general", courseLabel));
 }
 
-export function exportClassementPodium(
+export async function exportClassementPodium(
   rows: ClassementLigne[],
   courseLabel: string,
   categories: ClassementCategorie[]
@@ -65,7 +61,7 @@ export function exportClassementPodium(
     drawTable(doc, table.rows, startY);
     startY = (doc.lastAutoTable?.finalY ?? startY) + 8;
   }
-  addPdfFooter(doc);
+  await addPdfFooter(doc);
   doc.save(fileName("classement-podium", courseLabel));
 }
 
@@ -120,10 +116,8 @@ function toPdfRow(row: ClassementLigne): string[] {
     row.dossard || "—",
     row.nom || "—",
     row.prenom || "—",
-    row.categorieAlias || "—",
     row.temps || "—",
     pdfText(formatCltGenre(row)),
-    pdfText(formatCltCategorie(row)),
     row.statut || "—",
   ];
 }

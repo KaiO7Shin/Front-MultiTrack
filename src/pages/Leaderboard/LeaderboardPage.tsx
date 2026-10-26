@@ -8,9 +8,11 @@ import { fetchClassement, type ClassementLigne } from "@/services/classement";
 import { ClassementExportMenu } from "./ClassementExportMenu";
 import { ClassementTable } from "./ClassementTable";
 import { exportClassementGeneral, exportClassementPodium } from "./classementPdf";
+import { ScratchPodium } from "./ScratchPodium";
 import {
   filterClassement,
   rankingCategories,
+  scratchPodium,
   type ClassementCategorie,
 } from "./classementView";
 
@@ -83,6 +85,7 @@ export function LeaderboardPage() {
     () => filterClassement(rows, genre, categorieId, query),
     [rows, genre, categorieId, query]
   );
+  const podium = useMemo(() => scratchPodium(rows, genre), [rows, genre]);
   const ready = Boolean(courseId) && !loading;
 
   function changeCourse(next: string) {
@@ -172,6 +175,7 @@ export function LeaderboardPage() {
               <option value="Femme">Femme</option>
             </select>
           </FormField>
+          {/* Pack essential : filtre catégorie masqué (scratch uniquement).
           <FormField label="Catégorie" htmlFor="classement-categorie">
             <select
               id="classement-categorie"
@@ -188,8 +192,11 @@ export function LeaderboardPage() {
               ))}
             </select>
           </FormField>
+          */}
         </div>
       </div>
+
+      {ready && <ScratchPodium rows={podium} />}
 
       {!courseId ? (
         <div className="page-card p-8 text-center text-sm text-muted-foreground">

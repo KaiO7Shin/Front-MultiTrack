@@ -6,10 +6,13 @@ import { Alert, Spinner } from "@/components/ui/feedback";
 import { FormField, inputClassName, selectClassName } from "@/components/ui/form-field";
 import { useEffect, useState } from "react";
 
+/** Pack essential : date cachée, même âge pour un classement scratch unique. */
+const DEFAULT_DATE_NAISSANCE = "2000-01-01";
+
 const emptyForm: ParticipantCreateDTO = {
   nom: "",
   prenom: "",
-  dateNaissance: "",
+  dateNaissance: DEFAULT_DATE_NAISSANCE,
   genre: "",
   courseChoisieId: 0,
 };
@@ -120,7 +123,7 @@ export function ParticipantCreateForm({
         const res = await createParticipant({
           nom: form.nom,
           prenom: form.prenom,
-          dateNaissance: form.dateNaissance,
+          dateNaissance: form.dateNaissance || DEFAULT_DATE_NAISSANCE,
           genre: form.genre,
           courseChoisieId: form.courseChoisieId,
         });
@@ -176,6 +179,7 @@ export function ParticipantCreateForm({
         />
       </FormField>
 
+      {/* Pack essential : date de naissance cachée, valeur 01/01/2000.
       <FormField label="Date de naissance" htmlFor="participant-birth" required>
         <input
           id="participant-birth"
@@ -186,6 +190,7 @@ export function ParticipantCreateForm({
           required
         />
       </FormField>
+      */}
 
       <FormField label="Genre" htmlFor="participant-genre" required>
         <select

@@ -14,6 +14,7 @@ import {
   statusLabel,
 } from "@/pages/Participants/participantStatus";
 import { exportParticipantsPdf } from "@/pages/Participants/participantsPdf";
+import { ParticipantsExportMenu } from "@/pages/Participants/ParticipantsExportMenu";
 
 type UICourse = { id: number; label: string };
 
@@ -89,10 +90,12 @@ export function OrganizerParticipantsTracking({
     return filtered.slice(start, start + pageSize);
   }, [filtered, pageSize, currentPage]);
 
-  const exportPdf = () => {
+  const exportPdf = (kind: "checking" | "publication") => {
+    const label = kind === "checking" ? "Checking" : "Publication";
     exportParticipantsPdf(filtered, {
-      title: "Suivi des participants",
-      filename: "participants-suivi.pdf",
+      kind,
+      title: `Suivi des participants — ${label}`,
+      filename: `participants-suivi-${kind}.pdf`,
     });
   };
 
@@ -116,15 +119,11 @@ export function OrganizerParticipantsTracking({
           <p className="page-subtitle">Liste filtrable des inscrits</p>
         </div>
         <div className="page-actions">
-          <button
-            type="button"
-            onClick={exportPdf}
+          <ParticipantsExportMenu
             disabled={filtered.length === 0}
-            className="btn-secondary px-3 py-2 text-sm disabled:opacity-40"
-          >
-            <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
-            Exporter
-          </button>
+            onChecking={() => exportPdf("checking")}
+            onPublication={() => exportPdf("publication")}
+          />
         </div>
       </div>
 

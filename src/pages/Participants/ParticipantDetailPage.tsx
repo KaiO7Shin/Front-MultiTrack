@@ -201,9 +201,11 @@ export function ParticipantDetailPage() {
               {participant.courseLibelle || participant.nomCourse || "—"}
             </DetailRow>
             <DetailRow label="Dossard">{participant.numDossard || "—"}</DetailRow>
+            {/* Pack essential : catégorie masquée (classement scratch uniquement).
             <DetailRow label="Catégorie">
               {participant.aliasCategorie || "—"}
             </DetailRow>
+            */}
             <DetailRow label="Statut">{statusLabel(participant.statut)}</DetailRow>
             {participant.statut === "Finisher" && (
               <DetailRow label="Temps">

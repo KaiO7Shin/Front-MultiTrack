@@ -124,7 +124,7 @@ export const CoursesList = () => {
         <div className="min-w-0">
           <h1 className="page-title">Courses</h1>
           <p className="page-subtitle">
-            Créer, modifier et gérer les courses (Trail, VTT)
+            Créer, modifier et gérer les courses 
           </p>
         </div>
         <div className="page-actions">

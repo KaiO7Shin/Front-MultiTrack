@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  formatCltCategorie,
   formatCltGenre,
   formatRang,
 } from "./classementView";
@@ -29,10 +28,12 @@ export function ClassementTable({ rows }: { rows: ClassementLigne[] }) {
               <th className="px-4 py-3 text-center">Dossard</th>
               <th className="px-4 py-3 text-left">Nom</th>
               <th className="px-4 py-3 text-left">Prénom</th>
+              {/* Pack essential : catégorie masquée (scratch uniquement).
               <th className="px-4 py-3 text-center">Cat.</th>
+              */}
               <th className="px-4 py-3 text-center">Temps</th>
               <th className="px-4 py-3 text-center">Clt genre</th>
-              <th className="px-4 py-3 text-center">Clt cat.</th>
+              {/* <th className="px-4 py-3 text-center">Clt cat.</th> */}
               <th className="px-4 py-3 text-center">Statut</th>
               <th className="w-12 px-2 py-3 text-center">
                 <span className="sr-only">Dossier</span>
@@ -48,10 +49,12 @@ export function ClassementTable({ rows }: { rows: ClassementLigne[] }) {
                   <td className="px-4 py-3 text-center">{row.dossard}</td>
                   <td className="px-4 py-3 text-left">{row.nom}</td>
                   <td className="px-4 py-3 text-left">{row.prenom || "—"}</td>
+                  {/* Pack essential : catégorie masquée.
                   <td className="px-4 py-3 text-center">{row.categorieAlias || "—"}</td>
+                  */}
                   <td className="px-4 py-3 text-center tabular-nums">{row.temps || "—"}</td>
                   <td className="px-4 py-3 text-center">{formatCltGenre(row)}</td>
-                  <td className="px-4 py-3 text-center">{formatCltCategorie(row)}</td>
+                  {/* <td className="px-4 py-3 text-center">{formatCltCategorie(row)}</td> */}
                   <td className="px-4 py-3 text-center">
                     <span
                       className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass(row.statut)}`}
