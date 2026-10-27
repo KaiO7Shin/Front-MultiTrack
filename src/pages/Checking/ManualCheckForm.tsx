@@ -45,6 +45,7 @@ function BibNumberInput({
 type ManualCheckFormProps = {
   busy: boolean;
   feedback: ReactNode;
+  afterSubmit?: ReactNode;
   onSubmit: (bib: string) => Promise<boolean>;
   onInvalid: (message: string) => void;
 };
@@ -52,6 +53,7 @@ type ManualCheckFormProps = {
 export function ManualCheckForm({
   busy,
   feedback,
+  afterSubmit,
   onSubmit,
   onInvalid,
 }: ManualCheckFormProps) {
@@ -100,6 +102,7 @@ export function ManualCheckForm({
       <button type="submit" disabled={busy} className="btn-primary w-full">
         Valider
       </button>
+      {afterSubmit}
     </form>
   );
 }

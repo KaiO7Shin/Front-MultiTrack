@@ -130,11 +130,17 @@ export function removeParticipantFromCache(id: number) {
   }
 }
 
-export function patchParticipantStatusByBib(bib: string, statut: ParticipantStatus) {
+export function patchParticipantStatusByBib(
+  bib: string,
+  statut: ParticipantStatus,
+  extras?: { temps?: string | null }
+) {
   const needle = bib.trim();
   const current = snapshot.rows?.find((item) => item.numDossard.trim() === needle);
-  if (!current || current.statut === statut) return;
-  replaceParticipantInCache({ ...current, statut });
+  if (!current) return;
+  const nextTemps = extras && "temps" in extras ? extras.temps : current.temps;
+  if (current.statut === statut && current.temps === nextTemps) return;
+  replaceParticipantInCache({ ...current, statut, temps: nextTemps });
 }
 
 export function readClassement(courseId: number) {
