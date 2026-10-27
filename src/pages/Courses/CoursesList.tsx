@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Alert } from "@/components/ui/feedback";
 import type { Course, CourseCreateDTO, CourseType } from "@/lib/type";
 import {
   captureClientTimestamp,
@@ -36,6 +37,10 @@ export const CoursesList = () => {
   const [editTarget, setEditTarget] = useState<Course | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [actionFeedback, setActionFeedback] = useState<{
+    variant: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -107,7 +112,10 @@ export const CoursesList = () => {
 
   async function handleDelete(course: Course) {
     if (normalizeCourseStatus(course.status) !== "A venir") {
-      setLoadError("Seules les courses « À venir » peuvent être supprimées.");
+      setActionFeedback({
+        variant: "error",
+        message: "Seules les courses « A venir » peuvent être supprimées.",
+      });
       return;
     }
     if (!window.confirm(`Supprimer la course « ${course.name} » ?`)) return;
@@ -116,9 +124,10 @@ export const CoursesList = () => {
       await deleteCourse(course.id);
       setCourses((prev) => prev.filter((c) => c.id !== course.id));
     } catch (e: unknown) {
-      setLoadError(
-        e instanceof Error ? e.message : "Erreur lors de la suppression."
-      );
+      setActionFeedback({
+        variant: "error",
+        message: e instanceof Error ? e.message : "Erreur lors de la suppression.",
+      });
     }
   }
 
@@ -150,10 +159,19 @@ export const CoursesList = () => {
         <StatPill label="Terminées" value={counts.done} />
       </div>
 
+      {actionFeedback && (
+        <Alert
+          variant={actionFeedback.variant}
+          role={actionFeedback.variant === "error" ? "alert" : "status"}
+        >
+          {actionFeedback.message}
+        </Alert>
+      )}
+
       {loadError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <Alert variant="error" role="alert">
           {loadError}
-        </div>
+        </Alert>
       )}
 
       {loading ? (
@@ -177,6 +195,7 @@ export const CoursesList = () => {
                   prev.map((x) => (x.id === c.id ? { ...x, ...upd } : x))
                 );
               }}
+              onFeedback={setActionFeedback}
               onRefresh={refresh}
             />
           ))}
@@ -208,17 +227,26 @@ function StatPill({ label, value }: { label: string; value: number }) {
   );
 }
 
+function formatEventStamp(value?: string) {
+  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
+  if (!match) return "";
+  const [, year, month, day, hour, minute, second] = match;
+  return `${day}-${month}-${year} ${hour}:${minute}:${second}`;
+}
+
 function CourseCard({
   course,
   onEdit,
   onDelete,
   onLocalUpdate,
+  onFeedback,
   onRefresh,
 }: {
   course: Course;
   onEdit: () => void;
   onDelete: () => void;
   onLocalUpdate: (upd: Partial<Course>) => void;
+  onFeedback: (feedback: { variant: "success" | "error"; message: string } | null) => void;
   onRefresh: () => Promise<void>;
 }) {
   const status = normalizeCourseStatus(course.status);
@@ -232,6 +260,7 @@ function CourseCard({
   async function handleStart() {
     if (loading) return;
     setLoading(true);
+    onFeedback(null);
     try {
       const res = await changeRaceStatus(
         course.id,
@@ -242,9 +271,20 @@ function CourseCard({
         status: res.status,
         startAt: res.startAt || course.startAt,
       });
+      const stamp = formatEventStamp(res.startAt);
+      onFeedback({
+        variant: "success",
+        message: stamp
+          ? `Course lancée avec succès à ${stamp}`
+          : "Course lancée avec succès",
+      });
       await onRefresh();
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Erreur lors du lancement de la course.");
+      onFeedback({
+        variant: "error",
+        message:
+          e instanceof Error ? e.message : "Erreur lors du lancement de la course.",
+      });
     } finally {
       setLoading(false);
     }
@@ -255,15 +295,24 @@ function CourseCard({
     if (!window.confirm(`Terminer la course « ${course.name} » ? Action irréversible.`))
       return;
     setLoading(true);
+    onFeedback(null);
     try {
       const res = await finishRace(course.id);
       onLocalUpdate({
         status: res.status,
         startAt: res.startAt || course.startAt,
       });
+      onFeedback({
+        variant: "success",
+        message: "Course terminée avec succès.",
+      });
       await onRefresh();
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Erreur lors de la clôture de la course.");
+      onFeedback({
+        variant: "error",
+        message:
+          e instanceof Error ? e.message : "Erreur lors de la clôture de la course.",
+      });
     } finally {
       setLoading(false);
     }
