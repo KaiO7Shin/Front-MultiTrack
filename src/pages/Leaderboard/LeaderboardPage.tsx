@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw, Search } from "lucide-react";
 import { Alert } from "@/components/ui/feedback";
 import { FormField, selectClassName } from "@/components/ui/form-field";
+import { loadClassementCached } from "@/lib/classementCache";
 import { fetchCategoriesDetailed } from "@/services/categories";
 import { fetchCourses } from "@/services/courses";
-import { fetchClassement, type ClassementLigne } from "@/services/classement";
+import type { ClassementLigne } from "@/services/classement";
 import { ClassementExportMenu } from "./ClassementExportMenu";
 import { ClassementTable } from "./ClassementTable";
 import { exportClassementGeneral, exportClassementPodium } from "./classementPdf";
@@ -59,11 +60,11 @@ export function LeaderboardPage() {
     };
   }, []);
 
-  const loadClassement = useCallback(async (id: number) => {
+  const loadClassement = useCallback(async (id: number, force = false) => {
     setLoading(true);
     setError(null);
     try {
-      setRows(await fetchClassement(id));
+      setRows(await loadClassementCached(id, force));
     } catch (err) {
       setRows([]);
       setError(err instanceof Error ? err.message : "Impossible de charger le classement.");
@@ -71,6 +72,12 @@ export function LeaderboardPage() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    for (const course of courses) {
+      void loadClassementCached(course.id).catch(() => undefined);
+    }
+  }, [courses]);
 
   useEffect(() => {
     if (!courseId) {
@@ -109,7 +116,7 @@ export function LeaderboardPage() {
             className="btn-secondary"
             disabled={!ready}
             onClick={() => {
-              if (courseId) void loadClassement(Number(courseId));
+              if (courseId) void loadClassement(Number(courseId), true);
             }}
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden />

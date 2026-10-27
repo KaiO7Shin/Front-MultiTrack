@@ -128,7 +128,7 @@ export function ParticipantCreateForm({
           courseChoisieId: form.courseChoisieId,
         });
         setForm({ ...emptyForm, genre: genres[0]?.libelle || "" });
-        onSuccess?.(res.message || "Participant créé avec succès.");
+        onSuccess?.(res.message || "Participant créé avec succès.", res.data?.id);
         onCreated?.();
       }
     } catch (e: unknown) {

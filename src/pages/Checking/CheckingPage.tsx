@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { patchParticipantStatusByBib } from "@/lib/boMemoryCache";
 import {
   apiErrorMessage,
   checkArrival,
@@ -41,6 +42,7 @@ export function CheckingPage() {
       try {
         const response =
           mode === "presence" ? await checkPresence(bib) : await checkArrival(bib);
+        patchParticipantStatusByBib(bib, mode === "presence" ? "Présent" : "Finisher");
         setSuccess(response.message?.trim() || "Checking enregistré");
         return true;
       } catch (err: unknown) {

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { clearBoMemoryCaches } from "@/lib/boMemoryCache";
 import {
   clearSessionStorage,
   isJwtExpired,
@@ -30,6 +31,7 @@ apiClient.interceptors.request.use((config) => {
   if (token && !isJwtExpired(token)) {
     config.headers.Authorization = `Bearer ${token}`;
   } else if (token && isJwtExpired(token)) {
+    clearBoMemoryCaches();
     clearSessionStorage();
   }
   return config;
@@ -43,6 +45,7 @@ apiClient.interceptors.response.use(
     const isLogin = url.includes("/login/user");
 
     if (status === 401 && !isLogin) {
+      clearBoMemoryCaches();
       clearSessionStorage();
       if (window.location.pathname !== "/login") {
         window.location.assign("/login");

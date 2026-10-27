@@ -10,6 +10,9 @@ export const PARTICIPANT_LIST_SOURCES: ReadonlyArray<{
   { value: "PARTICIPANT", label: "Participant" },
 ];
 
+/** Valeur du filtre « tous les statuts » (aucun appel API, filtre local). */
+export const ALL_STATUTS = "all";
+
 export const DEFAULT_STATUT_BY_SOURCE: Record<ParticipantListSource, string> = {
   INSCRIPTION: "Attente validation",
   PARTICIPANT: "Inscrit",

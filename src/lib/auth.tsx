@@ -4,6 +4,7 @@ import { PageLoading } from "@/components/ui/feedback";
 import { demoCheckpointSession } from "@/data/staticStore";
 import api from "@/lib/api";
 import { API } from "@/lib/apiEndpoints";
+import { clearBoMemoryCaches } from "@/lib/boMemoryCache";
 import {
   clearSessionStorage,
   decodeJwtPayload,
@@ -132,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (ms <= 0) {
       setUser(null);
       setToken(null);
+      clearBoMemoryCaches();
       clearSessionStorage();
       if (window.location.pathname !== "/login") {
         window.location.assign("/login");
@@ -141,6 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timer = window.setTimeout(() => {
       setUser(null);
       setToken(null);
+      clearBoMemoryCaches();
       clearSessionStorage();
       if (window.location.pathname !== "/login") {
         window.location.assign("/login");
@@ -183,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   function signOut() {
     setUser(null);
     setToken(null);
+    clearBoMemoryCaches();
     clearSessionStorage();
   }
 

@@ -133,6 +133,7 @@ export type ParticipantCreateDTO = {
 };
 
 export type ParticipantResponse = {
+  id?: number;
   numDossard: string;
   nom: string;
   prenom: string;

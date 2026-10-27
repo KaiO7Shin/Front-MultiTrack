@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Upload } from "lucide-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { clearBoMemoryCaches } from "@/lib/boMemoryCache";
 import { importParticipantsCsv } from "@/services/import";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import { FormField, selectClassName } from "@/components/ui/form-field";
@@ -28,6 +29,7 @@ export const ImportParticipants = () => {
 
     try {
       const { message } = await importParticipantsCsv(file, separator);
+      clearBoMemoryCaches();
       setMessage(message);
     } catch (err: any) {
       if (err.response) {

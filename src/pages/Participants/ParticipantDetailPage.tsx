@@ -10,6 +10,7 @@ import type {
   ParticipantProjection,
   ParticipantStatus,
 } from "@/lib/type";
+import { replaceParticipantInCache } from "@/lib/boMemoryCache";
 import { formatParticipantName } from "@/lib/utils";
 import { ROLE_ADMIN, useAuth } from "@/lib/auth";
 import { Alert, Spinner } from "@/components/ui/feedback";
@@ -100,7 +101,10 @@ export function ParticipantDetailPage() {
     try {
       await changeParticipantStatus(participant.numDossard, newStatus);
       const updated = await fetchParticipantById(participant.id);
-      if (updated) setParticipant(updated);
+      if (updated) {
+        setParticipant(updated);
+        replaceParticipantInCache(updated);
+      }
       setSuccess(`Statut mis à jour : ${statusLabel(newStatus)}.`);
       setStatusOpen(false);
     } catch {
@@ -218,7 +222,10 @@ export function ParticipantDetailPage() {
             <ParticipantTempsForm
               key={`${participant.id}-${participant.temps ?? ""}`}
               participant={participant}
-              onUpdated={setParticipant}
+              onUpdated={(row) => {
+                setParticipant(row);
+                replaceParticipantInCache(row);
+              }}
               onSubmitStart={() => setSuccess(null)}
               onSuccess={setSuccess}
             />

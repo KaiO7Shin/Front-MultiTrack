@@ -151,6 +151,7 @@ export function ParticipantListFilters({
             value={selectedStatus}
             onChange={(e) => onStatusChange(e.target.value)}
           >
+            <option value="all">Tous les statuts</option>
             {statuts.map((s) => (
               <option key={s.id} value={s.libelle}>
                 {s.libelle}
