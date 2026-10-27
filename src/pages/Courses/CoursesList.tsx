@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import type { Course, CourseCreateDTO, CourseType } from "@/lib/type";
-import { formatBarrierDuration, normalizeCourseStatus } from "@/lib/utils";
+import {
+  captureClientTimestamp,
+  formatBarrierDuration,
+  normalizeCourseStatus,
+} from "@/lib/utils";
 import {
   changeRaceStatus,
   createCourse,
@@ -229,7 +233,11 @@ function CourseCard({
     if (loading) return;
     setLoading(true);
     try {
-      const res = await changeRaceStatus(course.id, "En cours");
+      const res = await changeRaceStatus(
+        course.id,
+        "En cours",
+        captureClientTimestamp()
+      );
       onLocalUpdate({
         status: res.status,
         startAt: res.startAt || course.startAt,
