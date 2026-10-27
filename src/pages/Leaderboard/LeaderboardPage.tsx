@@ -14,6 +14,7 @@ import {
   filterClassement,
   rankingCategories,
   scratchPodium,
+  withFilteredRanks,
   type ClassementCategorie,
 } from "./classementView";
 
@@ -89,7 +90,7 @@ export function LeaderboardPage() {
 
   const courseLabel = courses.find((course) => String(course.id) === courseId)?.label ?? "";
   const filtered = useMemo(
-    () => filterClassement(rows, genre, categorieId, query),
+    () => withFilteredRanks(filterClassement(rows, genre, categorieId, query)),
     [rows, genre, categorieId, query]
   );
   const podium = useMemo(() => scratchPodium(rows, genre), [rows, genre]);

@@ -68,6 +68,21 @@ export function filterClassement(
   });
 }
 
+/**
+ * Rang d’affichage dans la liste filtrée (1, 2, 3…).
+ * Les non-classés restent sans rang. Ne mute pas les lignes du cache.
+ */
+export function withFilteredRanks(rows: ClassementLigne[]): ClassementLigne[] {
+  let place = 0;
+  return rows.map((row) => {
+    if (row.rang == null || !row.temps) {
+      return row.rang == null ? row : { ...row, rang: null };
+    }
+    place += 1;
+    return row.rang === place ? row : { ...row, rang: place };
+  });
+}
+
 export function rankingCategories(
   categories: { id: number; alias: string; ageMin: number | null }[]
 ): ClassementCategorie[] {
