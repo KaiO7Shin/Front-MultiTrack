@@ -51,7 +51,7 @@ export function DossardPreflightPanel({ report }: { report: DossardPreflight }) 
           {report.pages} dossard{report.pages > 1 ? "s" : ""} prêt
           {report.pages > 1 ? "s" : ""} à générer
           {report.duo
-            ? " (le second exemplaire d’une paire duo n’imprime que le code-barres et le numéro)."
+            ? " (le second exemplaire d’une paire duo n’imprime pas le nom et le prénom)."
             : "."}
         </Alert>
       )}

@@ -522,6 +522,7 @@ export type DossardLayoutResume = {
   nomActive: boolean;
   prenomActive: boolean;
   categorieActive: boolean;
+  distanceActive: boolean;
   police: string;
 };
 
