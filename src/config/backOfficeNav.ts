@@ -27,13 +27,15 @@ const ADMIN_NAV: BackOfficeNavEntry[] = [
   { kind: "link", to: "/dashboard", label: "Tableau de bord", end: true },
   { kind: "link", to: "/participants", label: "Participants" },
   { kind: "link", to: "/checking", label: "Checking", end: true },
-  { kind: "link", to: "/comptes", label: "Comptes utilisateurs", end: true },
+  // Pack essential : comptes utilisateurs commentés.
+  // { kind: "link", to: "/comptes", label: "Comptes utilisateurs", end: true },
   {
     kind: "group",
     id: "referentiels",
     label: "Référentiels",
     children: [
-      { kind: "link", to: "/categories", label: "Catégories", end: true },
+      // Pack essential : catégories commentées (classement scratch uniquement).
+      // { kind: "link", to: "/categories", label: "Catégories", end: true },
       { kind: "link", to: "/statuts", label: "Statuts", end: true },
     ],
   },
@@ -44,11 +46,13 @@ const ADMIN_NAV: BackOfficeNavEntry[] = [
     children: [
       { kind: "link", to: "/courses", label: "Courses" },
       { kind: "link", to: "/dossards", label: "Dossards", end: true },
-      { kind: "link", to: "/eligibilites", label: "Éligibilités", end: true },
+      // Pack essential : éligibilités commentées.
+      // { kind: "link", to: "/eligibilites", label: "Éligibilités", end: true },
     ],
   },
   { kind: "link", to: "/leaderboard", label: "Résultats", end: true },
-  { kind: "link", to: "/journaux", label: "Journaux d’erreurs" },
+  // Pack essential : journaux d’erreurs commentés.
+  // { kind: "link", to: "/journaux", label: "Journaux d’erreurs" },
 ];
 
 const ORGANIZER_NAV: BackOfficeNavEntry[] = [

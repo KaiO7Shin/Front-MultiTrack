@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import { addPdfFooter, PDF_FOOTER_MARGIN } from "@/lib/pdfExport";
 import type { TshirtMatrix } from "./tshirtMatrix";
 
-export function exportTshirtMatrixPdf(visible: TshirtMatrix) {
+export async function exportTshirtMatrixPdf(visible: TshirtMatrix) {
   if (visible.courses.length === 0) return;
 
   const doc = new jsPDF("l", "mm", "a4");
@@ -45,6 +45,6 @@ export function exportTshirtMatrixPdf(visible: TshirtMatrix) {
     },
   });
 
-  addPdfFooter(doc);
+  await addPdfFooter(doc);
   doc.save("tshirts-par-course.pdf");
 }

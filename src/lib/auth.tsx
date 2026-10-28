@@ -4,6 +4,7 @@ import { PageLoading } from "@/components/ui/feedback";
 import { demoCheckpointSession } from "@/data/staticStore";
 import api from "@/lib/api";
 import { API } from "@/lib/apiEndpoints";
+import { clearBoMemoryCaches } from "@/lib/boMemoryCache";
 import {
   clearSessionStorage,
   decodeJwtPayload,
@@ -111,10 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: raw.name ?? jwt.name ?? undefined,
       })
     );
-    if (restored) {
+    if (restored && restored.user.role === ROLE_ADMIN) {
       setToken(restored.token);
       setUser(restored.user);
     } else {
+      if (restored) clearSessionStorage();
       setToken(null);
       setUser(null);
     }
@@ -131,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (ms <= 0) {
       setUser(null);
       setToken(null);
+      clearBoMemoryCaches();
       clearSessionStorage();
       if (window.location.pathname !== "/login") {
         window.location.assign("/login");
@@ -140,6 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timer = window.setTimeout(() => {
       setUser(null);
       setToken(null);
+      clearBoMemoryCaches();
       clearSessionStorage();
       if (window.location.pathname !== "/login") {
         window.location.assign("/login");
@@ -164,8 +168,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const jwtRole = mapJwtRoleToCode(jwt?.role);
       // Le claim JWT fait foi s’il est présent (évite un mauvais code numérique en base).
       const role = jwtRole ?? apiRole;
-      if (![ROLE_ADMIN, ROLE_CHECKPOINT, ROLE_ORGANIZER].includes(role)) {
-        throw new Error("Rôle utilisateur non reconnu");
+      if (role !== ROLE_ADMIN) {
+        throw new Error("Accès réservé à l'administrateur");
       }
 
       const sessionUser = buildSessionUser(Number(data.data.user.id), role);
@@ -182,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   function signOut() {
     setUser(null);
     setToken(null);
+    clearBoMemoryCaches();
     clearSessionStorage();
   }
 

@@ -13,7 +13,8 @@ import "./index.css";
 
 import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { CoursesList } from "./pages/Courses/CoursesList";
-import { CategoriesList } from "./pages/Categories/CategoriesList";
+// Pack essential : pages catégories et éligibilités commentées.
+// import { CategoriesList } from "./pages/Categories/CategoriesList";
 import { CourseDetails } from "./pages/Courses/CourseDetails";
 import { ImportParticipants } from "./pages/Participants/ImportParticipants";
 import { AddParticipant } from "./pages/Participants/AddParticipant";
@@ -29,10 +30,11 @@ import { LeaderboardPage } from "./pages/Leaderboard/LeaderboardPage";
 import { LoginPage } from "./pages/Auth/LoginPage";
 import { PointeursList } from "./pages/Pointeurs/PointeursList";
 import { StatutsPage } from "./pages/Statuts/StatutsPage";
-import { EligibilitesPage } from "./pages/Eligibilites/EligibilitesPage";
-import { ErrorLogDetailPage } from "./pages/ErrorLogs/ErrorLogDetailPage";
-import { ErrorLogsPage } from "./pages/ErrorLogs/ErrorLogsPage";
-import { ComptesPage } from "./pages/Comptes/ComptesPage";
+// import { EligibilitesPage } from "./pages/Eligibilites/EligibilitesPage";
+// Pack essential : pages comptes et journaux commentées.
+// import { ErrorLogDetailPage } from "./pages/ErrorLogs/ErrorLogDetailPage";
+// import { ErrorLogsPage } from "./pages/ErrorLogs/ErrorLogsPage";
+// import { ComptesPage } from "./pages/Comptes/ComptesPage";
 import { CheckingPage } from "./pages/Checking/CheckingPage";
 import { ParametresPage } from "./pages/Parametres/ParametresPage";
 
@@ -62,7 +64,8 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <DashboardPage /> },
 
       { path: "courses", element: <CoursesList /> },
-      { path: "categories", element: <CategoriesList /> },
+      // Pack essential : catégories commentées.
+      // { path: "categories", element: <CategoriesList /> },
       {
         path: "statuts",
         element: (
@@ -71,14 +74,15 @@ const router = createBrowserRouter([
           </RequireRole>
         ),
       },
-      {
-        path: "eligibilites",
-        element: (
-          <RequireRole role={ROLE_ADMIN}>
-            <EligibilitesPage />
-          </RequireRole>
-        ),
-      },
+      // Pack essential : éligibilités commentées.
+      // {
+      //   path: "eligibilites",
+      //   element: (
+      //     <RequireRole role={ROLE_ADMIN}>
+      //       <EligibilitesPage />
+      //     </RequireRole>
+      //   ),
+      // },
       { path: "courses/:id", element: <CourseDetails /> },
 
       { path: "participants", element: <ParticipantsPage /> },
@@ -119,14 +123,15 @@ const router = createBrowserRouter([
 
       { path: "leaderboard", element: <LeaderboardPage /> },
 
-      {
-        path: "comptes",
-        element: (
-          <RequireRole role={ROLE_ADMIN}>
-            <ComptesPage />
-          </RequireRole>
-        ),
-      },
+      // Pack essential : comptes utilisateurs commentés.
+      // {
+      //   path: "comptes",
+      //   element: (
+      //     <RequireRole role={ROLE_ADMIN}>
+      //       <ComptesPage />
+      //     </RequireRole>
+      //   ),
+      // },
 
       {
         path: "parametres",
@@ -136,22 +141,23 @@ const router = createBrowserRouter([
           </RequireRole>
         ),
       },
-      {
-        path: "journaux",
-        element: (
-          <RequireRole role={ROLE_ADMIN}>
-            <ErrorLogsPage />
-          </RequireRole>
-        ),
-      },
-      {
-        path: "journaux/:id",
-        element: (
-          <RequireRole role={ROLE_ADMIN}>
-            <ErrorLogDetailPage />
-          </RequireRole>
-        ),
-      },
+      // Pack essential : journaux d’erreurs commentés.
+      // {
+      //   path: "journaux",
+      //   element: (
+      //     <RequireRole role={ROLE_ADMIN}>
+      //       <ErrorLogsPage />
+      //     </RequireRole>
+      //   ),
+      // },
+      // {
+      //   path: "journaux/:id",
+      //   element: (
+      //     <RequireRole role={ROLE_ADMIN}>
+      //       <ErrorLogDetailPage />
+      //     </RequireRole>
+      //   ),
+      // },
 
       {
         path: "organisateur",

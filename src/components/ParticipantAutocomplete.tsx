@@ -102,9 +102,11 @@ export function ParticipantAutocomplete({
                   {" "}
                   — {formatParticipantName(p.prenom, p.nom)}
                 </span>
+                {/* Pack essential : catégorie masquée.
                 <span className="block text-xs text-slate-400">
                   {p.aliasCategorie}
                 </span>
+                */}
               </button>
             </li>
           ))}

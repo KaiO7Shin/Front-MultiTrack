@@ -20,7 +20,7 @@ export function CoursePopularityChart({ rows }: { rows: PopularityRow[] }) {
       {rows.length === 0 ? (
         <EmptyState
           title="Aucune course à comparer"
-          description="Aucune inscription ne correspond à cette sélection."
+          description="Aucun participant ne correspond à cette sélection."
         />
       ) : (
         <div className="w-full min-w-0" style={{ height: Math.max(220, rows.length * 56) }}>
@@ -54,7 +54,7 @@ export function CoursePopularityChart({ rows }: { rows: PopularityRow[] }) {
                     active={props.active}
                     label={typeof props.label === "string" ? props.label : undefined}
                     payload={props.payload?.map((item) => ({
-                      name: "Inscriptions",
+                      name: "Participants",
                       value: Number(item.value ?? 0),
                       color: OLIVE,
                     }))}
@@ -63,7 +63,7 @@ export function CoursePopularityChart({ rows }: { rows: PopularityRow[] }) {
               />
               <Bar
                 dataKey="count"
-                name="Inscriptions"
+                name="Participants"
                 fill={OLIVE}
                 radius={[0, 6, 6, 0]}
                 barSize={18}

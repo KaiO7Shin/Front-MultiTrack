@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { deleteParticipant } from "@/services/participants";
+import { RefreshCw } from "lucide-react";
+import { deleteParticipant, fetchParticipantById } from "@/services/participants";
+import {
+  clearBoMemoryCaches,
+  removeParticipantFromCache,
+  replaceParticipantInCache,
+} from "@/lib/boMemoryCache";
 import { fetchCategories, fetchCoursesDetailed } from "@/services/courses";
 import { fetchGenres, type GenreOption } from "@/services/genres";
 import { fetchStatuts, type StatutOption } from "@/services/statuts";
@@ -11,8 +17,7 @@ import { ParticipantDeleteModal } from "./ParticipantDeleteModal";
 import { ParticipantListFilters } from "./ParticipantListFilters";
 import { ParticipantsTable } from "./ParticipantsTable";
 import {
-  DEFAULT_STATUT_BY_SOURCE,
-  defaultListSourceForRole,
+  ALL_STATUTS,
   statutScopeParam,
   type ParticipantListSource,
 } from "./participantListSource";
@@ -22,6 +27,7 @@ import {
 } from "./useParticipantListSearch";
 import { Alert } from "@/components/ui/feedback";
 import { exportParticipantsPdf } from "./participantsPdf";
+import { ParticipantsExportMenu } from "./ParticipantsExportMenu";
 import {
   nextParticipantSort,
   sortParticipants,
@@ -52,23 +58,21 @@ export function ParticipantsPage() {
   const isAdmin = user?.role === ROLE_ADMIN;
   const feedbackRef = useRef<HTMLDivElement>(null);
 
-  const [source, setSource] = useState<ParticipantListSource>(() =>
-    defaultListSourceForRole(user?.role)
-  );
+  // Pack essential : liste figée sur les participants (filtre Type masqué).
+  const [source, setSource] = useState<ParticipantListSource>("PARTICIPANT");
   const [query, setQuery] = useState("");
   const [selectedCourseId, setSelectedCourseId] = useState<number | "all">("all");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
   const [selectedGender, setSelectedGender] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState(() =>
-    DEFAULT_STATUT_BY_SOURCE[defaultListSourceForRole(user?.role)]
-  );
+  const [selectedStatus, setSelectedStatus] = useState(ALL_STATUTS);
+  const [filterError, setFilterError] = useState<string | null>(null);
 
   const [courses, setCourses] = useState<UICourse[]>([]);
   const [categories, setCategories] = useState<UICategory[]>([]);
   const [genres, setGenres] = useState<GenreOption[]>([]);
   const [statuts, setStatuts] = useState<StatutOption[]>([]);
 
-  const { rows, loading, error: listError, setError: setListError, reload } =
+  const { rows, loading, refreshing, error: listError, reload } =
     useParticipantListSearch({
       source,
       courseId: selectedCourseId,
@@ -112,13 +116,13 @@ export function ParticipantsPage() {
         setCategories(catList);
         setGenres(genreList);
       } catch {
-        if (mounted) setListError("Impossible de charger les listes de filtres.");
+        if (mounted) setFilterError("Impossible de charger les listes de filtres.");
       }
     })();
     return () => {
       mounted = false;
     };
-  }, [setListError]);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -127,24 +131,14 @@ export function ParticipantsPage() {
         const statutList = await fetchStatuts(statutScopeParam(source));
         if (!mounted) return;
         setStatuts(statutList);
-        const defaultStatut = DEFAULT_STATUT_BY_SOURCE[source];
-        const stillValid = statutList.some((s) => s.libelle === selectedStatus);
-        if (!stillValid) {
-          setSelectedStatus(
-            statutList.find((s) => s.libelle === defaultStatut)?.libelle ??
-              statutList[0]?.libelle ??
-              defaultStatut
-          );
-        }
       } catch {
-        if (mounted) setListError("Impossible de charger les statuts.");
+        if (mounted) setFilterError("Impossible de charger les statuts.");
       }
     })();
     return () => {
       mounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- options liées à la source uniquement
-  }, [source, setListError]);
+  }, [source]);
 
   const showFeedback = (message: string) => {
     setActionSuccess(message);
@@ -155,11 +149,15 @@ export function ParticipantsPage() {
 
   const handleFormSuccess = async (message: string, participantId?: number) => {
     setEditingParticipant(null);
-    if (source !== "PARTICIPANT") {
-      setSource("PARTICIPANT");
-      setSelectedStatus(DEFAULT_STATUT_BY_SOURCE.PARTICIPANT);
-    } else {
+    if (participantId == null) {
       await reload();
+    } else {
+      try {
+        replaceParticipantInCache(await fetchParticipantById(participantId));
+      } catch {
+        clearBoMemoryCaches();
+        await reload();
+      }
     }
     showFeedback(message);
     if (participantId != null) {
@@ -173,7 +171,7 @@ export function ParticipantsPage() {
     setDeleteError(null);
     try {
       const res = await deleteParticipant(deleteTarget.id);
-      await reload();
+      removeParticipantFromCache(deleteTarget.id);
       setDeleteTarget(null);
       showFeedback(res.message || "Participant supprimé.");
     } catch (err: unknown) {
@@ -188,11 +186,12 @@ export function ParticipantsPage() {
     }
   };
 
-  const exportPdf = () => {
+  const exportPdf = (kind: "checking" | "publication") => {
+    const label = kind === "checking" ? "Checking" : "Publication";
     exportParticipantsPdf(displayRows, {
-      title:
-        source === "INSCRIPTION" ? "Liste des inscriptions" : "Liste des participants",
-      filename: source === "INSCRIPTION" ? "inscriptions.pdf" : "participants.pdf",
+      kind,
+      title: `Participants — ${label}`,
+      filename: `participants-${kind}.pdf`,
     });
   };
 
@@ -203,20 +202,25 @@ export function ParticipantsPage() {
           <h1 className="page-title">Participants</h1>
           <p className="page-subtitle">
             {isAdmin
-              ? "Gérez les inscrits, validez les dossiers et suivez les courses."
+              ? "Créer, modifier et gérer les participants"
               : "Ajoutez un coureur et suivez les inscrits."}
           </p>
         </div>
         <div className="page-actions">
           <button
             type="button"
-            onClick={exportPdf}
-            disabled={filteredRows.length === 0}
-            className="btn-secondary px-3 py-2 text-sm disabled:opacity-40"
+            className="btn-secondary"
+            onClick={() => void reload()}
+            disabled={refreshing || loading}
           >
-            <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
-            Exporter
+            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden />
+            Rafraîchir
           </button>
+          <ParticipantsExportMenu
+            disabled={filteredRows.length === 0}
+            onChecking={() => exportPdf("checking")}
+            onPublication={() => exportPdf("publication")}
+          />
           {isAdmin && (
             <Link
               to="/participants/import"
@@ -229,9 +233,9 @@ export function ParticipantsPage() {
       </div>
 
       <div ref={feedbackRef}>
-        {listError && (
+        {(filterError || listError) && (
           <Alert variant="error" role="alert">
-            {listError}
+            {filterError || listError}
           </Alert>
         )}
         {actionSuccess && (
@@ -278,7 +282,7 @@ export function ParticipantsPage() {
         onSourceChange={(value) => {
           setSource(value);
           setSelectedCategoryId("all");
-          setSelectedStatus(DEFAULT_STATUT_BY_SOURCE[value]);
+          setSelectedStatus(ALL_STATUTS);
           setSort(null);
           setActionSuccess(null);
         }}

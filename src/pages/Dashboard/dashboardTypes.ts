@@ -102,6 +102,9 @@ export type DashboardKpis = {
   validated: number;
   pending: number;
   participantCount: number;
+  inscrits: number;
+  presents: number;
+  dns: number;
 };
 
 export type DashboardView = {

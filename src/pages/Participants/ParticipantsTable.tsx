@@ -92,9 +92,14 @@ export function ParticipantsTable({
               />
               <th className="px-3 py-2 text-left">Genre</th>
               <th className="px-3 py-2 text-left">Course</th>
-              <th className="px-3 py-2 text-left">
-                {isInscription ? "Contact" : "Catégorie"}
-              </th>
+              {isInscription && (
+                <th className="px-3 py-2 text-left">Contact</th>
+              )}
+              {/* Pack essential : colonne catégorie masquée.
+              {!isInscription && (
+                <th className="px-3 py-2 text-left">Catégorie</th>
+              )}
+              */}
               <th className="px-3 py-2 text-left">Statut</th>
               {!isInscription && (
                 <th className="px-3 py-2 text-right">Actions</th>
@@ -135,11 +140,14 @@ export function ParticipantsTable({
                   <td className="px-3 py-2">
                     {p.courseLibelle || p.nomCourse || "—"}
                   </td>
-                  <td className="px-3 py-2">
-                    {isInscription
-                      ? p.email || p.contact || "—"
-                      : p.aliasCategorie || "—"}
-                  </td>
+                  {isInscription && (
+                    <td className="px-3 py-2">{p.email || p.contact || "—"}</td>
+                  )}
+                  {/* Pack essential : colonne catégorie masquée.
+                  {!isInscription && (
+                    <td className="px-3 py-2">{p.aliasCategorie || "—"}</td>
+                  )}
+                  */}
                   <td className="px-3 py-2">
                     <span
                       className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass(p.statut)}`}

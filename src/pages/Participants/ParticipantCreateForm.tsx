@@ -1,25 +1,20 @@
 import type { Course, ParticipantCreateDTO, ParticipantProjection } from "@/lib/type";
 import { fetchCoursesForRegistration } from "@/services/courses";
 import { fetchGenres, type GenreOption } from "@/services/genres";
-import { fetchTaillesTShirt, type TailleTShirtOption } from "@/services/taillesTShirt";
 import { createParticipant, updateParticipant } from "@/services/participants";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import { FormField, inputClassName, selectClassName } from "@/components/ui/form-field";
-import {
-  needsPartnerTShirt,
-  partnerTShirtChoiceMessage,
-} from "@/lib/duoCourses";
-import { TshirtSizeFields } from "./TshirtSizeFields";
 import { useEffect, useState } from "react";
+
+/** Pack essential : date cachée, même âge pour un classement scratch unique. */
+const DEFAULT_DATE_NAISSANCE = "2000-01-01";
 
 const emptyForm: ParticipantCreateDTO = {
   nom: "",
   prenom: "",
-  dateNaissance: "",
+  dateNaissance: DEFAULT_DATE_NAISSANCE,
   genre: "",
   courseChoisieId: 0,
-  tailleTShirt: "",
-  tailleTShirtBinome: "",
 };
 
 type ParticipantFormProps = {
@@ -39,7 +34,6 @@ export function ParticipantCreateForm({
 }: ParticipantFormProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [genres, setGenres] = useState<GenreOption[]>([]);
-  const [tailles, setTailles] = useState<TailleTShirtOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [form, setForm] = useState<ParticipantCreateDTO>(emptyForm);
@@ -50,15 +44,13 @@ export function ParticipantCreateForm({
     let mounted = true;
     (async () => {
       try {
-        const [courseList, genreList, tailleList] = await Promise.all([
+        const [courseList, genreList] = await Promise.all([
           fetchCoursesForRegistration(),
           fetchGenres(),
-          fetchTaillesTShirt(),
         ]);
         if (!mounted) return;
         setCourses(courseList);
         setGenres(genreList);
-        setTailles(tailleList);
         setForm((f) => ({
           ...f,
           genre: f.genre || genreList[0]?.libelle || "",
@@ -87,8 +79,6 @@ export function ParticipantCreateForm({
       dateNaissance: editing.dateNaissance,
       genre: editing.genre,
       courseChoisieId: editing.courseId,
-      tailleTShirt: editing.tailleTShirt ?? "",
-      tailleTShirtBinome: editing.tailleTShirtBinome ?? "",
     });
   }, [editing]);
 
@@ -112,16 +102,6 @@ export function ParticipantCreateForm({
       setErr("Choisissez un genre.");
       return;
     }
-    if (!form.tailleTShirt) {
-      setErr("Choisissez une taille de t-shirt.");
-      return;
-    }
-    const selectedCourse = courses.find((c) => c.id === form.courseChoisieId);
-    const courseLibelle = selectedCourse?.name ?? "";
-    if (needsPartnerTShirt(courseLibelle) && !form.tailleTShirtBinome) {
-      setErr(partnerTShirtChoiceMessage(courseLibelle));
-      return;
-    }
 
     setLoading(true);
     try {
@@ -135,8 +115,6 @@ export function ParticipantCreateForm({
           genre: form.genre,
           courseChoisieId: form.courseChoisieId,
           statut: editing.statut,
-          tailleTShirt: form.tailleTShirt,
-          tailleTShirtBinome: form.tailleTShirtBinome,
         });
         setForm({ ...emptyForm, genre: genres[0]?.libelle || "" });
         onSuccess?.(res.message || "Participant mis à jour.", editing.id);
@@ -145,14 +123,12 @@ export function ParticipantCreateForm({
         const res = await createParticipant({
           nom: form.nom,
           prenom: form.prenom,
-          dateNaissance: form.dateNaissance,
+          dateNaissance: form.dateNaissance || DEFAULT_DATE_NAISSANCE,
           genre: form.genre,
           courseChoisieId: form.courseChoisieId,
-          tailleTShirt: form.tailleTShirt,
-          tailleTShirtBinome: form.tailleTShirtBinome,
         });
         setForm({ ...emptyForm, genre: genres[0]?.libelle || "" });
-        onSuccess?.(res.message || "Participant créé avec succès.");
+        onSuccess?.(res.message || "Participant créé avec succès.", res.data?.id);
         onCreated?.();
       }
     } catch (e: unknown) {
@@ -203,6 +179,7 @@ export function ParticipantCreateForm({
         />
       </FormField>
 
+      {/* Pack essential : date de naissance cachée, valeur 01/01/2000.
       <FormField label="Date de naissance" htmlFor="participant-birth" required>
         <input
           id="participant-birth"
@@ -213,6 +190,7 @@ export function ParticipantCreateForm({
           required
         />
       </FormField>
+      */}
 
       <FormField label="Genre" htmlFor="participant-genre" required>
         <select
@@ -238,17 +216,7 @@ export function ParticipantCreateForm({
           id="participant-course"
           className={selectClassName}
           value={form.courseChoisieId || ""}
-          onChange={(e) => {
-            const courseId = Number(e.target.value);
-            const libelle = courses.find((c) => c.id === courseId)?.name ?? "";
-            setForm((f) => ({
-              ...f,
-              courseChoisieId: courseId,
-              tailleTShirtBinome: needsPartnerTShirt(libelle)
-                ? f.tailleTShirtBinome
-                : "",
-            }));
-          }}
+          onChange={(e) => handleChange("courseChoisieId", Number(e.target.value))}
           required
         >
           <option value="" disabled>
@@ -261,19 +229,6 @@ export function ParticipantCreateForm({
           ))}
         </select>
       </FormField>
-
-      <TshirtSizeFields
-        tailleTShirt={form.tailleTShirt ?? ""}
-        tailleTShirtBinome={form.tailleTShirtBinome ?? ""}
-        courseLibelle={
-          courses.find((c) => c.id === form.courseChoisieId)?.name ?? ""
-        }
-        tailles={tailles}
-        onTailleTShirtChange={(value) => handleChange("tailleTShirt", value)}
-        onTailleTShirtBinomeChange={(value) =>
-          handleChange("tailleTShirtBinome", value)
-        }
-      />
 
       <div className="sm:col-span-2 flex flex-col sm:flex-row gap-2">
         {isEditing && (

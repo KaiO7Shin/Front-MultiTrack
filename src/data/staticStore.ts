@@ -598,12 +598,16 @@ export const staticStore = {
 
   changeRaceStatus(
     raceId: number,
-    newStatus: CourseStatus
+    newStatus: CourseStatus,
+    recordedAt?: string
   ): { raceId: number; startAt?: string; status: CourseStatus } {
     const course = requireCourse(raceId);
+    if (newStatus === "En cours" && course.status !== "A venir") {
+      fail("Seules les courses « A venir » peuvent être lancées");
+    }
     course.status = newStatus;
-    if (newStatus === "En cours" && !course.startAt) {
-      course.startAt = new Date().toISOString();
+    if (newStatus === "En cours") {
+      course.startAt = recordedAt || new Date().toISOString();
     }
     return { raceId, startAt: course.startAt, status: course.status };
   },

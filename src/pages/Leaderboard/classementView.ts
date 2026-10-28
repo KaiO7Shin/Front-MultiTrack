@@ -35,6 +35,15 @@ export function formatCltCategorie(row: ClassementLigne) {
   return row.categorieAlias ? `${rank} ${row.categorieAlias}` : rank;
 }
 
+/** Trois premiers au scratch, sur les lignes déjà chargées. Le genre « all » mélange H et F. */
+export function scratchPodium(rows: ClassementLigne[], genre: string): ClassementLigne[] {
+  return rows
+    .filter((row) => genre === "all" || row.genre === genre)
+    .filter((row) => row.rang != null && row.temps)
+    .sort((a, b) => (a.rang ?? 0) - (b.rang ?? 0))
+    .slice(0, 3);
+}
+
 export function filterClassement(
   rows: ClassementLigne[],
   genre: string,
@@ -59,6 +68,21 @@ export function filterClassement(
   });
 }
 
+/**
+ * Rang d’affichage dans la liste filtrée (1, 2, 3…).
+ * Les non-classés restent sans rang. Ne mute pas les lignes du cache.
+ */
+export function withFilteredRanks(rows: ClassementLigne[]): ClassementLigne[] {
+  let place = 0;
+  return rows.map((row) => {
+    if (row.rang == null || !row.temps) {
+      return row.rang == null ? row : { ...row, rang: null };
+    }
+    place += 1;
+    return row.rang === place ? row : { ...row, rang: place };
+  });
+}
+
 export function rankingCategories(
   categories: { id: number; alias: string; ageMin: number | null }[]
 ): ClassementCategorie[] {
@@ -74,7 +98,7 @@ export function rankingCategories(
 
 export function podiumTables(
   rows: ClassementLigne[],
-  categories: ClassementCategorie[]
+  _categories: ClassementCategorie[]
 ): PodiumTable[] {
   const scratch = (genre: "Homme" | "Femme", title: string): PodiumTable => ({
     title,
@@ -83,21 +107,22 @@ export function podiumTables(
       .sort((a, b) => (a.cltGenre ?? 0) - (b.cltGenre ?? 0)),
   });
 
-  const categoryTables = categories
-    .filter((categorie) => !isHc(categorie.alias))
-    .map((categorie) => ({
-      title: `Catégorie ${categorie.alias}`,
-      rows: rows
-        .filter(
-          (row) =>
-            row.categorieId === categorie.id &&
-            row.cltCategorie != null &&
-            row.cltCategorie <= PODIUM_SIZE
-        )
-        .sort((a, b) => (a.cltCategorie ?? 0) - (b.cltCategorie ?? 0)),
-    }));
+  // Pack essential : podiums par catégorie masqués (scratch uniquement).
+  // const categoryTables = categories
+  //   .filter((categorie) => !isHc(categorie.alias))
+  //   .map((categorie) => ({
+  //     title: `Catégorie ${categorie.alias}`,
+  //     rows: rows
+  //       .filter(
+  //         (row) =>
+  //           row.categorieId === categorie.id &&
+  //           row.cltCategorie != null &&
+  //           row.cltCategorie <= PODIUM_SIZE
+  //       )
+  //       .sort((a, b) => (a.cltCategorie ?? 0) - (b.cltCategorie ?? 0)),
+  //   }));
 
-  return [scratch("Homme", "Scratch Homme"), scratch("Femme", "Scratch Femme"), ...categoryTables];
+  return [scratch("Homme", "Scratch Homme"), scratch("Femme", "Scratch Femme")];
 }
 
 function compareCategories(a: ClassementCategorie, b: ClassementCategorie) {

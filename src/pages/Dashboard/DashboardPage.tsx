@@ -1,44 +1,30 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, PageLoading } from "@/components/ui/feedback";
 import { fetchDashboard } from "@/services/dashboard";
-import { DashboardFiltersBar } from "./DashboardFiltersBar";
 import { DashboardKpiGrid } from "./DashboardKpiGrid";
 import { CoursePopularityChart } from "./CoursePopularityChart";
 import { CourseTrackingChart } from "./CourseTrackingChart";
-import { FollowUpTable } from "./FollowUpTable";
-import { RegistrationsTrendChart } from "./RegistrationsTrendChart";
+// Pack essential : filtres, courbe d'inscriptions et tableau de suivi commentés.
+// import { DashboardFiltersBar } from "./DashboardFiltersBar";
+// import { FollowUpTable } from "./FollowUpTable";
+// import { RegistrationsTrendChart } from "./RegistrationsTrendChart";
 import { currentTrendMonth } from "./dashboardView";
 import {
   DEFAULT_DASHBOARD_FILTERS,
-  type DashboardCourse,
-  type DashboardFilters,
   type DashboardView,
 } from "./dashboardTypes";
 
 export const DashboardPage = () => {
-  const [filters, setFilters] = useState<DashboardFilters>(DEFAULT_DASHBOARD_FILTERS);
-  const [trendMonth, setTrendMonth] = useState(currentTrendMonth);
-  const [courses, setCourses] = useState<DashboardCourse[]>([]);
-  const [years, setYears] = useState<number[]>([]);
   const [view, setView] = useState<DashboardView | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [refreshTick, setRefreshTick] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const hasView = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
-    if (!hasView.current) setLoading(true);
-    else setRefreshing(true);
-
-    fetchDashboard(filters, trendMonth)
+    fetchDashboard(DEFAULT_DASHBOARD_FILTERS, currentTrendMonth())
       .then((data) => {
         if (cancelled) return;
-        setCourses(data.courses);
-        setYears(data.years.includes(trendMonth.year) ? data.years : [trendMonth.year, ...data.years]);
         setView(data.view);
-        hasView.current = true;
         setError(null);
       })
       .catch((err: unknown) => {
@@ -48,18 +34,12 @@ export const DashboardPage = () => {
       .finally(() => {
         if (cancelled) return;
         setLoading(false);
-        setRefreshing(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [filters, trendMonth, refreshTick]);
-
-  const seriesName =
-    filters.inscriptionStatut === "all"
-      ? "Nouvelles inscriptions"
-      : filters.inscriptionStatut;
+  }, []);
 
   if (loading && !view) {
     return <PageLoading message="Chargement du tableau de bord…" />;
@@ -70,7 +50,7 @@ export const DashboardPage = () => {
       <div className="page-header">
         <div className="min-w-0">
           <h1 className="page-title">Tableau de bord</h1>
-          <p className="page-subtitle">Pilotage des inscriptions et suivi des courses.</p>
+          <p className="page-subtitle">Participants et suivi des courses.</p>
         </div>
       </div>
 
@@ -80,40 +60,16 @@ export const DashboardPage = () => {
         </Alert>
       )}
 
-      <DashboardFiltersBar
-        filters={filters}
-        courses={courses}
-        refreshing={refreshing}
-        onChange={setFilters}
-        onRefresh={() => setRefreshTick((tick) => tick + 1)}
-      />
-
       {view && (
         <>
           <p className="sr-only" aria-live="polite">
-            {view.kpis.participantCount.toLocaleString("fr-FR")} inscriptions
-            totales, {view.kpis.total.toLocaleString("fr-FR")} inscriptions en
-            ligne,{" "}
-            {view.followUp.length.toLocaleString("fr-FR")} participants à suivre.
+            {view.kpis.inscrits.toLocaleString("fr-FR")} participants inscrits,{" "}
+            {view.kpis.presents.toLocaleString("fr-FR")} présents,{" "}
+            {view.kpis.dns.toLocaleString("fr-FR")} DNS.
           </p>
           <DashboardKpiGrid kpis={view.kpis} />
-
-          <div className="grid gap-4 xl:grid-cols-2">
-            <RegistrationsTrendChart
-              points={view.trend}
-              seriesName={seriesName}
-              trendMonth={trendMonth}
-              years={years}
-              onTrendMonthChange={setTrendMonth}
-            />
-            <CoursePopularityChart rows={view.popularity} />
-          </div>
-
+          <CoursePopularityChart rows={view.popularity} />
           <CourseTrackingChart rows={view.tracking} totals={view.trackingTotals} />
-          <FollowUpTable
-            rows={view.followUp}
-            participantStatut={filters.participantStatut}
-          />
         </>
       )}
     </section>

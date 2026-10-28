@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Upload } from "lucide-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { clearBoMemoryCaches } from "@/lib/boMemoryCache";
 import { importParticipantsCsv } from "@/services/import";
 import { Alert, Spinner } from "@/components/ui/feedback";
 import { FormField, selectClassName } from "@/components/ui/form-field";
@@ -28,6 +29,7 @@ export const ImportParticipants = () => {
 
     try {
       const { message } = await importParticipantsCsv(file, separator);
+      clearBoMemoryCaches();
       setMessage(message);
     } catch (err: any) {
       if (err.response) {
@@ -67,6 +69,7 @@ export const ImportParticipants = () => {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-6">
+        {error && <Alert variant="error" role="alert">{error}</Alert>}
         <FormField label="Séparateur CSV" htmlFor="csv-separator">
           <select
             id="csv-separator"
@@ -134,7 +137,6 @@ export const ImportParticipants = () => {
             </div>
           )}
 
-          {error && <Alert variant="error" role="alert">{error}</Alert>}
           {message && <Alert variant="success">{message}</Alert>}
         </div>
 
@@ -142,14 +144,13 @@ export const ImportParticipants = () => {
           Colonnes requises :
           <br />
           <span className="font-mono">
-            nom, dtn, genre, course
+            nom, prenom, date_naissance, genre, course
           </span>
           <br />
-          Colonne optionnelle : <span className="font-mono">prenom</span>
-          <br />
           <span className="text-slate-400">
-            dtn au format jj/mm/aaaa — course = libellé exact de la course (ex. Challenge Initiation — Trail 12 km).
-            Le dossard et la catégorie sont calculés automatiquement.
+            date_naissance au format aaaa-mm-jj ou jj/mm/aaaa. Genre et course : libellé,
+            sans tenir compte des majuscules. Le prénom peut être vide. Le dossard et la
+            catégorie sont calculés automatiquement. Une ligne en erreur annule tout le fichier.
           </span>
         </p>
       </div>

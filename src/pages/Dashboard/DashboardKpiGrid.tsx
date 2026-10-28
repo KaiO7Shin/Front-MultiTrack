@@ -1,4 +1,4 @@
-import { ClipboardCheck, Clock3, UserCheck, Users } from "lucide-react";
+import { Clock3, UserCheck, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { formatCount } from "./dashboardView";
 import type { DashboardKpis } from "./dashboardTypes";
@@ -9,23 +9,18 @@ const cards: {
   icon: ReactNode;
 }[] = [
   {
-    key: "participantCount",
-    title: "Inscriptions totales",
+    key: "inscrits",
+    title: "Participants inscrits",
     icon: <Users className="h-4 w-4" />,
   },
   {
-    key: "total",
-    title: "Inscriptions en ligne",
+    key: "presents",
+    title: "Participants présents",
     icon: <UserCheck className="h-4 w-4" />,
   },
   {
-    key: "validated",
-    title: "Inscriptions validées",
-    icon: <ClipboardCheck className="h-4 w-4" />,
-  },
-  {
-    key: "pending",
-    title: "Inscriptions en attente",
+    key: "dns",
+    title: "DNS",
     icon: <Clock3 className="h-4 w-4" />,
   },
 ];
@@ -33,7 +28,7 @@ const cards: {
 export function DashboardKpiGrid({ kpis }: { kpis: DashboardKpis }) {
   return (
     <div className="space-y-2">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-3">
         {cards.map((card) => (
           <article key={card.key} className="page-card p-4">
             <div className="flex items-start justify-between gap-3">
@@ -49,9 +44,7 @@ export function DashboardKpiGrid({ kpis }: { kpis: DashboardKpis }) {
         ))}
       </div>
       <p className="text-xs text-muted-foreground">
-        Les inscriptions totales correspondent aux dossiers participant pour la
-        course sélectionnée. Les inscriptions en ligne, validées et en attente
-        suivent la course et la période.
+        Compteurs des participants selon leur statut.
       </p>
     </div>
   );

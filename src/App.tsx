@@ -1,21 +1,12 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { BackOfficeShell, CheckpointShell } from "./components/BackOfficeShell";
-import { CheckpointScan } from "./pages/Checkpoint/CheckpointScan";
+import { BackOfficeShell } from "./components/BackOfficeShell";
 import { isPathAllowedForRole, navItemsForRole } from "./config/backOfficeNav";
 import {
   ROLE_ADMIN,
-  ROLE_CHECKPOINT,
-  ROLE_ORGANIZER,
   homePathForRole,
   useAuth,
 } from "./lib/auth";
-
-const ROLE_LABEL = {
-  [ROLE_ADMIN]: "Admin",
-  [ROLE_ORGANIZER]: "Organisateur",
-  [ROLE_CHECKPOINT]: "Checkpoint",
-} as const;
 
 export default function App() {
   const [open, setOpen] = useState(false);
@@ -24,26 +15,17 @@ export default function App() {
   const navigate = useNavigate();
 
   const role = user?.role;
-  const isCollaborateur = role === ROLE_CHECKPOINT;
-  const assignedManches = user?.assignedManches ?? [];
-  const collaborateurLabel =
-    user?.libelle?.trim() ||
-    user?.assignedControlPoint?.label ||
-    (assignedManches.length === 1
-      ? `${assignedManches[0].courseLabel} / ${assignedManches[0].label}`
-      : assignedManches.length > 1
-        ? `${assignedManches.length} manches`
-        : null);
 
   useEffect(() => {
-    if (isCollaborateur && !location.pathname.startsWith("/checkpoint")) {
-      navigate("/checkpoint/scan", { replace: true });
+    if (role != null && role !== ROLE_ADMIN) {
+      signOut();
+      navigate("/login", { replace: true });
       return;
     }
     if (role != null && !isPathAllowedForRole(location.pathname, role)) {
       navigate(homePathForRole(role), { replace: true });
     }
-  }, [isCollaborateur, role, location.pathname, navigate]);
+  }, [role, location.pathname, navigate, signOut]);
 
   useEffect(() => {
     setOpen(false);
@@ -54,20 +36,16 @@ export default function App() {
     navigate("/login", { replace: true });
   }
 
-  if (isCollaborateur) {
-    return (
-      <CheckpointShell
-        homeTo={homePathForRole(role)}
-        label={collaborateurLabel}
-        onLogout={handleLogout}
-      >
-        <CheckpointScan />
-      </CheckpointShell>
-    );
-  }
+  // Pack essential : shell checkpoint commenté. Un seul rôle, ADMIN.
+  // if (role === ROLE_CHECKPOINT) {
+  //   return (
+  //     <CheckpointShell homeTo="/checkpoint/scan" onLogout={handleLogout}>
+  //       <CheckpointScan />
+  //     </CheckpointShell>
+  //   );
+  // }
 
-  const roleLabel =
-    role === ROLE_ADMIN || role === ROLE_ORGANIZER ? ROLE_LABEL[role] : "Session";
+  const roleLabel = "Admin";
 
   return (
     <BackOfficeShell

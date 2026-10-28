@@ -51,6 +51,20 @@ export async function fetchAllParticipants() {
   return searchParticipants({ source: "PARTICIPANT" });
 }
 
+export async function updateParticipantTemps(id: number, duree: string) {
+  const { data } = await api.put<RenderResponse<Record<string, unknown>>>(
+    `${API.participantById(id)}/temps`,
+    { duree }
+  );
+  if (!data.data) {
+    throw new Error(data.message || "Impossible de mettre à jour le temps");
+  }
+  return {
+    participant: normalizeParticipantProjection(data.data),
+    message: data.message || "Temps mis à jour avec succès",
+  };
+}
+
 export async function fetchParticipantById(id: number) {
   const { data } = await api.get<RenderResponse<Record<string, unknown>>>(
     API.participantById(id)

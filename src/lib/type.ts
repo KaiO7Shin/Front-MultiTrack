@@ -133,6 +133,7 @@ export type ParticipantCreateDTO = {
 };
 
 export type ParticipantResponse = {
+  id?: number;
   numDossard: string;
   nom: string;
   prenom: string;
@@ -250,6 +251,8 @@ export type ParticipantProjection = {
   autorisationParentaleUrl?: string;
   /** Inscription d’origine (détail participant). */
   inscriptionId?: number | null;
+  /** Durée HH:MM:SS pour un finisher. */
+  temps?: string | null;
   /** Provenance de la ligne (liste multi-critère). */
   source?: ParticipantListSource;
 };

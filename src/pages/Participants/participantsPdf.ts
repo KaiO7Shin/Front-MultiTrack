@@ -4,10 +4,36 @@ import { addPdfFooter, PDF_FOOTER_MARGIN } from "@/lib/pdfExport";
 import type { ParticipantProjection } from "@/lib/type";
 
 const NAVY: [number, number, number] = [15, 23, 43];
-const CHECKBOX_COL = 0;
-const SIGNATURE_COL = 7;
 const MARGIN_X = 14;
-const HEAD = ["", "Dossard", "Nom", "Prénom", "Course", "Genre", "Catégorie", "Signature"];
+/** 2 px CSS (96 dpi) exprimés en mm, unité du PDF. */
+const TWO_PX_MM = (2 * 25.4) / 96;
+const CHECKING_ROW_HEIGHT = 10;
+const PUBLICATION_ROW_HEIGHT = CHECKING_ROW_HEIGHT - TWO_PX_MM;
+
+const CHECKING_HEAD = ["", "Dossard", "Nom", "Prénom", "Genre", "Course", "Signature"];
+const PUBLICATION_HEAD = ["Dossard", "Nom", "Prénom", "Genre", "Course"];
+
+type ColumnStyle = { cellWidth: number; halign: "left" | "center" | "right" };
+
+const CHECKING_COLUMNS: Record<number, ColumnStyle> = {
+  0: { cellWidth: 12, halign: "center" },
+  1: { cellWidth: 18, halign: "right" },
+  2: { cellWidth: 52, halign: "left" },
+  3: { cellWidth: 44, halign: "left" },
+  4: { cellWidth: 22, halign: "center" },
+  5: { cellWidth: 51, halign: "left" },
+  6: { cellWidth: 70, halign: "left" },
+};
+
+const PUBLICATION_COLUMNS: Record<number, ColumnStyle> = {
+  0: { cellWidth: 18, halign: "right" },
+  1: { cellWidth: 70, halign: "left" },
+  2: { cellWidth: 58, halign: "left" },
+  3: { cellWidth: 28, halign: "center" },
+  4: { cellWidth: 95, halign: "left" },
+};
+
+export type ParticipantExportKind = "checking" | "publication";
 
 type CourseGroup = {
   courseId: number;
@@ -15,9 +41,9 @@ type CourseGroup = {
   rows: ParticipantProjection[];
 };
 
-export function exportParticipantsPdf(
+export async function exportParticipantsPdf(
   rows: ParticipantProjection[],
-  options: { title: string; filename: string },
+  options: { title: string; filename: string; kind: ParticipantExportKind },
 ) {
   if (rows.length === 0) return;
 
@@ -34,11 +60,11 @@ export function exportParticipantsPdf(
   for (const group of groups) {
     startY = ensureSpaceForSection(doc, startY, 24);
     startY = drawCourseHeading(doc, group.courseLabel, startY);
-    drawParticipantsTable(doc, group.rows, startY);
+    drawParticipantsTable(doc, group.rows, startY, options.kind);
     startY = (doc.lastAutoTable?.finalY ?? startY) + 8;
   }
 
-  addPdfFooter(doc);
+  await addPdfFooter(doc);
   doc.save(options.filename);
 }
 
@@ -66,22 +92,10 @@ function groupByCourse(rows: ParticipantProjection[]): CourseGroup[] {
 
 function sortParticipantsInGroup(rows: ParticipantProjection[]) {
   return [...rows].sort((a, b) => {
-    const dossardA = parseDossard(a.numDossard);
-    const dossardB = parseDossard(b.numDossard);
-    if (dossardA != null && dossardB != null && dossardA !== dossardB) {
-      return dossardA - dossardB;
-    }
-    const nom = a.nom.localeCompare(b.nom, "fr");
+    const nom = (a.nom || "").localeCompare(b.nom || "", "fr");
     if (nom !== 0) return nom;
-    return a.prenom.localeCompare(b.prenom, "fr");
+    return (a.prenom || "").localeCompare(b.prenom || "", "fr");
   });
-}
-
-function parseDossard(value: string | undefined) {
-  const trimmed = value?.trim();
-  if (!trimmed) return null;
-  const n = Number.parseInt(trimmed, 10);
-  return Number.isFinite(n) ? n : null;
 }
 
 function ensureSpaceForSection(doc: jsPDF, startY: number, neededHeight: number) {
@@ -103,26 +117,21 @@ function drawParticipantsTable(
   doc: jsPDF,
   rows: ParticipantProjection[],
   startY: number,
+  kind: ParticipantExportKind,
 ) {
+  const publication = kind === "publication";
+  const columns = publication ? PUBLICATION_COLUMNS : CHECKING_COLUMNS;
+
   autoTable(doc, {
     startY,
     theme: "grid",
-    head: [HEAD],
-    body: rows.map((p) => [
-      "",
-      p.numDossard?.trim() || "—",
-      p.nom || "—",
-      p.prenom || "—",
-      p.courseLibelle || p.nomCourse || "—",
-      p.genre || "—",
-      p.aliasCategorie || "—",
-      "",
-    ]),
+    head: [publication ? PUBLICATION_HEAD : CHECKING_HEAD],
+    body: rows.map((participant) => participantRow(participant, publication)),
     margin: { left: MARGIN_X, right: MARGIN_X, bottom: PDF_FOOTER_MARGIN },
     styles: {
       fontSize: 9,
       cellPadding: { top: 1.6, bottom: 1.6, left: 2, right: 2 },
-      minCellHeight: 10,
+      minCellHeight: publication ? PUBLICATION_ROW_HEIGHT : CHECKING_ROW_HEIGHT,
       valign: "middle",
       overflow: "linebreak",
       textColor: NAVY,
@@ -136,34 +145,36 @@ function drawParticipantsTable(
       minCellHeight: 7,
       valign: "middle",
     },
-    columnStyles: {
-      0: { cellWidth: 12, halign: "center" },
-      1: { cellWidth: 18, halign: "right" },
-      2: { cellWidth: 46, halign: "left" },
-      3: { cellWidth: 34, halign: "left" },
-      4: { cellWidth: 50, halign: "left" },
-      5: { cellWidth: 22, halign: "center" },
-      6: { cellWidth: 20, halign: "center" },
-      [SIGNATURE_COL]: { cellWidth: 64, halign: "left" },
-    },
+    columnStyles: columns,
     didParseCell: (data) => {
-      if (data.section === "head" && data.column.index === 1) {
-        data.cell.styles.halign = "right";
-      }
-      if (data.section === "head" && (data.column.index === 5 || data.column.index === 6)) {
-        data.cell.styles.halign = "center";
-      }
+      if (data.section !== "head") return;
+      const align = columns[data.column.index]?.halign;
+      if (align) data.cell.styles.halign = align;
     },
-    didDrawCell: (data) => {
-      if (data.column.index !== CHECKBOX_COL) return;
-      if (data.section !== "head" && data.section !== "body") return;
-      drawCheckbox(
-        doc,
-        data.cell,
-        data.section === "head" ? [255, 255, 255] : NAVY,
-      );
-    },
+    didDrawCell: publication
+      ? undefined
+      : (data) => {
+          if (data.column.index !== 0) return;
+          if (data.section !== "head" && data.section !== "body") return;
+          drawCheckbox(
+            doc,
+            data.cell,
+            data.section === "head" ? [255, 255, 255] : NAVY,
+          );
+        },
   });
+}
+
+function participantRow(participant: ParticipantProjection, publication: boolean) {
+  const cells = [
+    participant.numDossard?.trim() || "—",
+    participant.nom || "—",
+    participant.prenom || "—",
+    participant.genre || "—",
+    participant.courseLibelle || participant.nomCourse || "—",
+  ];
+  if (publication) return cells;
+  return ["", ...cells, ""];
 }
 
 function drawCheckbox(
