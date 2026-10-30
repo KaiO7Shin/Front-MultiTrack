@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { ChevronRight } from "lucide-react";
 import { Alert, PageLoading } from "@/components/ui/feedback";
-import { fetchParametres, type AppParametre } from "@/services/parametres";
-import { ApplicationParametresModal } from "./ApplicationParametresModal";
+import { updateParametre, fetchParametres, type AppParametre } from "@/services/parametres";
+import { ParametreConfirm } from "./ParametreConfirm";
+import { ParametreSwitch } from "./ParametreSwitch";
+import {
+  APPLICATION_PARAMETRES,
+  draftFromRows,
+  type ParametreCle,
+} from "./parametreSections";
 
 export function ParametresPage() {
   const [rows, setRows] = useState<AppParametre[]>([]);
@@ -12,7 +17,9 @@ export function ParametresPage() {
     variant: "success" | "error";
     message: string;
   } | null>(null);
-  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState<{ cle: ParametreCle; next: boolean } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -33,6 +40,43 @@ export function ParametresPage() {
     refresh();
   }, [refresh]);
 
+  const values = draftFromRows(rows);
+  const pendingSection = APPLICATION_PARAMETRES.find((section) => section.cle === pending?.cle);
+
+  function ask(cle: ParametreCle, next: boolean) {
+    setFeedback(null);
+    setSaveError(null);
+    setPending({ cle, next });
+  }
+
+  function cancel() {
+    if (saving) return;
+    setPending(null);
+    setSaveError(null);
+  }
+
+  async function confirm() {
+    if (!pending) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const result = await updateParametre(pending.cle, pending.next);
+      setRows((current) =>
+        current.map((row) =>
+          row.parametre === result.parametre.parametre ? result.parametre : row
+        )
+      );
+      setFeedback({ variant: "success", message: result.message });
+      setPending(null);
+    } catch (err) {
+      setSaveError(
+        err instanceof Error ? err.message : "Impossible d’enregistrer le paramètre."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <section className="page-section">
       <div className="page-header">
@@ -52,43 +96,51 @@ export function ParametresPage() {
           {feedback.message}
         </Alert>
       )}
+      {!loading && !error && !values && (
+        <Alert variant="error" role="alert">
+          Les paramètres de l’application sont incomplets.
+        </Alert>
+      )}
 
       {loading ? (
         <PageLoading message="Chargement des paramètres…" />
       ) : (
-        <div className="page-card divide-y divide-border overflow-hidden">
-          <button
-            type="button"
-            className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => {
-              setFeedback(null);
-              setOpen(true);
-            }}
-            disabled={Boolean(error)}
-          >
-            <span className="min-w-0">
-              <span className="block text-sm font-medium text-brand">
-                Paramètres de l’application
-              </span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">
-                Classements, inscriptions et publication des résultats
-              </span>
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-          </button>
-        </div>
+        values && (
+          <div className="page-card divide-y divide-border overflow-hidden">
+            {APPLICATION_PARAMETRES.map((section) => (
+              <div
+                key={section.cle}
+                className="flex items-center justify-between gap-6 px-5 py-4"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-brand">{section.label}</p>
+                  {section.hint && (
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {section.hint}
+                    </p>
+                  )}
+                </div>
+                <ParametreSwitch
+                  checked={values[section.cle]}
+                  disabled={saving}
+                  label={section.label}
+                  onToggle={() => ask(section.cle, !values[section.cle])}
+                />
+              </div>
+            ))}
+          </div>
+        )
       )}
 
-      <ApplicationParametresModal
-        open={open}
-        rows={rows}
-        onClose={() => setOpen(false)}
-        onSaved={(next, message) => {
-          setRows(next);
-          setFeedback({ variant: "success", message });
-          setOpen(false);
+      <ParametreConfirm
+        label={pendingSection?.label ?? null}
+        next={pending?.next ?? false}
+        saving={saving}
+        error={saveError}
+        onCancel={cancel}
+        onConfirm={() => {
+          void confirm();
         }}
-        onSaveError={(message) => setFeedback({ variant: "error", message })}
       />
     </section>
   );

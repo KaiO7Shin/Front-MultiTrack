@@ -2289,3 +2289,42 @@ html[data-theme="dark"] .menu-toggle span { background: var(--theme-panel-text);
 
   .footer-tagline { letter-spacing: .14em; }
 }
+
+.inscrits-toolbar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.inscrits-table { min-width: 720px; }
+.inscrits-table .col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.inscrits-table .col-text { text-align: left; }
+.inscrits-table .col-code { text-align: center; }
+
+.inscrits-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.inscrits-page-size { min-width: 120px; margin: 0; }
+.inscrits-range { margin: 0; color: var(--theme-text-muted); font-size: 14px; }
+.inscrits-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.inscrits-pages p { margin: 0; color: var(--theme-text-muted); font-size: 14px; }
+.inscrits-pages .button:disabled { opacity: .4; }
+
+@media (min-width: 760px) {
+  .inscrits-toolbar { grid-template-columns: minmax(220px, 360px) minmax(220px, 1fr); }
+}
