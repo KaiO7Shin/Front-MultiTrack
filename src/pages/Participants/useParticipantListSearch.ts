@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { searchParticipants } from "@/services/participants";
 import type { ParticipantProjection } from "@/lib/type";
-import type { ParticipantListSource } from "./participantListSource";
+import { ALL_STATUTS, type ParticipantListSource } from "./participantListSource";
 
 type UseParticipantListSearchArgs = {
   source: ParticipantListSource;
@@ -32,7 +32,7 @@ export function useParticipantListSearch({
         categorieId:
           source === "PARTICIPANT" && categoryId !== "all" ? categoryId : undefined,
         genre: gender === "all" ? undefined : gender,
-        statut: status || undefined,
+        statut: !status || status === ALL_STATUTS ? undefined : status,
       });
       setRows(data);
     } catch (err: unknown) {

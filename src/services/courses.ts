@@ -132,7 +132,8 @@ export async function finishRace(
 
 export async function changeRaceStatus(
   raceId: number,
-  newStatus: CourseStatus
+  newStatus: CourseStatus,
+  recordedAt?: string
 ): Promise<{ raceId: number; startAt?: string; status: CourseStatus }> {
   try {
     const { data } = await api.post<
@@ -141,7 +142,7 @@ export async function changeRaceStatus(
         startDateTime?: string;
         status: string;
       }>
-    >(API.raceChangeStatus, { raceId, newStatus });
+    >(API.raceChangeStatus, { raceId, newStatus, recordedAt });
     if (data.code !== 200 || !data.data) {
       throw new Error(data.message || data.error || "Changement de statut impossible");
     }

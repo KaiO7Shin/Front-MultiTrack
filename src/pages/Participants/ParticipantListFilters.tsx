@@ -3,6 +3,7 @@ import { FormField, selectClassName } from "@/components/ui/form-field";
 import type { GenreOption } from "@/services/genres";
 import type { StatutOption } from "@/services/statuts";
 import {
+  ALL_STATUTS,
   PARTICIPANT_LIST_SOURCES,
   type ParticipantListSource,
 } from "./participantListSource";
@@ -153,6 +154,7 @@ export function ParticipantListFilters({
             value={selectedStatus}
             onChange={(e) => onStatusChange(e.target.value)}
           >
+            <option value={ALL_STATUTS}>Tous les statuts</option>
             {statuts.map((s) => (
               <option key={s.id} value={s.libelle}>
                 {s.libelle}

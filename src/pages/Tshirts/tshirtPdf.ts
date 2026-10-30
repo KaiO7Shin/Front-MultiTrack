@@ -1,9 +1,9 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { addPdfFooter, PDF_FOOTER_MARGIN } from "@/lib/pdfExport";
+import { addPdfFooter, PDF_FOOTER_MARGIN, PDF_TABLE_TOP_MARGIN } from "@/lib/pdfExport";
 import type { TshirtMatrix } from "./tshirtMatrix";
 
-export function exportTshirtMatrixPdf(visible: TshirtMatrix) {
+export async function exportTshirtMatrixPdf(visible: TshirtMatrix) {
   if (visible.courses.length === 0) return;
 
   const doc = new jsPDF("l", "mm", "a4");
@@ -35,7 +35,7 @@ export function exportTshirtMatrixPdf(visible: TshirtMatrix) {
         String(visible.grandTotal),
       ],
     ],
-    margin: { bottom: PDF_FOOTER_MARGIN },
+    margin: { top: PDF_TABLE_TOP_MARGIN, bottom: PDF_FOOTER_MARGIN },
     styles: { fontSize: 9, cellPadding: 2, halign: "center" },
     columnStyles: { 0: { halign: "left", cellWidth: 55 } },
     headStyles: {
@@ -45,6 +45,6 @@ export function exportTshirtMatrixPdf(visible: TshirtMatrix) {
     },
   });
 
-  addPdfFooter(doc);
+  await addPdfFooter(doc);
   doc.save("tshirts-par-course.pdf");
 }

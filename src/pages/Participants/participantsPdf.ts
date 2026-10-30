@@ -1,13 +1,15 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { addPdfFooter, PDF_FOOTER_MARGIN } from "@/lib/pdfExport";
+import { addPdfFooter, PDF_FOOTER_MARGIN, PDF_TABLE_TOP_MARGIN } from "@/lib/pdfExport";
 import type { ParticipantProjection } from "@/lib/type";
 
 const NAVY: [number, number, number] = [15, 23, 43];
 const CHECKBOX_COL = 0;
-const SIGNATURE_COL = 7;
+const SIGNATURE_COL = 6;
 const MARGIN_X = 14;
-const HEAD = ["", "Dossard", "Nom", "Prénom", "Course", "Genre", "Catégorie", "Signature"];
+/** Hauteur mini d’une ligne (mm). Le texte qui déborde agrandit la ligne. */
+const ROW_HEIGHT = 10;
+const HEAD = ["", "Dossard", "Nom", "Prénom", "Genre", "Catégorie", "Signature"];
 
 type CourseGroup = {
   courseId: number;
@@ -15,7 +17,7 @@ type CourseGroup = {
   rows: ParticipantProjection[];
 };
 
-export function exportParticipantsPdf(
+export async function exportParticipantsPdf(
   rows: ParticipantProjection[],
   options: { title: string; filename: string },
 ) {
@@ -38,7 +40,7 @@ export function exportParticipantsPdf(
     startY = (doc.lastAutoTable?.finalY ?? startY) + 8;
   }
 
-  addPdfFooter(doc);
+  await addPdfFooter(doc);
   doc.save(options.filename);
 }
 
@@ -88,7 +90,7 @@ function ensureSpaceForSection(doc: jsPDF, startY: number, neededHeight: number)
   const pageHeight = doc.internal.pageSize.getHeight();
   if (startY + neededHeight <= pageHeight - PDF_FOOTER_MARGIN) return startY;
   doc.addPage();
-  return 16;
+  return PDF_TABLE_TOP_MARGIN;
 }
 
 function drawCourseHeading(doc: jsPDF, label: string, y: number) {
@@ -113,16 +115,15 @@ function drawParticipantsTable(
       p.numDossard?.trim() || "—",
       p.nom || "—",
       p.prenom || "—",
-      p.courseLibelle || p.nomCourse || "—",
       p.genre || "—",
       p.aliasCategorie || "—",
       "",
     ]),
-    margin: { left: MARGIN_X, right: MARGIN_X, bottom: PDF_FOOTER_MARGIN },
+    margin: { top: PDF_TABLE_TOP_MARGIN, left: MARGIN_X, right: MARGIN_X, bottom: PDF_FOOTER_MARGIN },
     styles: {
       fontSize: 9,
       cellPadding: { top: 1.6, bottom: 1.6, left: 2, right: 2 },
-      minCellHeight: 10,
+      minCellHeight: ROW_HEIGHT,
       valign: "middle",
       overflow: "linebreak",
       textColor: NAVY,
@@ -139,18 +140,17 @@ function drawParticipantsTable(
     columnStyles: {
       0: { cellWidth: 12, halign: "center" },
       1: { cellWidth: 18, halign: "right" },
-      2: { cellWidth: 46, halign: "left" },
-      3: { cellWidth: 34, halign: "left" },
-      4: { cellWidth: 50, halign: "left" },
-      5: { cellWidth: 22, halign: "center" },
-      6: { cellWidth: 20, halign: "center" },
+      2: { cellWidth: 74, halign: "left" },
+      3: { cellWidth: 56, halign: "left" },
+      4: { cellWidth: 22, halign: "center" },
+      5: { cellWidth: 20, halign: "center" },
       [SIGNATURE_COL]: { cellWidth: 64, halign: "left" },
     },
     didParseCell: (data) => {
       if (data.section === "head" && data.column.index === 1) {
         data.cell.styles.halign = "right";
       }
-      if (data.section === "head" && (data.column.index === 5 || data.column.index === 6)) {
+      if (data.section === "head" && (data.column.index === 4 || data.column.index === 5)) {
         data.cell.styles.halign = "center";
       }
     },

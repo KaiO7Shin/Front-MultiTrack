@@ -15,7 +15,6 @@ import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { CoursesList } from "./pages/Courses/CoursesList";
 import { CategoriesList } from "./pages/Categories/CategoriesList";
 import { CourseDetails } from "./pages/Courses/CourseDetails";
-import { ImportParticipants } from "./pages/Participants/ImportParticipants";
 import { AddParticipant } from "./pages/Participants/AddParticipant";
 import { ParticipantPage } from "./pages/Participants/ParticipantPage";
 import { ParticipantsPage } from "./pages/Participants/ParticipantsPage";
@@ -90,7 +89,6 @@ const router = createBrowserRouter([
           </RequireRole>
         ),
       },
-      { path: "participants/import", element: <ImportParticipants /> },
       { path: "participants/add", element: <AddParticipant /> },
       { path: "participants/identity", element: <ParticipantPage /> },
       { path: "participants/:id", element: <ParticipantDetailPage /> },

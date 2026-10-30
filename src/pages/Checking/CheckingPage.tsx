@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   apiErrorMessage,
+  cancelArrival,
+  cancelPresence,
   checkArrival,
   checkPresence,
   type CheckingMode,
 } from "@/services/checking";
+import { CheckingCancelModal } from "./CheckingCancelModal";
 import { CheckingFeedback } from "./CheckingFeedback";
 import type { CheckingInputMethod } from "./checkingForm";
 import { CheckingTabs } from "./CheckingTabs";
@@ -37,6 +40,13 @@ export function CheckingPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [manualKey, setManualKey] = useState(0);
+  const [lastManualCheck, setLastManualCheck] = useState<{
+    mode: CheckingMode;
+    bib: string;
+  } | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelSaving, setCancelSaving] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const clearRef = useRef<() => void>(() => {});
   const focusRef = useRef<() => void>(() => {});
@@ -50,6 +60,9 @@ export function CheckingPage() {
         const response =
           mode === "presence" ? await checkPresence(bib) : await checkArrival(bib);
         setSuccess(response.message?.trim() || "Checking enregistré");
+        if (inputMethod === "manuel") {
+          setLastManualCheck({ mode, bib });
+        }
         return true;
       } catch (err: unknown) {
         setError(apiErrorMessage(err, "Erreur interne"));
@@ -62,6 +75,26 @@ export function CheckingPage() {
     },
     [inputMethod, mode]
   );
+
+  async function confirmCancel() {
+    if (!lastManualCheck || cancelSaving) return;
+    setCancelSaving(true);
+    setCancelError(null);
+    try {
+      const response =
+        lastManualCheck.mode === "presence"
+          ? await cancelPresence(lastManualCheck.bib)
+          : await cancelArrival(lastManualCheck.bib);
+      setSuccess(response.message?.trim() || "Checking annulé");
+      setError(null);
+      setLastManualCheck(null);
+      setCancelOpen(false);
+    } catch (err: unknown) {
+      setCancelError(apiErrorMessage(err, "Impossible d'annuler le checking."));
+    } finally {
+      setCancelSaving(false);
+    }
+  }
 
   const scan = useBarcodeScan({
     enabled: !busy && inputMethod === "scan",
@@ -88,22 +121,33 @@ export function CheckingPage() {
   }
 
   function selectMode(next: CheckingMode) {
-    if (next === mode || busy) return;
+    if (next === mode || busy || cancelSaving) return;
     setMode(next);
     resetFeedback();
+    setLastManualCheck(null);
+    setCancelOpen(false);
+    setCancelError(null);
     setManualKey((key) => key + 1);
     if (inputMethod === "scan") scan.focus();
   }
 
   function selectInputMethod(next: CheckingInputMethod) {
-    if (next === inputMethod || busy) return;
+    if (next === inputMethod || busy || cancelSaving) return;
     setInputMethod(next);
     resetFeedback();
+    setLastManualCheck(null);
+    setCancelOpen(false);
+    setCancelError(null);
     setManualKey((key) => key + 1);
     if (next === "scan") scan.focus();
   }
 
   const active = MODES.find((item) => item.id === mode) ?? MODES[0];
+  const canCancel =
+    inputMethod === "manuel" &&
+    lastManualCheck != null &&
+    lastManualCheck.mode === mode &&
+    !busy;
 
   return (
     <section className="page-section">
@@ -144,17 +188,46 @@ export function CheckingPage() {
           ) : (
             <ManualCheckForm
               key={manualKey}
-              busy={busy}
+              busy={busy || cancelSaving}
               feedback={<CheckingFeedback error={error} success={success} />}
+              afterSubmit={
+                canCancel ? (
+                  <button
+                    type="button"
+                    className="btn-warning w-full"
+                    onClick={() => {
+                      setCancelError(null);
+                      setCancelOpen(true);
+                    }}
+                  >
+                    Annuler
+                  </button>
+                ) : null
+              }
               onSubmit={submit}
               onInvalid={(message) => {
                 setSuccess(null);
+                setLastManualCheck(null);
                 setError(message);
               }}
             />
           )}
         </div>
       </div>
+
+      <CheckingCancelModal
+        open={cancelOpen && lastManualCheck != null}
+        mode={lastManualCheck?.mode ?? mode}
+        bibNumber={lastManualCheck?.bib ?? ""}
+        saving={cancelSaving}
+        error={cancelError}
+        onClose={() => {
+          if (cancelSaving) return;
+          setCancelOpen(false);
+          setCancelError(null);
+        }}
+        onConfirm={() => void confirmCancel()}
+      />
     </section>
   );
 }

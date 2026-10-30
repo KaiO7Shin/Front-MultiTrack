@@ -35,6 +35,11 @@ export function formatCltCategorie(row: ClassementLigne) {
   return row.categorieAlias ? `${rank} ${row.categorieAlias}` : rank;
 }
 
+/** Trois premiers classés de la liste déjà filtrée, genres confondus. */
+export function scratchPodium(rows: ClassementLigne[]): ClassementLigne[] {
+  return rows.filter((row) => row.rang != null && row.temps).slice(0, 3);
+}
+
 export function filterClassement(
   rows: ClassementLigne[],
   genre: string,
@@ -56,6 +61,21 @@ export function filterClassement(
       nom.includes(q) ||
       prenom.includes(q)
     );
+  });
+}
+
+/**
+ * Rang d’affichage dans la liste filtrée (1, 2, 3…).
+ * Les non-classés restent sans rang. Ne mute pas les lignes d’origine.
+ */
+export function withFilteredRanks(rows: ClassementLigne[]): ClassementLigne[] {
+  let place = 0;
+  return rows.map((row) => {
+    if (row.rang == null || !row.temps) {
+      return row.rang == null ? row : { ...row, rang: null };
+    }
+    place += 1;
+    return row.rang === place ? row : { ...row, rang: place };
   });
 }
 

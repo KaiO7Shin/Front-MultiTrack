@@ -70,7 +70,9 @@ export const API = {
 
   checkingPc: "/checking/pc",
   checkingPresence: "/checking/presence",
+  checkingPresenceAnnuler: "/checking/presence/annuler",
   checkingFinishline: "/checking/finishline",
+  checkingFinishlineAnnuler: "/checking/finishline/annuler",
 
   pointeurs: "/pointeurs",
   pointeur: "/pointeur",
