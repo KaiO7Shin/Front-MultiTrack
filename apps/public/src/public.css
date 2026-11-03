@@ -1397,6 +1397,12 @@ html[data-theme="dark"] .race-card {
   color: var(--status-validated-fg);
 }
 
+.status-pill.is-cancelled {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
 .status-pill.is-refused {
   background: var(--status-refused-bg);
   color: var(--status-refused-fg);
