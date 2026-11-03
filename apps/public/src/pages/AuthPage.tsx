@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Field } from "../components/form";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { PhoneField } from "../components/PhoneField";
+import { usePublicFlags } from "../hooks/usePublicFlags";
 import { useSession } from "../hooks/useSession";
+import { INSCRIPTIONS_CLOTUREES } from "../lib/registrationGate";
 import { formValues, wait } from "../lib/utils";
 import type { AuthTab } from "../types";
 
@@ -16,9 +18,14 @@ export function AuthPage({ initialTab }: { initialTab: AuthTab }) {
   const [phone, setPhone] = useState("");
   const navigate = useNavigate();
   const { register, login } = useSession();
+  const { flags } = usePublicFlags();
 
   async function submitRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (flags?.finInscription) {
+      setError(INSCRIPTIONS_CLOTUREES);
+      return;
+    }
     const values = formValues(event.currentTarget);
     setError("");
     setLoading(true);

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { usePublicFlags } from "../hooks/usePublicFlags";
 import { useSession } from "../hooks/useSession";
 import { handoffFacebookClick, requestFacebookBrowserNotice } from "../lib/facebookBrowser";
 import type { Theme } from "../types";
@@ -24,6 +25,7 @@ export function ThemeSwitcher({ theme, onToggle }: { theme: Theme; onToggle: () 
 
 export function SiteHeader() {
   const { authenticated, logout } = useSession();
+  const { flags } = usePublicFlags();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -66,6 +68,9 @@ export function SiteHeader() {
           <nav id="main-navigation" className={`main-nav${menuOpen ? " open" : ""}`} aria-label="Navigation principale">
             <NavLink to="/" end onClick={() => setMenuOpen(false)}>Accueil</NavLink>
             <NavLink to="/courses" onClick={() => setMenuOpen(false)}>Courses</NavLink>
+            {flags?.pubInscrits && (
+              <NavLink to="/inscrits" onClick={() => setMenuOpen(false)}>Inscrits</NavLink>
+            )}
             <NavLink to="/a-propos" onClick={() => setMenuOpen(false)}>À propos</NavLink>
             <NavLink to="/contact" onClick={() => setMenuOpen(false)}>Contact</NavLink>
             {authenticated && (

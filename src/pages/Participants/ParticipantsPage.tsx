@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { deleteParticipant } from "@/services/participants";
 import { fetchCategories, fetchCoursesDetailed } from "@/services/courses";
 import { fetchGenres, type GenreOption } from "@/services/genres";
@@ -217,14 +216,6 @@ export function ParticipantsPage() {
             <img src="/pdf.svg" alt="" className="h-4 w-4" aria-hidden />
             Exporter
           </button>
-          {isAdmin && (
-            <Link
-              to="/participants/import"
-              className="rounded-xl border px-3 py-2 text-sm hover:bg-[#8c9962]/10 text-center"
-            >
-              Importer CSV
-            </Link>
-          )}
         </div>
       </div>
 

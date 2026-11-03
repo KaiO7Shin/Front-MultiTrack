@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Alert } from "@/components/ui/feedback";
 import type { Course, CourseCreateDTO, CourseType } from "@/lib/type";
-import { formatBarrierDuration, normalizeCourseStatus } from "@/lib/utils";
+import { captureClientTimestamp, formatBarrierDuration, normalizeCourseStatus } from "@/lib/utils";
 import {
   changeRaceStatus,
   createCourse,
@@ -26,6 +27,10 @@ export const CoursesList = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionFeedback, setActionFeedback] = useState<{
+    variant: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
@@ -85,6 +90,10 @@ export const CoursesList = () => {
       if (modalMode === "create") {
         const created = await createCourse(dto);
         setCourses((prev) => [...prev, created]);
+        setActionFeedback({
+          variant: "success",
+          message: "Course créée avec succès.",
+        });
       } else if (editTarget) {
         const updated = await updateCourse(editTarget.id, dto);
         setCourses((prev) =>
@@ -103,7 +112,10 @@ export const CoursesList = () => {
 
   async function handleDelete(course: Course) {
     if (normalizeCourseStatus(course.status) !== "A venir") {
-      setLoadError("Seules les courses « À venir » peuvent être supprimées.");
+      setActionFeedback({
+        variant: "error",
+        message: "Seules les courses « A venir » peuvent être supprimées.",
+      });
       return;
     }
     if (!window.confirm(`Supprimer la course « ${course.name} » ?`)) return;
@@ -111,10 +123,15 @@ export const CoursesList = () => {
     try {
       await deleteCourse(course.id);
       setCourses((prev) => prev.filter((c) => c.id !== course.id));
+      setActionFeedback({
+        variant: "success",
+        message: "Course supprimée avec succès.",
+      });
     } catch (e: unknown) {
-      setLoadError(
-        e instanceof Error ? e.message : "Erreur lors de la suppression."
-      );
+      setActionFeedback({
+        variant: "error",
+        message: e instanceof Error ? e.message : "Erreur lors de la suppression.",
+      });
     }
   }
 
@@ -146,10 +163,19 @@ export const CoursesList = () => {
         <StatPill label="Terminées" value={counts.done} />
       </div>
 
+      {actionFeedback && (
+        <Alert
+          variant={actionFeedback.variant}
+          role={actionFeedback.variant === "error" ? "alert" : "status"}
+        >
+          {actionFeedback.message}
+        </Alert>
+      )}
+
       {loadError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <Alert variant="error" role="alert">
           {loadError}
-        </div>
+        </Alert>
       )}
 
       {loading ? (
@@ -168,6 +194,7 @@ export const CoursesList = () => {
               course={c}
               onEdit={() => openEdit(c)}
               onDelete={() => handleDelete(c)}
+              onFeedback={setActionFeedback}
               onLocalUpdate={(upd) => {
                 setCourses((prev) =>
                   prev.map((x) => (x.id === c.id ? { ...x, ...upd } : x))
@@ -204,17 +231,26 @@ function StatPill({ label, value }: { label: string; value: number }) {
   );
 }
 
+function formatEventStamp(value?: string) {
+  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
+  if (!match) return "";
+  const [, year, month, day, hour, minute, second] = match;
+  return `${day}-${month}-${year} ${hour}:${minute}:${second}`;
+}
+
 function CourseCard({
   course,
   onEdit,
   onDelete,
   onLocalUpdate,
+  onFeedback,
   onRefresh,
 }: {
   course: Course;
   onEdit: () => void;
   onDelete: () => void;
   onLocalUpdate: (upd: Partial<Course>) => void;
+  onFeedback: (feedback: { variant: "success" | "error"; message: string } | null) => void;
   onRefresh: () => Promise<void>;
 }) {
   const status = normalizeCourseStatus(course.status);
@@ -228,15 +264,26 @@ function CourseCard({
   async function handleStart() {
     if (loading) return;
     setLoading(true);
+    onFeedback(null);
     try {
-      const res = await changeRaceStatus(course.id, "En cours");
+      const res = await changeRaceStatus(course.id, "En cours", captureClientTimestamp());
       onLocalUpdate({
         status: res.status,
         startAt: res.startAt || course.startAt,
       });
+      const stamp = formatEventStamp(res.startAt);
+      onFeedback({
+        variant: "success",
+        message: stamp
+          ? `Course lancée avec succès à ${stamp}`
+          : "Course lancée avec succès",
+      });
       await onRefresh();
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Erreur lors du lancement de la course.");
+      onFeedback({
+        variant: "error",
+        message: e instanceof Error ? e.message : "Erreur lors du lancement de la course.",
+      });
     } finally {
       setLoading(false);
     }
@@ -247,15 +294,23 @@ function CourseCard({
     if (!window.confirm(`Terminer la course « ${course.name} » ? Action irréversible.`))
       return;
     setLoading(true);
+    onFeedback(null);
     try {
       const res = await finishRace(course.id);
       onLocalUpdate({
         status: res.status,
         startAt: res.startAt || course.startAt,
       });
+      onFeedback({
+        variant: "success",
+        message: "Course terminée avec succès.",
+      });
       await onRefresh();
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Erreur lors de la clôture de la course.");
+      onFeedback({
+        variant: "error",
+        message: e instanceof Error ? e.message : "Erreur lors de la clôture de la course.",
+      });
     } finally {
       setLoading(false);
     }

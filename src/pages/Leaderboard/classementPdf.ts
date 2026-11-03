@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { addPdfFooter, formatPdfNumber, PDF_FOOTER_MARGIN } from "@/lib/pdfExport";
+import { addPdfFooter, formatPdfNumber, PDF_FOOTER_MARGIN, PDF_TABLE_TOP_MARGIN } from "@/lib/pdfExport";
 import type { ClassementLigne } from "@/services/classement";
 import {
   formatCltCategorie,
@@ -35,15 +35,15 @@ const COLUMN_STYLES = {
   8: { halign: "center" as const },
 };
 
-export function exportClassementGeneral(rows: ClassementLigne[], courseLabel: string) {
+export async function exportClassementGeneral(rows: ClassementLigne[], courseLabel: string) {
   const doc = new jsPDF("l", "mm", "a4");
   drawTitle(doc, `Classement général — ${courseLabel}`);
   drawTable(doc, rows, 22);
-  addPdfFooter(doc);
+  await addPdfFooter(doc);
   doc.save(fileName("classement-general", courseLabel));
 }
 
-export function exportClassementPodium(
+export async function exportClassementPodium(
   rows: ClassementLigne[],
   courseLabel: string,
   categories: ClassementCategorie[]
@@ -65,7 +65,7 @@ export function exportClassementPodium(
     drawTable(doc, table.rows, startY);
     startY = (doc.lastAutoTable?.finalY ?? startY) + 8;
   }
-  addPdfFooter(doc);
+  await addPdfFooter(doc);
   doc.save(fileName("classement-podium", courseLabel));
 }
 
@@ -90,7 +90,7 @@ function drawTable(doc: jsPDF, rows: ClassementLigne[], startY: number) {
     theme: "grid",
     head: [HEAD],
     body: rows.map(toPdfRow),
-    margin: { left: MARGIN_X, right: MARGIN_X, bottom: PDF_FOOTER_MARGIN },
+    margin: { top: PDF_TABLE_TOP_MARGIN, left: MARGIN_X, right: MARGIN_X, bottom: PDF_FOOTER_MARGIN },
     styles: {
       fontSize: 9,
       cellPadding: 1.6,
@@ -136,7 +136,7 @@ function ensureSpace(doc: jsPDF, startY: number, needed: number) {
   const pageHeight = doc.internal.pageSize.getHeight();
   if (startY + needed <= pageHeight - PDF_FOOTER_MARGIN) return startY;
   doc.addPage();
-  return 16;
+  return PDF_TABLE_TOP_MARGIN;
 }
 
 function fileName(prefix: string, courseLabel: string) {

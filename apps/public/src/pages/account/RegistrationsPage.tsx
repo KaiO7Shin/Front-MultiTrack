@@ -1,15 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LoadingOverlay } from "../../components/LoadingOverlay";
 import { StatusPill } from "../../components/StatusPill";
+import { usePublicFlags } from "../../hooks/usePublicFlags";
 import { useRegistrationDraft } from "../../hooks/useRegistrationDraft";
 import { useSession } from "../../hooks/useSession";
+import { INSCRIPTIONS_CLOTUREES } from "../../lib/registrationGate";
 import { participantFullName } from "../../lib/participant";
 import type { Registration } from "../../types";
 import { RegistrationWizard } from "./RegistrationWizard";
 
 export function RegistrationsPage() {
   const { registrations, addRegistration, loadRegistrations } = useSession();
+  const { flags } = usePublicFlags();
+  const [closedMessage, setClosedMessage] = useState("");
   const {
     hydrated,
     wizardOpen,
@@ -28,6 +32,15 @@ export function RegistrationsPage() {
   useEffect(() => {
     void loadRegistrations();
   }, [loadRegistrations]);
+
+  function requestNewRegistration() {
+    if (flags?.finInscription) {
+      setClosedMessage(INSCRIPTIONS_CLOTUREES);
+      return;
+    }
+    setClosedMessage("");
+    setWizardOpen(true);
+  }
 
   if (!hydrated) {
     return <LoadingOverlay visible />;
@@ -62,7 +75,8 @@ export function RegistrationsPage() {
         <span className="empty-number">0</span>
         <h2>Aucune inscription pour le moment</h2>
         <p>Créez une inscription pour réserver votre place à l’événement.</p>
-        <button type="button" className="button button-dark" onClick={() => setWizardOpen(true)}>
+        {closedMessage && <p className="form-error" role="alert">{closedMessage}</p>}
+        <button type="button" className="button button-dark" onClick={requestNewRegistration}>
           Nouvelle inscription
         </button>
       </div>
@@ -77,10 +91,11 @@ export function RegistrationsPage() {
           <h2>Mes inscriptions</h2>
           <p className="section-lead">Retrouvez ici vos dossiers d’inscription.</p>
         </div>
-        <button type="button" className="button button-dark" onClick={() => setWizardOpen(true)}>
+        <button type="button" className="button button-dark" onClick={requestNewRegistration}>
           Nouvelle inscription
         </button>
       </div>
+      {closedMessage && <p className="form-error" role="alert">{closedMessage}</p>}
       <div className="registration-table-wrap">
         <table className="registration-table">
           <thead>

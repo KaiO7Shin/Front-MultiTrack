@@ -1,5 +1,6 @@
 import api from "@/lib/api";
 import { API } from "@/lib/apiEndpoints";
+import { captureClientTimestamp } from "@/lib/utils";
 import type { RenderResponse } from "@/lib/type";
 
 export type CheckingMode = "presence" | "arrivee";
@@ -7,6 +8,7 @@ export type CheckingMode = "presence" | "arrivee";
 export type CheckingResult = {
   bibNumber: string;
   checkedAt: string;
+  statut?: string;
 };
 
 export function apiErrorMessage(err: unknown, fallback: string): string {
@@ -32,6 +34,22 @@ export async function checkPresence(bibNumber: string) {
 export async function checkArrival(bibNumber: string) {
   const { data } = await api.post<RenderResponse<CheckingResult>>(API.checkingFinishline, {
     bibNumber,
+  });
+  return data;
+}
+
+export async function cancelPresence(bibNumber: string) {
+  const { data } = await api.post<RenderResponse<CheckingResult>>(API.checkingPresenceAnnuler, {
+    bibNumber,
+    recordedAt: captureClientTimestamp(),
+  });
+  return data;
+}
+
+export async function cancelArrival(bibNumber: string) {
+  const { data } = await api.post<RenderResponse<CheckingResult>>(API.checkingFinishlineAnnuler, {
+    bibNumber,
+    recordedAt: captureClientTimestamp(),
   });
   return data;
 }
