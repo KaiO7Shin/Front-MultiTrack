@@ -135,3 +135,20 @@ export async function reviewInscription(
     );
   }
 }
+
+export async function cancelInscription(
+  id: number,
+  commentaire: string
+): Promise<RenderResponse<InscriptionReviewResponse>> {
+  try {
+    const { data } = await api.post<RenderResponse<InscriptionReviewResponse>>(
+      API.inscriptionAnnuler(id),
+      { commentaire: commentaire.trim() }
+    );
+    return data;
+  } catch (err) {
+    throw new Error(
+      apiErrorMessage(err, "Impossible d’annuler l’inscription.")
+    );
+  }
+}

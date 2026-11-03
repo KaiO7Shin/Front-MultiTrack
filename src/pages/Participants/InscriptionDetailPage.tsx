@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { Ban } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  cancelInscription,
   fetchInscriptionById,
   resendInscriptionValidationMail,
   reviewInscription,
@@ -17,9 +19,11 @@ import { Alert, Spinner } from "@/components/ui/feedback";
 import {
   INSCRIPTION_PENDING_STATUS,
   INSCRIPTION_REFUSED_STATUS,
+  INSCRIPTION_VALIDATED_STATUS,
   statusBadgeClass,
   statusLabel,
 } from "@/pages/Participants/participantStatus";
+import { InscriptionCancelModal } from "./InscriptionCancelModal";
 import { InscriptionReviewModal } from "./InscriptionReviewModal";
 import {
   StatutHistoryButton,
@@ -48,6 +52,9 @@ export function InscriptionDetailPage() {
     useState<InscriptionReviewDecision | null>(null);
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelSaving, setCancelSaving] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [mailSending, setMailSending] = useState(false);
   const [mailError, setMailError] = useState<string | null>(null);
@@ -160,6 +167,38 @@ export function InscriptionDetailPage() {
     }
   };
 
+  const openCancel = () => {
+    setCancelError(null);
+    setSuccess(null);
+    setCancelOpen(true);
+  };
+
+  const closeCancel = () => {
+    if (cancelSaving) return;
+    setCancelOpen(false);
+    setCancelError(null);
+  };
+
+  const confirmCancel = async (commentaire: string) => {
+    if (!inscription) return;
+    setCancelSaving(true);
+    setCancelError(null);
+    try {
+      const res = await cancelInscription(inscription.id, commentaire);
+      await load(inscription.id);
+      setSuccess(res.message || "Inscription annulée avec succès");
+      setCancelOpen(false);
+    } catch (err: unknown) {
+      setCancelError(
+        err instanceof Error
+          ? err.message
+          : "Impossible d’annuler l’inscription."
+      );
+    } finally {
+      setCancelSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <section className="page-section">
@@ -192,8 +231,14 @@ export function InscriptionDetailPage() {
     isAdmin &&
     (inscription.statut === INSCRIPTION_PENDING_STATUS ||
       inscription.statut === INSCRIPTION_REFUSED_STATUS);
+  const canCancel =
+    isAdmin &&
+    (inscription.statut === INSCRIPTION_PENDING_STATUS ||
+      inscription.statut === INSCRIPTION_REFUSED_STATUS ||
+      inscription.statut === INSCRIPTION_VALIDATED_STATUS);
   const canResendValidationMail =
-    isAdmin || user?.role === ROLE_ORGANIZER;
+    (isAdmin || user?.role === ROLE_ORGANIZER) &&
+    inscription.statut === INSCRIPTION_VALIDATED_STATUS;
   const fullName = formatParticipantName(inscription.prenom, inscription.nom);
 
   return (
@@ -293,22 +338,36 @@ export function InscriptionDetailPage() {
             )}
           </dl>
 
-          {canReview && (
+          {(canReview || canCancel) && (
             <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
-              <button
-                type="button"
-                onClick={() => openReview("Validée")}
-                className="rounded-xl bg-brand-cta px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-              >
-                Valider
-              </button>
-              <button
-                type="button"
-                onClick={() => openReview("Refusée")}
-                className="rounded-xl border border-[#a72a1f]/35 bg-[#fff0ee] px-4 py-2 text-sm font-medium text-[#a72a1f] hover:bg-[#fde8e4]"
-              >
-                Refuser
-              </button>
+              {canReview && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => openReview("Validée")}
+                    className="rounded-xl bg-brand-cta px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                  >
+                    Valider
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openReview("Refusée")}
+                    className="rounded-xl border border-[#a72a1f]/35 bg-[#fff0ee] px-4 py-2 text-sm font-medium text-[#a72a1f] hover:bg-[#fde8e4]"
+                  >
+                    Refuser
+                  </button>
+                </>
+              )}
+              {canCancel && (
+                <button
+                  type="button"
+                  onClick={openCancel}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <Ban className="h-4 w-4" aria-hidden />
+                  Annuler
+                </button>
+              )}
             </div>
           )}
         </section>
@@ -362,6 +421,15 @@ export function InscriptionDetailPage() {
         error={reviewError}
         onClose={closeReview}
         onConfirm={confirmReview}
+      />
+
+      <InscriptionCancelModal
+        open={cancelOpen}
+        participantName={fullName}
+        saving={cancelSaving}
+        error={cancelError}
+        onClose={closeCancel}
+        onConfirm={confirmCancel}
       />
 
       <StatutHistoryModal

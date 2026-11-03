@@ -6,9 +6,16 @@ export const INSCRIPTION_STATUS = {
   PENDING: "Attente validation",
   VALIDATED: "Validée",
   REFUSED: "Refusée",
+  CANCELLED: "Annulée",
 } as const;
 
-export type InscriptionStatusTone = "sent" | "pending" | "validated" | "refused" | "unknown";
+export type InscriptionStatusTone =
+  | "sent"
+  | "pending"
+  | "validated"
+  | "refused"
+  | "cancelled"
+  | "unknown";
 
 export type InscriptionStatusPresentation = {
   tone: InscriptionStatusTone;
@@ -22,6 +29,7 @@ const STATUS_PILLS: Record<string, Omit<InscriptionStatusPresentation, "classNam
   [INSCRIPTION_STATUS.PENDING]: { tone: "pending", label: "En attente" },
   [INSCRIPTION_STATUS.VALIDATED]: { tone: "validated", label: "Validée" },
   [INSCRIPTION_STATUS.REFUSED]: { tone: "refused", label: "Refusée" },
+  [INSCRIPTION_STATUS.CANCELLED]: { tone: "cancelled", label: "Annulée" },
 };
 
 export function inscriptionStatusPresentation(
