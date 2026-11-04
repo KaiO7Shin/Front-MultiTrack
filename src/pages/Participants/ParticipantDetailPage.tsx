@@ -32,6 +32,9 @@ function participantBackLink(from: string | null) {
   if (from === "dashboard") {
     return { to: "/dashboard", label: "Retour au tableau de bord" };
   }
+  if (from === "leaderboard") {
+    return { to: "/leaderboard", label: "Retour aux résultats" };
+  }
   return { to: "/participants", label: "Retour aux participants" };
 }
 

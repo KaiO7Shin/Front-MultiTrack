@@ -226,6 +226,7 @@ export function normalizeParticipantStatus(raw: unknown): ParticipantStatus {
     "Attente validation",
     "Validée",
     "Refusée",
+    "Annulée",
     "Inscrit",
     "Présent",
     "En course",

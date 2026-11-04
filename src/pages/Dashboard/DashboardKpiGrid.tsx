@@ -1,4 +1,4 @@
-import { ClipboardCheck, Clock3, UserCheck, Users } from "lucide-react";
+import { Ban, ClipboardCheck, Clock3, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { formatCount } from "./dashboardView";
 import type { DashboardKpis } from "./dashboardTypes";
@@ -14,11 +14,6 @@ const cards: {
     icon: <Users className="h-4 w-4" />,
   },
   {
-    key: "total",
-    title: "Inscriptions en ligne",
-    icon: <UserCheck className="h-4 w-4" />,
-  },
-  {
     key: "validated",
     title: "Inscriptions validées",
     icon: <ClipboardCheck className="h-4 w-4" />,
@@ -27,6 +22,11 @@ const cards: {
     key: "pending",
     title: "Inscriptions en attente",
     icon: <Clock3 className="h-4 w-4" />,
+  },
+  {
+    key: "refused",
+    title: "Inscriptions refusées",
+    icon: <Ban className="h-4 w-4" />,
   },
 ];
 
@@ -50,7 +50,7 @@ export function DashboardKpiGrid({ kpis }: { kpis: DashboardKpis }) {
       </div>
       <p className="text-xs text-muted-foreground">
         Les inscriptions totales correspondent aux dossiers participant pour la
-        course sélectionnée. Les inscriptions en ligne, validées et en attente
+        course sélectionnée. Les inscriptions validées, en attente et refusées
         suivent la course et la période.
       </p>
     </div>

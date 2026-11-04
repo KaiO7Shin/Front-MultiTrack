@@ -1,5 +1,7 @@
 export const API = {
   publicEvent: "/api/public/event",
+  publicParametres: "/api/public/parametres",
+  publicInscrits: "/api/public/inscrits",
   publicRaces: "/api/public/races",
   courses: "/api/courses/",
   categories: "/api/categories",

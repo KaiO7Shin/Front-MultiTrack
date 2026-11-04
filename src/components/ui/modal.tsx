@@ -10,6 +10,7 @@ type ModalProps = {
   disabled?: boolean;
   className?: string;
   size?: "sm" | "md" | "lg";
+  footer?: ReactNode;
 };
 
 const sizeClasses = {
@@ -26,6 +27,7 @@ export function Modal({
   disabled = false,
   className,
   size = "md",
+  footer,
 }: ModalProps) {
   const titleId = useId();
 
@@ -82,6 +84,11 @@ export function Modal({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {children}
         </div>
+        {footer && (
+          <div className="shrink-0 border-t border-border bg-white px-5 py-3">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

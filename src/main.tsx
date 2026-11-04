@@ -15,7 +15,6 @@ import { DashboardPage } from "./pages/Dashboard/DashboardPage";
 import { CoursesList } from "./pages/Courses/CoursesList";
 import { CategoriesList } from "./pages/Categories/CategoriesList";
 import { CourseDetails } from "./pages/Courses/CourseDetails";
-import { ImportParticipants } from "./pages/Participants/ImportParticipants";
 import { AddParticipant } from "./pages/Participants/AddParticipant";
 import { ParticipantPage } from "./pages/Participants/ParticipantPage";
 import { ParticipantsPage } from "./pages/Participants/ParticipantsPage";
@@ -33,6 +32,8 @@ import { EligibilitesPage } from "./pages/Eligibilites/EligibilitesPage";
 import { ErrorLogDetailPage } from "./pages/ErrorLogs/ErrorLogDetailPage";
 import { ErrorLogsPage } from "./pages/ErrorLogs/ErrorLogsPage";
 import { ComptesPage } from "./pages/Comptes/ComptesPage";
+import { CheckingPage } from "./pages/Checking/CheckingPage";
+import { ParametresPage } from "./pages/Parametres/ParametresPage";
 
 import {
   AuthProvider,
@@ -80,7 +81,14 @@ const router = createBrowserRouter([
       { path: "courses/:id", element: <CourseDetails /> },
 
       { path: "participants", element: <ParticipantsPage /> },
-      { path: "participants/import", element: <ImportParticipants /> },
+      {
+        path: "checking",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <CheckingPage />
+          </RequireRole>
+        ),
+      },
       { path: "participants/add", element: <AddParticipant /> },
       { path: "participants/identity", element: <ParticipantPage /> },
       { path: "participants/:id", element: <ParticipantDetailPage /> },
@@ -118,6 +126,14 @@ const router = createBrowserRouter([
         ),
       },
 
+      {
+        path: "parametres",
+        element: (
+          <RequireRole role={ROLE_ADMIN}>
+            <ParametresPage />
+          </RequireRole>
+        ),
+      },
       {
         path: "journaux",
         element: (

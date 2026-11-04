@@ -78,6 +78,7 @@ export default function App() {
       open={open}
       onOpenChange={setOpen}
       onLogout={handleLogout}
+      settingsTo={role === ROLE_ADMIN ? "/parametres" : undefined}
     >
       <Outlet />
     </BackOfficeShell>

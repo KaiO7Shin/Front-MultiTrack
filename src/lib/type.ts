@@ -209,6 +209,7 @@ export type ParticipantStatus =
   | "Attente validation"
   | "Validée"
   | "Refusée"
+  | "Annulée"
   | "Inscrit"
   | "Present"
   | "Présent"

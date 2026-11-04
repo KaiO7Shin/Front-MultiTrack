@@ -41,6 +41,7 @@ export const API = {
   inscriptions: "/inscriptions",
   inscriptionById: (id: number) => `/inscriptions/${id}`,
   inscriptionReview: (id: number) => `/inscriptions/${id}/review`,
+  inscriptionAnnuler: (id: number) => `/inscriptions/${id}/annuler`,
   inscriptionValidationMail: (id: number) => `/inscriptions/${id}/mail-validation`,
   inscriptionStatutLogs: (id: number) => `/inscriptions/${id}/statut-logs`,
   inscriptionDocument: (
@@ -69,7 +70,10 @@ export const API = {
   // mancheAssignments: "/manche-assignments",
 
   checkingPc: "/checking/pc",
+  checkingPresence: "/checking/presence",
+  checkingPresenceAnnuler: "/checking/presence/annuler",
   checkingFinishline: "/checking/finishline",
+  checkingFinishlineAnnuler: "/checking/finishline/annuler",
 
   pointeurs: "/pointeurs",
   pointeur: "/pointeur",
@@ -82,6 +86,11 @@ export const API = {
 
   comptesUtilisateur: "/comptes",
   compteUtilisateurById: (id: number) => `/comptes/${id}`,
+
+  classementByCourse: (id: number) => `/courses/${id}/classement`,
+
+  parametres: "/parametres",
+  parametreByCle: (cle: string) => `/parametres/${encodeURIComponent(cle)}`,
 
   dossardsPreflight: "/dossards/preflight",
   dossardsGenerate: "/dossards/generate",

@@ -149,6 +149,10 @@
     @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white text-foreground px-4 py-2 text-sm font-medium transition hover:border-brand-cta hover:text-brand-dark;
   }
 
+  .btn-warning {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-100 disabled:opacity-50;
+  }
+
   .badge-live {
     @apply inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700;
   }

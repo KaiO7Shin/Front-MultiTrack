@@ -5,6 +5,7 @@ export const PARTICIPANT_STATUSES: readonly ParticipantStatus[] = [
   "Attente validation",
   "Validée",
   "Refusée",
+  "Annulée",
   "Inscrit",
   "Présent",
   "En course",
@@ -20,6 +21,7 @@ export const PARTICIPANT_STATUS_LABELS: Record<ParticipantStatus, string> = {
   "Attente validation": "Attente validation",
   Validée: "Validée",
   Refusée: "Refusée",
+  Annulée: "Annulée",
   Inscrit: "Inscrit",
   Present: "Présent",
   Présent: "Présent",
@@ -32,6 +34,8 @@ export const PARTICIPANT_STATUS_LABELS: Record<ParticipantStatus, string> = {
 
 export const INSCRIPTION_PENDING_STATUS: ParticipantStatus = "Attente validation";
 export const INSCRIPTION_REFUSED_STATUS: ParticipantStatus = "Refusée";
+export const INSCRIPTION_VALIDATED_STATUS: ParticipantStatus = "Validée";
+export const INSCRIPTION_CANCELLED_STATUS: ParticipantStatus = "Annulée";
 
 export function statusLabel(statut: ParticipantStatus | string | null | undefined) {
   if (!statut) return "—";
@@ -48,6 +52,8 @@ export function statusBadgeClass(statut: ParticipantStatus | string) {
       return "bg-green-100 text-green-700 border-green-200";
     case "Refusée":
       return "bg-red-100 text-red-700 border-red-200";
+    case "Annulée":
+      return "bg-slate-200 text-slate-700 border-slate-300";
     case "Inscrit":
       return "bg-slate-100 text-slate-700 border-slate-200";
     case "Present":
