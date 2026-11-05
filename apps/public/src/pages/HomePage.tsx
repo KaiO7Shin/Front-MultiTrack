@@ -86,13 +86,13 @@ export function HomePage() {
           <h2>Nos Challenges</h2>
           <div className="highlight-grid">
             {HIGHLIGHTS.map((highlight) => (
-              <article className="highlight-card" key={highlight.title}>
+              <Link className="highlight-card" key={highlight.title} to={highlight.to}>
                 {ICONS[highlight.icon]}
                 <div>
                   <h3>{highlight.title}</h3>
                   <p>{highlight.text}</p>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </div>

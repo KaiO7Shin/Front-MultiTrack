@@ -47,10 +47,14 @@ export const CATEGORY_ELIGIBILITY: Record<string, readonly string[]> = {
   "Challenge des amoureux": ["Senior", "Master"],
 };
 
+/** Libellés réels de `type_course` (Trail, VTT). */
+export const COURSE_TYPE_TRAIL = "Trail";
+export const COURSE_TYPE_VTT = "VTT";
+
 export const HIGHLIGHTS = [
-  { title: "Trail Run", text: "Défiez les sommets.", icon: "trail" },
-  { title: "VTT", text: "Parcourez les sentiers.", icon: "bike" },
-  { title: "Beer Event", text: "Festif et convivial.", icon: "beer" },
+  { title: "Trail Run", text: "Défiez les sommets.", icon: "trail", to: `/courses?type=${COURSE_TYPE_TRAIL}` },
+  { title: "VTT", text: "Parcourez les sentiers.", icon: "bike", to: `/courses?type=${COURSE_TYPE_VTT}` },
+  { title: "Beer Event", text: "Festif et convivial.", icon: "beer", to: "/a-propos" },
 ] as const;
 
 export const WIZARD_STEPS = ["Règlement", "Participant", "Résumé"] as const;

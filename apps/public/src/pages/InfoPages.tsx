@@ -1,9 +1,14 @@
+import { useLayoutEffect } from "react";
 import { Page } from "../components/Layout";
 import { RulesDocumentLinks } from "../components/RulesDocumentLinks";
 import { ORGANIZER_CONTACTS } from "../config/site";
 import { EVENT_INFO } from "../data/catalog";
 
 export function AboutPage() {
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <Page
       title="À propos"

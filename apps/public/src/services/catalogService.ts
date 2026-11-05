@@ -64,6 +64,15 @@ export function courseGroupTitle(typeCourse: string) {
   return typeCourse ? `Challenge ${typeCourse}` : "Courses";
 }
 
+export function normalizeCourseType(value: string) {
+  return value.normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
+}
+
+export function courseTypeAnchor(typeCourse: string) {
+  const slug = normalizeCourseType(typeCourse).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `courses-${slug || "liste"}`;
+}
+
 /**
  * Catalogue public actuel : données TBB locales pour l’éligibilité et les inscriptions.
  * Les listes /courses et /categories viennent de l’API.

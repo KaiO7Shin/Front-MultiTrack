@@ -29,6 +29,7 @@ export type Runner = {
 
 export type Registration = {
   id: string;
+  courseId: number;
   createdAt: string;
   status: string;
   paymentReference: string;
