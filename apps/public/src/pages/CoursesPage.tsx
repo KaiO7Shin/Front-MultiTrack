@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   RaceBikeIcon,
@@ -16,7 +16,7 @@ import {
   isFacebookInAppBrowser,
   requestFacebookBrowserNotice,
 } from "../lib/facebookBrowser";
-import { courseGroupTitle } from "../services/catalogService";
+import { courseGroupTitle, courseTypeAnchor, normalizeCourseType } from "../services/catalogService";
 
 function courseGpxFilename(libelle: string) {
   const name = libelle.replace(/[\\/:*?"<>|]/g, " ").replace(/\s+/g, " ").trim() || "course";
@@ -63,6 +63,20 @@ export function CoursesPage() {
   const { courses, groups, loading, error } = useCourses();
   const [gpxError, setGpxError] = useState<string | null>(null);
   const gpxQuery = searchParams.get("gpx");
+  const typeQuery = searchParams.get("type")?.trim() ?? "";
+  const visibleGroups = useMemo(() => {
+    if (!typeQuery) return groups;
+    const wanted = normalizeCourseType(typeQuery);
+    return groups.filter((group) => normalizeCourseType(group.typeCourse) === wanted);
+  }, [groups, typeQuery]);
+
+  useEffect(() => {
+    if (loading || error || !typeQuery || visibleGroups.length === 0) return;
+    const node = document.getElementById(courseTypeAnchor(visibleGroups[0].typeCourse));
+    if (!node) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    node.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  }, [error, loading, typeQuery, visibleGroups]);
 
   useEffect(() => {
     if (!gpxQuery || isFacebookInAppBrowser() || loading) return;
@@ -142,8 +156,19 @@ export function CoursesPage() {
           <p>Les challenges seront bientôt disponibles.</p>
         </div>
       )}
-      {!loading && !error && groups.map((group) => (
-        <section className="race-group" key={group.typeCourse || "courses"}>
+      {!loading && !error && groups.length > 0 && typeQuery && visibleGroups.length === 0 && (
+        <div className="empty-results">
+          <span className="empty-number">0</span>
+          <h2>Aucune course pour ce challenge</h2>
+          <p>Ce type de course n’est pas disponible pour le moment.</p>
+        </div>
+      )}
+      {!loading && !error && visibleGroups.map((group) => (
+        <section
+          className="race-group"
+          id={courseTypeAnchor(group.typeCourse)}
+          key={group.typeCourse || "courses"}
+        >
           <h2 className="race-group-title">{courseGroupTitle(group.typeCourse)}</h2>
           <div className="race-grid">
             {group.courses.map((course) => {

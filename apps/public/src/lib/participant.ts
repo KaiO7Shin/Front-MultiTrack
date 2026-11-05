@@ -69,6 +69,7 @@ export function validateParentalFile(file: File) {
 }
 
 export type RegistrationEditInput = {
+  courseId: number;
   lastName: string;
   firstName: string;
   birthDate: string;
@@ -83,8 +84,9 @@ export type RegistrationEditInput = {
   emergencyContactPhone: string;
 };
 
-/** Mêmes contraintes que la création, sans course ni pièce d’identité obligatoire. */
+/** Mêmes contraintes que la création, sans pièce d’identité obligatoire. */
 export function validateRegistrationEdit(input: RegistrationEditInput): string | null {
+  if (!input.courseId) return "Choisissez une course.";
   if (!input.lastName.trim()) return "Saisissez le nom du participant.";
   if (input.lastName.trim().length > 100) return "Le nom ne doit pas dépasser 100 caractères.";
   if (!input.firstName.trim()) return "Saisissez le prénom du participant.";
