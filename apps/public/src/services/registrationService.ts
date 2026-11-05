@@ -41,6 +41,7 @@ export function createRegistration(
 ): Registration {
   return {
     id: extras?.id ?? `TBB-${String(Date.now()).slice(-6)}`,
+    courseId: typeof draft.courseId === "number" ? draft.courseId : 0,
     createdAt: new Date().toLocaleDateString("fr-FR"),
     status: extras?.status ?? INSCRIPTION_STATUS.PENDING,
     paymentReference: payment.reference,
@@ -58,6 +59,7 @@ export function mapInscription(item: InscriptionResponse): Registration {
   const method = PAYMENT_METHODS.find((option) => option === item.paymentMethod) ?? "";
   return {
     id: String(item.id),
+    courseId: Number(item.courseId),
     createdAt: formatInscriptionDate(item.submittedAt),
     status: item.status,
     paymentReference: item.paymentReference || "—",
@@ -192,6 +194,7 @@ export async function updateRegistration(
   }
 
   const body = new FormData();
+  body.append("courseId", String(input.courseId));
   body.append("lastName", input.lastName.trim());
   body.append("firstName", input.firstName.trim());
   body.append("birthDate", input.birthDate);
